@@ -1,0 +1,12 @@
+# Vercel 忽略文件
+# 这些文件在部署时不会被上传
+
+node_modules
+.next
+.git
+.env.local
+.env*.local
+.DS_Store
+*.log
+coverage
+.vercel

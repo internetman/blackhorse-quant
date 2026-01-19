@@ -29,7 +29,30 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## 🚀 部署到 Vercel
+
+本项目已配置自动化部署到 Vercel。
+
+### ⚡ 快速开始：GitHub 自动部署
+
+**最简单的方式（推荐）：**
+
+1. 访问 [Vercel Dashboard](https://vercel.com/new)
+2. 点击 "Import Git Repository"
+3. 选择你的 GitHub 仓库
+4. 点击 "Deploy"
+
+完成！之后每次 `git push origin main` 都会自动部署。
+
+📖 **详细步骤请查看：[GitHub 自动部署完整指南](./GITHUB_DEPLOY_GUIDE.md)**
+
+### 其他部署方式
+
+- **手动部署**: 使用 `npm run deploy`
+- **GitHub Actions**: 详见 [DEPLOY.md](./DEPLOY.md)
+- **设置脚本**: 运行 `./scripts/setup-vercel.sh`
+
+---
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
