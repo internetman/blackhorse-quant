@@ -31,7 +31,9 @@ import {
   Clock,
   Eye,
   FileSearch,
-  ZapOff
+  ZapOff,
+  Menu,
+  X
 } from 'lucide-react';
 
 // --- 标志组件 ---
@@ -69,37 +71,39 @@ const MOCK_TRADES = [
 // --- 页面通用 UI 组件 ---
 
 const ConfigSection = ({ title, icon: Icon, children, risk, readonly }: { title: string; icon: React.ComponentType<{ size?: number; className?: string }>; children: React.ReactNode; risk?: boolean; readonly?: boolean }) => (
-  <div className={`bg-[#161922] border ${risk ? 'border-rose-900/50 shadow-[0_0_15px_rgba(244,63,94,0.05)]' : 'border-slate-800'} rounded-xl overflow-hidden flex flex-col h-full transition-all hover:border-slate-700`}>
-    <div className={`px-4 py-3 border-b ${risk ? 'border-rose-900/50 bg-rose-950/20' : 'border-slate-800 bg-black/20'} flex items-center justify-between`}>
-      <div className="flex items-center gap-2">
-        <Icon size={16} className={risk ? 'text-rose-500' : 'text-blue-400'} />
-        <h3 className={`text-xs font-bold uppercase tracking-widest ${risk ? 'text-rose-500' : 'text-slate-400'}`}>{title}</h3>
+  <div className={`bg-[#161922] border ${risk ? 'border-rose-900/50 shadow-[0_0_15px_rgba(244,63,94,0.05)]' : 'border-slate-800'} rounded-lg md:rounded-xl overflow-hidden flex flex-col h-full transition-all hover:border-slate-700`}>
+    <div className={`px-3 md:px-4 py-2.5 md:py-3 border-b ${risk ? 'border-rose-900/50 bg-rose-950/20' : 'border-slate-800 bg-black/20'} flex items-center justify-between`}>
+      <div className="flex items-center gap-2 min-w-0">
+        <Icon size={14} className={`md:w-4 md:h-4 shrink-0 ${risk ? 'text-rose-500' : 'text-blue-400'}`} />
+        <h3 className={`text-[10px] md:text-xs font-bold uppercase tracking-widest truncate ${risk ? 'text-rose-500' : 'text-slate-400'}`}>{title}</h3>
       </div>
-      {readonly && <Lock size={12} className="text-slate-600" />}
-      {risk && <ShieldAlert size={14} className="text-rose-500 animate-pulse" />}
+      <div className="flex items-center gap-1.5 shrink-0">
+        {readonly && <Lock size={10} className="md:w-3 md:h-3 text-slate-600" />}
+        {risk && <ShieldAlert size={12} className="md:w-3.5 md:h-3.5 text-rose-500 animate-pulse" />}
+      </div>
     </div>
-    <div className="p-5 space-y-4 flex-1">
+    <div className="p-3 md:p-4 lg:p-5 space-y-3 md:space-y-4 flex-1">
       {children}
     </div>
   </div>
 );
 
 const FormField = ({ label, description, children, risk }: { label: string; description?: string; children: React.ReactNode; risk?: boolean }) => (
-  <div className="space-y-1.5">
-    <div className="flex justify-between items-center">
-      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">{label}</label>
-      {risk && <span className="text-[9px] text-rose-500 font-bold px-1 rounded border border-rose-500/30">高风险</span>}
+  <div className="space-y-1 md:space-y-1.5">
+    <div className="flex justify-between items-center gap-2">
+      <label className="text-[9px] md:text-[10px] font-bold text-slate-500 uppercase tracking-tighter">{label}</label>
+      {risk && <span className="text-[8px] md:text-[9px] text-rose-500 font-bold px-1 rounded border border-rose-500/30 shrink-0">高风险</span>}
     </div>
     {children}
-    {description && <p className="text-[9px] text-slate-600 italic leading-none">{description}</p>}
+    {description && <p className="text-[8px] md:text-[9px] text-slate-600 italic leading-tight">{description}</p>}
   </div>
 );
 
 const Switch = ({ checked, label }: { checked: boolean; label: string }) => (
-  <div className="flex items-center justify-between group cursor-pointer">
-    <span className="text-[11px] text-slate-400 font-medium group-hover:text-slate-200 transition-colors">{label}</span>
-    <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${checked ? 'bg-blue-600' : 'bg-slate-700'}`}>
-      <div className={`w-3 h-3 bg-white rounded-full transition-transform ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
+  <div className="flex items-center justify-between group cursor-pointer touch-manipulation py-1">
+    <span className="text-[10px] md:text-[11px] text-slate-400 font-medium group-hover:text-slate-200 transition-colors flex-1 pr-2">{label}</span>
+    <div className={`w-9 md:w-10 h-5 md:h-6 rounded-full p-0.5 transition-colors shrink-0 ${checked ? 'bg-blue-600' : 'bg-slate-700'}`}>
+      <div className={`w-4 h-4 bg-white rounded-full transition-transform ${checked ? 'translate-x-4 md:translate-x-4' : 'translate-x-0'}`} />
     </div>
   </div>
 );
@@ -109,6 +113,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('config'); 
   const [sysStatus, setSysStatus] = useState('running');
   const [riskConfirmed, setRiskConfirmed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // 状态信息映射
   const getStatusInfo = (status: string) => {
@@ -123,21 +128,51 @@ export default function App() {
   return (
     <div className="flex h-screen bg-[#0b0d11] text-slate-200 overflow-hidden font-sans text-sm selection:bg-blue-500/30">
       
+      {/* 移动端遮罩层 */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* 侧边导航栏 */}
-      <aside className="w-64 border-r border-slate-800 flex flex-col p-4 bg-[#0f1117] shrink-0">
-        <div className="flex items-center gap-3 px-2 mb-10 mt-2">
-          <BlackHorseLogo className="w-9 h-9" />
-          <h1 className="text-xl font-bold tracking-tight text-white italic">黑马量化</h1>
+      <aside className={`
+        fixed lg:static inset-y-0 left-0 z-50
+        w-64 border-r border-slate-800 flex flex-col p-4 bg-[#0f1117] shrink-0
+        transform transition-transform duration-300 ease-in-out
+        ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}>
+        <div className="flex items-center justify-between mb-10 mt-2">
+          <div className="flex items-center gap-3 px-2">
+            <BlackHorseLogo className="w-9 h-9" />
+            <h1 className="text-xl font-bold tracking-tight text-white italic">黑马量化</h1>
+          </div>
+          <button 
+            onClick={() => setMobileMenuOpen(false)}
+            className="lg:hidden p-2 text-slate-400 hover:text-white"
+          >
+            <X size={20} />
+          </button>
         </div>
         
         <nav className="flex-1 space-y-1">
-          <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'dashboard' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 font-bold' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'}`}>
+          <button 
+            onClick={() => { setActiveTab('dashboard'); setMobileMenuOpen(false); }} 
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-sm md:text-base ${activeTab === 'dashboard' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 font-bold' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'}`}
+          >
             <LayoutDashboard size={19} />交易面板
           </button>
-          <button onClick={() => setActiveTab('config')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'config' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 font-bold' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'}`}>
+          <button 
+            onClick={() => { setActiveTab('config'); setMobileMenuOpen(false); }} 
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-sm md:text-base ${activeTab === 'config' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 font-bold' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'}`}
+          >
             <Settings size={19} />量化策略
           </button>
-          <button onClick={() => setActiveTab('trades')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'trades' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 font-bold' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'}`}>
+          <button 
+            onClick={() => { setActiveTab('trades'); setMobileMenuOpen(false); }} 
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-sm md:text-base ${activeTab === 'trades' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 font-bold' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'}`}
+          >
             <History size={19} />成交日志
           </button>
         </nav>
@@ -152,67 +187,75 @@ export default function App() {
       </aside>
 
       {/* 主体区域 */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden lg:ml-0">
         
         {/* 顶部标题栏 */}
-        <header className="h-20 border-b border-slate-800 flex items-center justify-between px-8 bg-[#0f1117]/80 backdrop-blur-md z-10 shrink-0">
-          <div className="flex items-center gap-8">
+        <header className="h-16 md:h-20 border-b border-slate-800 flex items-center justify-between px-4 md:px-8 bg-[#0f1117]/80 backdrop-blur-md z-10 shrink-0">
+          {/* 移动端菜单按钮 */}
+          <button 
+            onClick={() => setMobileMenuOpen(true)}
+            className="lg:hidden p-2 text-slate-400 hover:text-white"
+          >
+            <Menu size={24} />
+          </button>
+
+          <div className="flex items-center gap-4 md:gap-8 flex-1">
             <div className="flex flex-col gap-1.5">
-              <div className="flex gap-2 bg-black/40 p-1.5 rounded-xl border border-slate-800">
-                <button onClick={() => setSysStatus('running')} className={`p-2 rounded-lg transition-all ${sysStatus === 'running' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'text-slate-600 hover:text-slate-400'}`}><Play size={18} fill="currentColor" /></button>
-                <button onClick={() => setSysStatus('paused')} className={`p-2 rounded-lg transition-all ${sysStatus === 'paused' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30' : 'text-slate-600 hover:text-slate-400'}`}><Pause size={18} fill="currentColor" /></button>
-                <button onClick={() => setSysStatus('kill')} className={`p-2 rounded-lg transition-all ${sysStatus === 'kill' ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30' : 'text-slate-600 hover:text-slate-400'}`}><XCircle size={18} fill="currentColor" /></button>
+              <div className="flex gap-1 md:gap-2 bg-black/40 p-1 md:p-1.5 rounded-xl border border-slate-800">
+                <button onClick={() => setSysStatus('running')} className={`p-1.5 md:p-2 rounded-lg transition-all touch-manipulation ${sysStatus === 'running' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'text-slate-600 hover:text-slate-400'}`}><Play size={16} className="md:w-[18px] md:h-[18px]" fill="currentColor" /></button>
+                <button onClick={() => setSysStatus('paused')} className={`p-1.5 md:p-2 rounded-lg transition-all touch-manipulation ${sysStatus === 'paused' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30' : 'text-slate-600 hover:text-slate-400'}`}><Pause size={16} className="md:w-[18px] md:h-[18px]" fill="currentColor" /></button>
+                <button onClick={() => setSysStatus('kill')} className={`p-1.5 md:p-2 rounded-lg transition-all touch-manipulation ${sysStatus === 'kill' ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30' : 'text-slate-600 hover:text-slate-400'}`}><XCircle size={16} className="md:w-[18px] md:h-[18px]" fill="currentColor" /></button>
               </div>
-              <p className="text-[10px] text-slate-500 font-medium italic pl-1">{getStatusInfo(sysStatus).desc}</p>
+              <p className="text-[9px] md:text-[10px] text-slate-500 font-medium italic pl-1 hidden md:block">{getStatusInfo(sysStatus).desc}</p>
             </div>
-            <div className="h-10 w-px bg-slate-800/50"></div>
-            <div className="flex flex-col">
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest text-rose-500/80">今日盈亏实时统计</span>
-              <span className="text-xl font-bold font-mono text-rose-500 tracking-tight">+¥58,240.42</span>
+            <div className="h-8 md:h-10 w-px bg-slate-800/50 hidden sm:block"></div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest text-rose-500/80">今日盈亏</span>
+              <span className="text-lg md:text-xl font-bold font-mono text-rose-500 tracking-tight truncate">+¥58,240.42</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-5">
-             <div className="text-right hidden md:block">
+          <div className="flex items-center gap-3 md:gap-5">
+             <div className="text-right hidden lg:block">
                <div className="text-xs text-slate-500 font-bold uppercase tracking-widest opacity-60">实盘账户 ID</div>
                <div className="text-sm font-bold text-white tracking-wider font-mono">¥1,242,500.00</div>
              </div>
-             <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center shadow-lg overflow-hidden p-1.5">
+             <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center shadow-lg overflow-hidden p-1.5 shrink-0">
                 <BlackHorseLogo className="w-full h-full" />
              </div>
           </div>
         </header>
 
         {/* 动态内容区 */}
-        <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-[#0b0d11]">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8 bg-[#0b0d11]">
           
           {/* 量化策略面板 */}
           {activeTab === 'config' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-10 max-w-7xl mx-auto">
               
-              <div className="flex items-center justify-between border-b border-slate-800 pb-8">
-                <div>
-                  <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                    策略参数中心 <span className="text-[10px] font-mono bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded-full border border-blue-500/20">v3.2.0 稳定版</span>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-800 pb-6 md:pb-8 gap-4">
+                <div className="flex-1">
+                  <h2 className="text-xl md:text-2xl font-bold text-white flex flex-wrap items-center gap-2 md:gap-3">
+                    策略参数中心 <span className="text-[9px] md:text-[10px] font-mono bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded-full border border-blue-500/20">v3.2.0 稳定版</span>
                   </h2>
-                  <p className="text-slate-500 mt-1.5 text-xs font-medium uppercase tracking-[0.1em]">支持参数热重载：所有变更将在下一个行情切片到来时生效</p>
+                  <p className="text-slate-500 mt-1.5 text-[10px] md:text-xs font-medium uppercase tracking-[0.1em]">支持参数热重载：所有变更将在下一个行情切片到来时生效</p>
                 </div>
-                <div className="flex flex-col items-end gap-3">
-                  <div className="flex items-center gap-3 bg-slate-900 border border-slate-800 px-4 py-2 rounded-2xl shadow-inner border-l-4 border-l-rose-500">
-                    <input type="checkbox" id="riskCheck" checked={riskConfirmed} onChange={(e) => setRiskConfirmed(e.target.checked)} className="w-4 h-4 rounded text-blue-600 bg-black border-slate-700 focus:ring-0" />
-                    <label htmlFor="riskCheck" className="text-xs text-rose-100 font-bold cursor-pointer select-none">我已知晓此变更将立即影响实盘，自担交易盈亏</label>
+                <div className="flex flex-col items-stretch md:items-end gap-3">
+                  <div className="flex items-center gap-2 md:gap-3 bg-slate-900 border border-slate-800 px-3 md:px-4 py-2 rounded-xl md:rounded-2xl shadow-inner border-l-4 border-l-rose-500">
+                    <input type="checkbox" id="riskCheck" checked={riskConfirmed} onChange={(e) => setRiskConfirmed(e.target.checked)} className="w-4 h-4 md:w-5 md:h-5 rounded text-blue-600 bg-black border-slate-700 focus:ring-0 shrink-0 touch-manipulation" />
+                    <label htmlFor="riskCheck" className="text-[10px] md:text-xs text-rose-100 font-bold cursor-pointer select-none">我已知晓此变更将立即影响实盘，自担交易盈亏</label>
                   </div>
                   <button 
                     disabled={!riskConfirmed}
                     onClick={() => { alert("部署指令已发送，节点热重载中..."); setRiskConfirmed(false); }}
-                    className={`flex items-center gap-2 px-10 py-3.5 rounded-2xl font-bold transition-all transform active:scale-95 shadow-xl ${riskConfirmed ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/40' : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'}`}
+                    className={`flex items-center justify-center gap-2 px-6 md:px-10 py-2.5 md:py-3.5 rounded-xl md:rounded-2xl font-bold transition-all transform active:scale-95 shadow-xl touch-manipulation text-sm md:text-base ${riskConfirmed ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/40' : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'}`}
                   >
-                    <Save size={18} /> 同步至实盘环境
+                    <Save size={16} className="md:w-[18px] md:h-[18px]" /> <span className="hidden sm:inline">同步至实盘环境</span><span className="sm:hidden">同步</span>
                   </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 
                 {/* 1. 策略基础信息 */}
                 <ConfigSection title="策略基础信息" icon={Lock} readonly>
@@ -233,7 +276,7 @@ export default function App() {
                 {/* 2. 交易标的与范围 */}
                 <ConfigSection title="交易标的范围" icon={Target}>
                   <FormField label="证券池来源">
-                    <select className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white outline-none">
+                    <select className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 md:p-2.5 text-xs text-white outline-none touch-manipulation">
                       <option>全市场活跃股</option>
                       <option>沪深300成分股</option>
                       <option>中证500成分股</option>
@@ -242,7 +285,7 @@ export default function App() {
                   </FormField>
                   <div className="grid grid-cols-2 gap-3">
                     <FormField label="最大同时持仓数">
-                      <input type="number" defaultValue={30} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white font-mono" />
+                      <input type="number" defaultValue={30} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 md:p-2.5 text-xs text-white font-mono touch-manipulation" />
                     </FormField>
                     <FormField label="成交额下限(万)">
                       <input type="number" defaultValue={1000} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white font-mono" />
@@ -415,42 +458,67 @@ export default function App() {
                   </div>
                </div>
 
-               <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-                <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-black/10 font-bold">
+               <div className="bg-slate-900 border border-slate-800 rounded-xl md:rounded-2xl overflow-hidden shadow-2xl">
+                <div className="px-4 md:px-6 py-3 md:py-4 border-b border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 bg-black/10 font-bold">
                   <h3 className="text-white text-xs uppercase tracking-widest flex items-center gap-2"><Briefcase size={14}/> 实时股票持仓列表 (T+0)</h3>
-                  <button className="text-[10px] text-rose-500 border border-rose-500/30 px-4 py-1.5 rounded-lg hover:bg-rose-400/10 font-bold uppercase tracking-widest transition-all">全仓紧急停止并平仓</button>
+                  <button className="text-[10px] text-rose-500 border border-rose-500/30 px-3 md:px-4 py-1.5 rounded-lg hover:bg-rose-400/10 font-bold uppercase tracking-widest transition-all touch-manipulation whitespace-nowrap">全仓紧急停止并平仓</button>
                 </div>
-                <table className="w-full text-left text-[11px]">
-                  <thead className="text-slate-500 uppercase bg-black/30 font-bold tracking-widest">
-                    <tr><th className="px-6 py-4">证券代码</th><th className="px-6 py-4">方向</th><th className="px-6 py-4">持仓/均价</th><th className="px-6 py-4 text-right">收益率</th><th className="px-6 py-4 text-right">估盈金额</th></tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/50">
-                    {MOCK_POSITIONS.map(pos => (
-                      <tr key={pos.id} className="hover:bg-slate-800/30 transition-colors group">
-                        <td className="px-6 py-5 font-bold text-white group-hover:text-blue-400 transition-colors">{pos.asset}</td>
-                        <td className="px-6 py-5">
-                          <span className={`px-3 py-1 rounded-full text-[10px] font-black ${pos.side === '多' ? 'text-rose-500 bg-rose-500/10 border border-rose-500/20' : 'text-emerald-500 bg-emerald-500/10 border border-emerald-500/20'}`}>{pos.side}</span>
-                        </td>
-                        <td className="px-6 py-5 font-mono text-slate-300"><div>{pos.amount} 股</div><div className="opacity-40 text-[10px] italic">{pos.entryPrice}</div></td>
-                        <td className={`px-6 py-5 text-right font-mono font-black ${pos.pnl.startsWith('+') ? 'text-rose-500' : 'text-emerald-500'}`}>{pos.pnl}</td>
-                        <td className={`px-6 py-5 text-right font-mono font-black ${pos.pnl.startsWith('+') ? 'text-rose-500' : 'text-emerald-500'}`}>{pos.pnlValue}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                {/* 桌面端表格 */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left text-[11px]">
+                    <thead className="text-slate-500 uppercase bg-black/30 font-bold tracking-widest">
+                      <tr><th className="px-6 py-4">证券代码</th><th className="px-6 py-4">方向</th><th className="px-6 py-4">持仓/均价</th><th className="px-6 py-4 text-right">收益率</th><th className="px-6 py-4 text-right">估盈金额</th></tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/50">
+                      {MOCK_POSITIONS.map(pos => (
+                        <tr key={pos.id} className="hover:bg-slate-800/30 transition-colors group">
+                          <td className="px-6 py-5 font-bold text-white group-hover:text-blue-400 transition-colors">{pos.asset}</td>
+                          <td className="px-6 py-5">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black ${pos.side === '多' ? 'text-rose-500 bg-rose-500/10 border border-rose-500/20' : 'text-emerald-500 bg-emerald-500/10 border border-emerald-500/20'}`}>{pos.side}</span>
+                          </td>
+                          <td className="px-6 py-5 font-mono text-slate-300"><div>{pos.amount} 股</div><div className="opacity-40 text-[10px] italic">{pos.entryPrice}</div></td>
+                          <td className={`px-6 py-5 text-right font-mono font-black ${pos.pnl.startsWith('+') ? 'text-rose-500' : 'text-emerald-500'}`}>{pos.pnl}</td>
+                          <td className={`px-6 py-5 text-right font-mono font-black ${pos.pnl.startsWith('+') ? 'text-rose-500' : 'text-emerald-500'}`}>{pos.pnlValue}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {/* 移动端卡片式布局 */}
+                <div className="md:hidden divide-y divide-slate-800/50">
+                  {MOCK_POSITIONS.map(pos => (
+                    <div key={pos.id} className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-bold text-white text-sm mb-1 truncate">{pos.asset}</div>
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${pos.side === '多' ? 'text-rose-500 bg-rose-500/10 border border-rose-500/20' : 'text-emerald-500 bg-emerald-500/10 border border-emerald-500/20'}`}>{pos.side}</span>
+                            <span className="text-xs text-slate-400 font-mono">{pos.amount} 股</span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className={`text-sm font-mono font-black ${pos.pnl.startsWith('+') ? 'text-rose-500' : 'text-emerald-500'}`}>{pos.pnl}</div>
+                          <div className={`text-xs font-mono ${pos.pnl.startsWith('+') ? 'text-rose-500' : 'text-emerald-500'}`}>{pos.pnlValue}</div>
+                        </div>
+                      </div>
+                      <div className="text-xs text-slate-500 font-mono">均价: {pos.entryPrice}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
 
           {activeTab === 'trades' && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 max-w-7xl mx-auto">
-              <div className="bg-[#161922] border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-                <div className="px-6 py-5 border-b border-slate-800 flex justify-between items-center bg-black/20">
+              <div className="bg-[#161922] border border-slate-800 rounded-xl md:rounded-2xl overflow-hidden shadow-2xl">
+                <div className="px-4 md:px-6 py-4 md:py-5 border-b border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 bg-black/20">
                   <h3 className="font-bold text-white text-xs uppercase tracking-[0.2em] flex items-center gap-2"><History size={16} /> 交易执行引擎审计流水</h3>
-                  <button className="bg-blue-600 text-[10px] px-5 py-2 rounded-xl text-white font-black hover:bg-blue-500 shadow-lg active:scale-95 transition-all">导出当日 PDF 报告</button>
+                  <button className="bg-blue-600 text-[10px] px-4 md:px-5 py-2 rounded-lg md:rounded-xl text-white font-black hover:bg-blue-500 shadow-lg active:scale-95 transition-all touch-manipulation whitespace-nowrap">导出当日 PDF 报告</button>
                 </div>
-                <div className="overflow-x-auto">
-                   <table className="w-full text-left text-xs">
+                {/* 桌面端表格 */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left text-xs">
                     <thead className="text-[10px] text-slate-500 uppercase bg-black/40 font-bold tracking-widest">
                       <tr><th className="px-6 py-5">成交时间</th><th className="px-6 py-5">标的代码</th><th className="px-6 py-5">执行结果</th><th className="px-6 py-5 text-right">成交均价</th><th className="px-6 py-5 text-center">深度审计</th></tr>
                     </thead>
@@ -466,12 +534,35 @@ export default function App() {
                           </td>
                           <td className="px-6 py-5 text-right font-mono font-black text-slate-200">¥{trade.price}</td>
                           <td className="px-6 py-5 text-center">
-                             <button className="text-blue-400 hover:text-blue-200 transition-colors hover:scale-125 transform inline-block"><ExternalLink size={16} /></button>
+                             <button className="text-blue-400 hover:text-blue-200 transition-colors hover:scale-125 transform inline-block touch-manipulation"><ExternalLink size={16} /></button>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                </div>
+                {/* 移动端卡片式布局 */}
+                <div className="md:hidden divide-y divide-slate-800/40">
+                  {MOCK_TRADES.map(trade => (
+                    <div key={trade.id} className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-black text-slate-200 text-sm mb-1">{trade.asset}</div>
+                          <div className="text-xs text-slate-500 font-mono mb-2">{trade.time}</div>
+                          <span className={`inline-block px-2 py-1 rounded-lg text-[10px] font-black border ${trade.status === '正常成交' ? 'text-rose-500 bg-rose-500/10 border-rose-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
+                            {trade.status}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-mono font-black text-slate-200 mb-1">¥{trade.price}</div>
+                          <button className="text-blue-400 hover:text-blue-200 transition-colors touch-manipulation"><ExternalLink size={16} /></button>
+                        </div>
+                      </div>
+                      {trade.reason && (
+                        <div className="text-xs text-slate-500 italic">原因: {trade.reason}</div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
