@@ -110,7 +110,7 @@ const Switch = ({ checked, label }: { checked: boolean; label: string }) => (
 
 // --- 主程序 ---
 export default function App() {
-  const [activeTab, setActiveTab] = useState('config'); 
+  const [activeTab, setActiveTab] = useState('dashboard'); 
   const [sysStatus, setSysStatus] = useState('running');
   const [riskConfirmed, setRiskConfirmed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
