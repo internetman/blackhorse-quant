@@ -34,6 +34,9 @@ interface AppState {
   // 加载状态
   loading: boolean;
   error: string | null;
+  // 连接状态
+  isConnected: boolean;
+  checkConnection: () => Promise<void>;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -45,14 +48,18 @@ export const useStore = create<AppState>((set, get) => ({
   stats: null,
   loading: false,
   error: null,
+  isConnected: false,
   
   // 系统状态
   fetchStatus: async () => {
     try {
       const status = await apiClient.getStatus();
-      set({ sysStatus: status.status });
+      set({ sysStatus: status.status, isConnected: true, error: null });
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : '获取状态失败' });
+      set({ 
+        error: error instanceof Error ? error.message : '获取状态失败',
+        isConnected: false 
+      });
     }
   },
   
@@ -72,11 +79,12 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       set({ loading: true });
       const positions = await apiClient.getPositions();
-      set({ positions, loading: false });
+      set({ positions, loading: false, isConnected: true, error: null });
     } catch (error) {
       set({ 
         error: error instanceof Error ? error.message : '获取持仓失败',
-        loading: false 
+        loading: false,
+        isConnected: false 
       });
     }
   },
@@ -147,9 +155,25 @@ export const useStore = create<AppState>((set, get) => ({
   fetchStats: async () => {
     try {
       const stats = await apiClient.getStats();
-      set({ stats });
+      set({ stats, isConnected: true, error: null });
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : '获取统计数据失败' });
+      set({ 
+        error: error instanceof Error ? error.message : '获取统计数据失败',
+        isConnected: false 
+      });
+    }
+  },
+  
+  // 检查连接状态
+  checkConnection: async () => {
+    try {
+      await apiClient.getStatus();
+      set({ isConnected: true, error: null });
+    } catch (error) {
+      set({ 
+        isConnected: false,
+        error: error instanceof Error ? error.message : '无法连接到后端服务'
+      });
     }
   },
 }));

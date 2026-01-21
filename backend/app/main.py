@@ -12,9 +12,19 @@ app = FastAPI(
 )
 
 # 配置 CORS
+# 允许所有来源（生产环境可以通过环境变量限制）
+import os
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "")
+if allowed_origins_env:
+    # 如果设置了环境变量，使用指定的来源
+    allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",")]
+else:
+    # 否则允许所有来源（方便开发和部署）
+    allowed_origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

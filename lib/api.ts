@@ -49,19 +49,28 @@ class ApiClient {
 
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-    });
+    
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options?.headers,
+        },
+      });
 
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.statusText}`);
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.statusText}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      // 网络错误或 CORS 错误
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error(`无法连接到后端服务 (${this.baseUrl})。请检查后端是否已部署并配置了 NEXT_PUBLIC_API_URL 环境变量。`);
+      }
+      throw error;
     }
-
-    return response.json();
   }
 
   // 持仓相关
