@@ -5,7 +5,7 @@
 // 导出空函数以保持兼容性
 export function startEngine() {
   // 数据更新由后端处理，前端不再需要本地引擎
-  console.log('前端引擎已废弃，数据更新由后端处理');
+  // 此函数保留用于向后兼容
 }
 
 export function stopEngine() {
