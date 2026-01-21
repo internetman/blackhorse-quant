@@ -1,9 +1,15 @@
 'use client';
+import React, { useEffect } from 'react';
 import { Briefcase } from 'lucide-react';
 import { useStore } from '@/lib/store';
 
 export const PositionsTable = () => {
   const positions = useStore((state) => state.positions);
+  const fetchPositions = useStore((state) => state.fetchPositions);
+  
+  useEffect(() => {
+    fetchPositions();
+  }, [fetchPositions]);
   
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-xl md:rounded-2xl overflow-hidden shadow-2xl">

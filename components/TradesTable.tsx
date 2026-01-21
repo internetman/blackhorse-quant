@@ -1,9 +1,20 @@
 'use client';
+import React, { useEffect } from 'react';
 import { History, ExternalLink } from 'lucide-react';
 import { useStore } from '@/lib/store';
 
 export const TradesTable = () => {
   const trades = useStore((state) => state.trades);
+  const fetchTrades = useStore((state) => state.fetchTrades);
+  
+  useEffect(() => {
+    fetchTrades();
+    // 每3秒刷新一次交易记录
+    const interval = setInterval(() => {
+      fetchTrades();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [fetchTrades]);
   
   return (
     <div className="bg-[#161922] border border-slate-800 rounded-xl md:rounded-2xl overflow-hidden shadow-2xl">

@@ -1,76 +1,155 @@
 'use client';
 import { create } from 'zustand';
-import { MOCK_POSITIONS, MOCK_TRADES, type Position, type Trade } from './mock';
+import { apiClient, type Position, type Trade, type ConfigParams, type Stats } from './api';
 
 export type SysStatus = 'running' | 'paused' | 'kill';
-
-interface ConfigParams {
-  strategyName: string;
-  maxPositions: number;
-  maxDrawdown: number;
-  // 可以扩展更多配置参数
-}
 
 interface AppState {
   // 系统状态
   sysStatus: SysStatus;
-  setSysStatus: (status: SysStatus) => void;
+  setSysStatus: (status: SysStatus) => Promise<void>;
+  fetchStatus: () => Promise<void>;
   
   // 持仓数据
   positions: Position[];
   setPositions: (positions: Position[]) => void;
-  updatePosition: (id: number, updates: Partial<Position>) => void;
+  fetchPositions: () => Promise<void>;
+  updatePosition: (id: number, updates: Partial<Position>) => Promise<void>;
+  clearPositions: () => Promise<void>;
   
   // 交易记录
   trades: Trade[];
-  addTrade: (trade: Trade) => void;
+  fetchTrades: () => Promise<void>;
+  addTrade: (trade: Trade) => Promise<void>;
   
   // 配置参数
-  configParams: ConfigParams;
-  updateConfigParams: (params: Partial<ConfigParams>) => void;
+  configParams: ConfigParams | null;
+  fetchConfig: () => Promise<void>;
+  updateConfigParams: (params: Partial<ConfigParams>) => Promise<void>;
   
   // 统计数据
-  totalPnl: number;
-  setTotalPnl: (pnl: number) => void;
+  stats: Stats | null;
+  fetchStats: () => Promise<void>;
   
-  // 今日盈亏
-  todayPnl: number;
-  setTodayPnl: (pnl: number) => void;
+  // 加载状态
+  loading: boolean;
+  error: string | null;
 }
 
-export const useStore = create<AppState>((set) => ({
+export const useStore = create<AppState>((set, get) => ({
   // 初始状态
   sysStatus: 'running',
-  positions: [...MOCK_POSITIONS],
-  trades: [...MOCK_TRADES],
-  totalPnl: 12402,
-  todayPnl: 58240.42,
-  configParams: {
-    strategyName: 'A股波动率均衡对冲策略',
-    maxPositions: 30,
-    maxDrawdown: 2.5,
+  positions: [],
+  trades: [],
+  configParams: null,
+  stats: null,
+  loading: false,
+  error: null,
+  
+  // 系统状态
+  fetchStatus: async () => {
+    try {
+      const status = await apiClient.getStatus();
+      set({ sysStatus: status.status });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : '获取状态失败' });
+    }
   },
   
-  // Actions
-  setSysStatus: (status) => set({ sysStatus: status }),
+  setSysStatus: async (status) => {
+    try {
+      await apiClient.setStatus(status);
+      set({ sysStatus: status });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : '设置状态失败' });
+    }
+  },
   
+  // 持仓数据
   setPositions: (positions) => set({ positions }),
   
-  updatePosition: (id, updates) => set((state) => ({
-    positions: state.positions.map((pos) =>
-      pos.id === id ? { ...pos, ...updates } : pos
-    ),
-  })),
+  fetchPositions: async () => {
+    try {
+      set({ loading: true });
+      const positions = await apiClient.getPositions();
+      set({ positions, loading: false });
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : '获取持仓失败',
+        loading: false 
+      });
+    }
+  },
   
-  addTrade: (trade) => set((state) => ({
-    trades: [trade, ...state.trades].slice(0, 100), // 最多保留100条
-  })),
+  updatePosition: async (id, updates) => {
+    try {
+      const updated = await apiClient.updatePosition(id, updates);
+      set((state) => ({
+        positions: state.positions.map((pos) =>
+          pos.id === id ? updated : pos
+        ),
+      }));
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : '更新持仓失败' });
+    }
+  },
   
-  updateConfigParams: (params) => set((state) => ({
-    configParams: { ...state.configParams, ...params },
-  })),
+  clearPositions: async () => {
+    try {
+      await apiClient.clearPositions();
+      set({ positions: [] });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : '清空持仓失败' });
+    }
+  },
   
-  setTotalPnl: (pnl) => set({ totalPnl: pnl }),
+  // 交易记录
+  fetchTrades: async () => {
+    try {
+      const trades = await apiClient.getTrades();
+      set({ trades });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : '获取交易记录失败' });
+    }
+  },
   
-  setTodayPnl: (pnl) => set({ todayPnl: pnl }),
+  addTrade: async (trade) => {
+    try {
+      const newTrade = await apiClient.createTrade(trade);
+      set((state) => ({
+        trades: [newTrade, ...state.trades].slice(0, 100),
+      }));
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : '创建交易记录失败' });
+    }
+  },
+  
+  // 配置参数
+  fetchConfig: async () => {
+    try {
+      const config = await apiClient.getConfig();
+      set({ configParams: config });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : '获取配置失败' });
+    }
+  },
+  
+  updateConfigParams: async (params) => {
+    try {
+      const config = await apiClient.updateConfig(params);
+      set({ configParams: config });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : '更新配置失败' });
+    }
+  },
+  
+  // 统计数据
+  fetchStats: async () => {
+    try {
+      const stats = await apiClient.getStats();
+      set({ stats });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : '获取统计数据失败' });
+    }
+  },
 }));

@@ -10,7 +10,8 @@ interface HeaderProps {
 export const Header = ({ setMobileMenuOpen }: HeaderProps) => {
   const sysStatus = useStore((state) => state.sysStatus);
   const setSysStatus = useStore((state) => state.setSysStatus);
-  const todayPnl = useStore((state) => state.todayPnl);
+  const stats = useStore((state) => state.stats);
+  const todayPnl = stats?.todayPnl ?? 0;
   
   const getStatusInfo = (status: string) => {
     switch(status) {

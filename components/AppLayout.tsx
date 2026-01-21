@@ -2,24 +2,16 @@
 import { useState, useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
-import { startEngine, stopEngine, setupStatusListener } from '@/lib/engine';
+import { useStore } from '@/lib/store';
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const fetchStatus = useStore((state) => state.fetchStatus);
   
   useEffect(() => {
-    // 启动引擎
-    startEngine();
-    
-    // 设置状态监听
-    const unsubscribe = setupStatusListener();
-    
-    return () => {
-      // 清理
-      stopEngine();
-      unsubscribe();
-    };
-  }, []);
+    // 初始化时获取状态
+    fetchStatus();
+  }, [fetchStatus]);
   
   return (
     <div className="flex h-screen bg-[#0b0d11] text-slate-200 overflow-hidden font-sans text-sm selection:bg-blue-500/30">

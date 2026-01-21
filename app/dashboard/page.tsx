@@ -1,11 +1,29 @@
 'use client';
+import React from 'react';
 import { useStore } from '@/lib/store';
 import { PositionsTable } from '@/components/PositionsTable';
 
 export default function DashboardPage() {
   const sysStatus = useStore((state) => state.sysStatus);
   const positions = useStore((state) => state.positions);
-  const totalPnl = useStore((state) => state.totalPnl);
+  const stats = useStore((state) => state.stats);
+  const fetchPositions = useStore((state) => state.fetchPositions);
+  const fetchStats = useStore((state) => state.fetchStats);
+  
+  const totalPnl = stats?.totalPnl ?? 0;
+  const positionCount = stats?.positionCount ?? positions.length;
+  const capitalUsage = stats?.capitalUsage ?? (positions.length > 0 ? Math.round((positions.length / 30) * 100) : 0);
+  
+  React.useEffect(() => {
+    fetchPositions();
+    fetchStats();
+    // 每2秒刷新一次数据
+    const interval = setInterval(() => {
+      fetchPositions();
+      fetchStats();
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [fetchPositions, fetchStats]);
   
   const getStatusInfo = (status: string) => {
     switch(status) {
@@ -28,7 +46,7 @@ export default function DashboardPage() {
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl border-l-4 border-l-slate-600">
           <div className="text-[10px] text-slate-500 mb-1 font-bold uppercase tracking-widest">活跃持仓</div>
           <div className="text-2xl font-bold text-white font-mono tracking-tighter">
-            {positions.length} <span className="text-xs font-normal text-slate-500 ml-1">个标的</span>
+            {positionCount} <span className="text-xs font-normal text-slate-500 ml-1">个标的</span>
           </div>
         </div>
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl border-l-4 border-l-rose-500">
@@ -40,7 +58,7 @@ export default function DashboardPage() {
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl border-l-4 border-l-blue-400">
           <div className="text-[10px] text-slate-500 mb-1 font-bold uppercase tracking-widest">资金占用率</div>
           <div className="text-2xl font-bold text-blue-400 font-mono tracking-tighter">
-            {positions.length > 0 ? Math.round((positions.length / 30) * 100) : 0}%
+            {capitalUsage.toFixed(1)}%
           </div>
         </div>
       </div>
