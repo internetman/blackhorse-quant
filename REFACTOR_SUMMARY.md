@@ -71,7 +71,7 @@ blackhorse-quant/
   - `configParams`: 配置参数对象
   - `totalPnl`: 总盈亏
   - `todayPnl`: 今日盈亏
-- 提供 actions：`setSysStatus`, `setPositions`, `updatePosition`, `addTrade`, `updateConfigParams`, `setTotalPnl`, `setTodayPnl`
+- 提供 actions：`setSysStatus`, `fetchStatus`, `setPositions`, `fetchPositions`, `updatePosition`, `clearPositions`, `fetchTrades`, `addTrade`, `fetchConfig`, `updateConfigParams`, `fetchStats`
 
 ### 4. 假引擎（Engine）
 
