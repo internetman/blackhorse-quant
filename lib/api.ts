@@ -1,5 +1,17 @@
 // API 客户端
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// 移除尾随斜杠，避免 URL 拼接时出现双斜杠
+const getApiBaseUrl = () => {
+  const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  return url.replace(/\/+$/, ''); // 移除所有尾随斜杠
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+// 调试：在浏览器控制台显示当前 API 地址
+if (typeof window !== 'undefined') {
+  console.log('🔗 API Base URL:', API_BASE_URL);
+  console.log('🔗 Environment Variable:', process.env.NEXT_PUBLIC_API_URL || '未设置（使用默认值）');
+}
 
 export interface Position {
   id: number;
@@ -44,11 +56,19 @@ class ApiClient {
   private baseUrl: string;
 
   constructor(baseUrl: string = API_BASE_URL) {
-    this.baseUrl = baseUrl;
+    // 移除尾随斜杠，避免 URL 拼接时出现双斜杠
+    this.baseUrl = baseUrl.replace(/\/+$/, '');
   }
 
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    const url = `${this.baseUrl}${endpoint}`;
+    // 确保 endpoint 以 / 开头，baseUrl 不以 / 结尾（已在构造函数中处理）
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const url = `${this.baseUrl}${cleanEndpoint}`;
+    
+    // 调试信息
+    if (typeof window !== 'undefined') {
+      console.log(`🌐 API Request: ${url}`);
+    }
     
     try {
       const response = await fetch(url, {
@@ -60,15 +80,22 @@ class ApiClient {
       });
 
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.statusText}`);
+        const errorText = await response.text().catch(() => response.statusText);
+        console.error(`❌ API Error [${response.status}]:`, errorText);
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
       }
 
       return response.json();
     } catch (error) {
       // 网络错误或 CORS 错误
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        throw new Error(`无法连接到后端服务 (${this.baseUrl})。请检查后端是否已部署并配置了 NEXT_PUBLIC_API_URL 环境变量。`);
+      if (error instanceof TypeError) {
+        const errorMsg = error.message.includes('fetch') 
+          ? `无法连接到后端服务 (${this.baseUrl})。请检查：1) 后端是否已部署 2) NEXT_PUBLIC_API_URL 环境变量是否正确设置 3) Vercel 是否已重新部署`
+          : error.message;
+        console.error('❌ Network Error:', error);
+        throw new Error(errorMsg);
       }
+      console.error('❌ Request Error:', error);
       throw error;
     }
   }
