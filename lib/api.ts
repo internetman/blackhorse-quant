@@ -102,7 +102,7 @@ class ApiClient {
 
   // 持仓相关
   async getPositions(): Promise<Position[]> {
-    return this.request<Position[]>('/api/positions');
+    return this.request<Position[]>('/api/positions/');
   }
 
   async updatePosition(id: number, updates: Partial<Position>): Promise<Position> {
@@ -113,18 +113,18 @@ class ApiClient {
   }
 
   async clearPositions(): Promise<void> {
-    return this.request<void>('/api/positions', {
+    return this.request<void>('/api/positions/', {
       method: 'DELETE',
     });
   }
 
   // 交易记录
   async getTrades(limit: number = 100): Promise<Trade[]> {
-    return this.request<Trade[]>(`/api/trades?limit=${limit}`);
+    return this.request<Trade[]>(`/api/trades/?limit=${limit}`);
   }
 
   async createTrade(trade: Trade): Promise<Trade> {
-    return this.request<Trade>('/api/trades', {
+    return this.request<Trade>('/api/trades/', {
       method: 'POST',
       body: JSON.stringify(trade),
     });
@@ -132,11 +132,11 @@ class ApiClient {
 
   // 系统状态
   async getStatus(): Promise<SysStatus> {
-    return this.request<SysStatus>('/api/status');
+    return this.request<SysStatus>('/api/status/');
   }
 
   async setStatus(status: 'running' | 'paused' | 'kill'): Promise<SysStatus> {
-    return this.request<SysStatus>('/api/status', {
+    return this.request<SysStatus>('/api/status/', {
       method: 'POST',
       body: JSON.stringify({ status }),
     });
@@ -144,16 +144,16 @@ class ApiClient {
 
   // 统计数据
   async getStats(): Promise<Stats> {
-    return this.request<Stats>('/api/stats');
+    return this.request<Stats>('/api/stats/');
   }
 
   // 配置参数
   async getConfig(): Promise<ConfigParams> {
-    return this.request<ConfigParams>('/api/config');
+    return this.request<ConfigParams>('/api/config/');
   }
 
   async updateConfig(config: Partial<ConfigParams>): Promise<ConfigParams> {
-    return this.request<ConfigParams>('/api/config', {
+    return this.request<ConfigParams>('/api/config/', {
       method: 'PATCH',
       body: JSON.stringify(config),
     });
