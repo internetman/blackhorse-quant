@@ -21,11 +21,11 @@ export default function DashboardPage() {
     checkConnection();
     fetchPositions();
     fetchStats();
-    // 每2秒刷新一次数据
+    // 每1秒刷新一次数据，让数据跳动更明显
     const interval = setInterval(() => {
       fetchPositions();
       fetchStats();
-    }, 2000);
+    }, 1000);
     return () => clearInterval(interval);
   }, [fetchPositions, fetchStats, checkConnection]);
   
