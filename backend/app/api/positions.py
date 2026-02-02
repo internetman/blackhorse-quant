@@ -1,8 +1,13 @@
-from fastapi import APIRouter
+import os
+from fastapi import APIRouter, HTTPException, Body
 from app.models import Position
 from app.store import store
 
 router = APIRouter()
+
+
+def _allow_force_close() -> bool:
+    return os.environ.get("ALLOW_FORCE_CLOSE", "").strip().lower() == "true"
 
 @router.get("/", response_model=list[Position])
 async def get_positions():
@@ -29,8 +34,19 @@ async def update_position(position_id: int, updates: dict):
     return updated
 
 @router.delete("/", response_model=dict)
-async def clear_positions():
-    """清空所有持仓（强平）"""
+async def clear_positions(body: dict = Body(default=None)):
+    """清空所有持仓（强平）。需环境变量 ALLOW_FORCE_CLOSE=true 且请求体 confirm=\"CLEAR\" 才执行。"""
+    if not _allow_force_close():
+        raise HTTPException(
+            status_code=403,
+            detail="强平未开放：请在服务端设置环境变量 ALLOW_FORCE_CLOSE=true 后重试",
+        )
+    confirm = (body or {}).get("confirm") if isinstance(body, dict) else None
+    if confirm != "CLEAR":
+        raise HTTPException(
+            status_code=400,
+            detail="请在前端确认弹窗中输入 CLEAR 后再执行强平",
+        )
     store.set_positions([])
     store.update_stats(totalPnl=0.0, positionCount=0)
     return {"message": "所有持仓已清空"}

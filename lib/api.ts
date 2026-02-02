@@ -1,6 +1,6 @@
 // API 客户端
 // 移除尾随斜杠，避免 URL 拼接时出现双斜杠
-const getApiBaseUrl = () => {
+export const getApiBaseUrl = (): string => {
   const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
   return url.replace(/\/+$/, ''); // 移除所有尾随斜杠
 };
@@ -112,9 +112,10 @@ class ApiClient {
     });
   }
 
-  async clearPositions(): Promise<void> {
+  async clearPositions(confirm: string = 'CLEAR'): Promise<void> {
     return this.request<void>('/api/positions/', {
       method: 'DELETE',
+      body: JSON.stringify({ confirm }),
     });
   }
 

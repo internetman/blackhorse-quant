@@ -1,5 +1,10 @@
 # 连接问题排查指南
 
+## API 地址两种模式（避免误导）
+
+- **本地开发**：未设置 `NEXT_PUBLIC_API_URL` 时，前端默认使用 localhost 作为 API 地址。
+- **生产/线上**：必须设置 `NEXT_PUBLIC_API_URL` 为实际后端地址，并在 Vercel 保存后**重新部署**，否则生产环境仍会走默认 localhost。
+
 ## 当前问题
 
 前端显示 "无法连接到后端服务"，但：
@@ -33,7 +38,7 @@
 
 **Console 标签**：
 - 应该看到 `🔗 API Base URL: https://blackhorse-quant-production.up.railway.app`
-- 如果看到 `http://localhost:8000`，说明环境变量没有生效
+- 如果看到 `http://localhost:8000`，说明生产环境未设置或未生效，需在 Vercel 设置 `NEXT_PUBLIC_API_URL` 并重新部署
 
 **Network 标签**：
 - 刷新页面

@@ -1,5 +1,10 @@
 # 验证部署和环境变量
 
+## API 地址两种模式（避免误导）
+
+- **本地开发**：未设置 `NEXT_PUBLIC_API_URL` 时，前端默认使用 localhost 作为 API 地址。
+- **生产/线上**：必须设置 `NEXT_PUBLIC_API_URL` 为实际后端地址，并在 Vercel 保存后**重新部署**，否则生产环境仍会走默认 localhost。
+
 ## ✅ Vercel 部署成功
 
 从日志看，部署已完成：

@@ -1,7 +1,9 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import { useStore } from '@/lib/store';
 import { PositionsTable } from '@/components/PositionsTable';
+import { getApiBaseUrl } from '@/lib/api';
+import { Bug, X } from 'lucide-react';
 
 export default function DashboardPage() {
   const sysStatus = useStore((state) => state.sysStatus);
@@ -12,6 +14,8 @@ export default function DashboardPage() {
   const fetchPositions = useStore((state) => state.fetchPositions);
   const fetchStats = useStore((state) => state.fetchStats);
   const checkConnection = useStore((state) => state.checkConnection);
+  const [showDebug, setShowDebug] = useState(false);
+  const apiBaseUrl = getApiBaseUrl();
   
   const totalPnl = stats?.totalPnl ?? 0;
   const positionCount = stats?.positionCount ?? positions.length;
@@ -55,9 +59,9 @@ export default function DashboardPage() {
                 {error || '请确保后端服务已部署并配置了正确的 API 地址。'}
               </p>
               <p className="text-xs text-slate-500">
-                本地开发：确保 FastAPI 运行在 <code className="bg-slate-800/50 px-1.5 py-0.5 rounded">http://localhost:8000</code>
+                未设置 <code className="bg-slate-800/50 px-1.5 py-0.5 rounded">NEXT_PUBLIC_API_URL</code> 时，前端默认使用 localhost 作为 API 地址。
                 <br />
-                生产环境：请在 Vercel 环境变量中设置 <code className="bg-slate-800/50 px-1.5 py-0.5 rounded">NEXT_PUBLIC_API_URL</code>
+                线上/生产环境必须设置该环境变量并重新部署后才会生效。
               </p>
               <p className="text-xs text-slate-500 mt-2">
                 详细部署说明请查看项目根目录的 <code className="bg-slate-800/50 px-1.5 py-0.5 rounded">VERCEL_BACKEND_SETUP.md</code> 文件
@@ -93,6 +97,39 @@ export default function DashboardPage() {
       </div>
 
       <PositionsTable />
+
+      {/* 可选调试信息：右下角浮动 */}
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
+        {showDebug && (
+          <div className="bg-slate-900/95 border border-slate-700 rounded-xl p-4 shadow-2xl max-w-xs text-left space-y-2">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-bold uppercase text-slate-500 tracking-widest">调试信息</span>
+              <button
+                type="button"
+                onClick={() => setShowDebug(false)}
+                className="p-1 rounded hover:bg-slate-800 text-slate-400"
+                aria-label="关闭"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <div className="text-[11px] space-y-1.5">
+              <p><span className="text-slate-500">API Base URL:</span><br /><code className="break-all text-amber-400">{apiBaseUrl}</code></p>
+              <p><span className="text-slate-500">连接状态:</span> <span className={isConnected ? 'text-emerald-500' : 'text-rose-500'}>{isConnected ? '已连接' : '未连接'}</span></p>
+              {error && <p><span className="text-slate-500">最近错误:</span><br /><span className="text-rose-400 break-words">{error}</span></p>}
+            </div>
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={() => setShowDebug((v) => !v)}
+          className="p-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white hover:border-slate-600 transition-colors"
+          title={showDebug ? '隐藏调试信息' : '显示调试信息'}
+          aria-label={showDebug ? '隐藏调试信息' : '显示调试信息'}
+        >
+          <Bug size={18} />
+        </button>
+      </div>
     </div>
   );
 }

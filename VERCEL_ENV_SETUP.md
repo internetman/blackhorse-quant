@@ -1,5 +1,10 @@
 # Vercel 环境变量配置指南
 
+## API 地址两种模式（避免误导）
+
+- **本地开发**：未设置 `NEXT_PUBLIC_API_URL` 时，前端默认使用 localhost 作为 API 地址。
+- **生产/线上**：必须设置 `NEXT_PUBLIC_API_URL` 为实际后端地址（如下方 Railway URL），保存后**重新部署** Vercel，否则生产环境无数据。
+
 ## Railway 后端地址
 
 你的 Railway 后端地址：`blackhorse-quant-production.up.railway.app`
