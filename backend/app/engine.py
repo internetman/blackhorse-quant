@@ -100,26 +100,8 @@ async def engine_loop():
             if sys_status == 'running' and tick_count % 5 == 0:
                 await generate_trade()
             
-            # 如果状态是 kill，清空持仓
-            if sys_status == 'kill':
-                positions = store.get_positions()
-                if positions:
-                    now = datetime.now()
-                    time_str = now.strftime('%H:%M:%S')
-                    
-                    for pos in positions:
-                        trade = Trade(
-                            id=int(datetime.now().timestamp() * 1000) + random.randint(1, 1000),
-                            time=time_str,
-                            asset=pos.asset,
-                            side='卖出' if pos.side == '多' else '买入',
-                            price=pos.currentPrice,
-                            status='强平',
-                            reason='系统强平指令'
-                        )
-                        store.add_trade(trade)
-                    
-                    store.set_positions([])
+            # kill 仅表示「停止策略、人工接管」，不再自动清空持仓。
+            # 清空持仓请通过前端「全仓紧急停止并平仓」+ 确认弹窗 + DELETE 接口（需 ALLOW_FORCE_CLOSE）执行。
             
             tick_count += 1
             await asyncio.sleep(1)  # 每秒执行一次

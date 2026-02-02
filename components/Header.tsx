@@ -1,5 +1,6 @@
 'use client';
-import { Play, Pause, XCircle, Menu } from 'lucide-react';
+import { useState } from 'react';
+import { Play, Pause, XCircle, Menu, AlertTriangle } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { BlackHorseLogo } from './BlackHorseLogo';
 
@@ -12,6 +13,7 @@ export const Header = ({ setMobileMenuOpen }: HeaderProps) => {
   const setSysStatus = useStore((state) => state.setSysStatus);
   const stats = useStore((state) => state.stats);
   const todayPnl = stats?.todayPnl ?? 0;
+  const [showKillConfirm, setShowKillConfirm] = useState(false);
   
   const getStatusInfo = (status: string) => {
     switch(status) {
@@ -48,8 +50,9 @@ export const Header = ({ setMobileMenuOpen }: HeaderProps) => {
               <Pause size={16} className="md:w-[18px] md:h-[18px]" fill="currentColor" />
             </button>
             <button 
-              onClick={() => setSysStatus('kill')} 
+              onClick={() => setShowKillConfirm(true)} 
               className={`p-1.5 md:p-2 rounded-lg transition-all touch-manipulation ${sysStatus === 'kill' ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30' : 'text-slate-600 hover:text-slate-400'}`}
+              title="强平停止（仅停止策略，不会清空持仓）"
             >
               <XCircle size={16} className="md:w-[18px] md:h-[18px]" fill="currentColor" />
             </button>
@@ -78,6 +81,39 @@ export const Header = ({ setMobileMenuOpen }: HeaderProps) => {
           <BlackHorseLogo className="w-full h-full" />
         </div>
       </div>
+
+      {/* 强平停止确认：仅停止策略，不会清空持仓 */}
+      {showKillConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-labelledby="kill-confirm-title">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                <AlertTriangle className="text-amber-500" size={20} />
+              </div>
+              <div>
+                <h3 id="kill-confirm-title" className="text-lg font-bold text-white">切换到强平停止？</h3>
+                <p className="text-sm text-slate-400 mt-1">仅停止策略、进入人工接管，<strong className="text-slate-300">不会清空持仓</strong>。若要清空持仓，请使用交易面板中的「全仓紧急停止并平仓」。</p>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setShowKillConfirm(false)}
+                className="px-4 py-2 rounded-xl border border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                onClick={() => { setSysStatus('kill'); setShowKillConfirm(false); }}
+                className="px-4 py-2 rounded-xl bg-rose-600 text-white font-medium hover:bg-rose-500 transition-colors"
+              >
+                确认切换
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
