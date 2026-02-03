@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Play, Pause, XCircle, Menu, AlertTriangle } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { BlackHorseLogo } from './BlackHorseLogo';
@@ -82,8 +83,8 @@ export const Header = ({ setMobileMenuOpen }: HeaderProps) => {
         </div>
       </div>
 
-      {/* 强平停止确认：仅停止策略，不会清空持仓 */}
-      {showKillConfirm && (
+      {/* 强平停止确认：用 Portal 挂到 body，避免受 header 的 backdrop-blur 影响导致 fixed 定位错位 */}
+      {showKillConfirm && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-labelledby="kill-confirm-title">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4">
             <div className="flex items-start gap-3">
@@ -112,7 +113,8 @@ export const Header = ({ setMobileMenuOpen }: HeaderProps) => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </header>
   );
