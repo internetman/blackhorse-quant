@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import positions, trades, status, stats, config
+from app.auth import verify_auth
+from fastapi import Depends
 import threading
 import asyncio
 from app.engine import engine_loop
@@ -30,12 +32,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 注册路由
-app.include_router(positions.router, prefix="/api/positions", tags=["持仓"])
-app.include_router(trades.router, prefix="/api/trades", tags=["交易"])
-app.include_router(status.router, prefix="/api/status", tags=["状态"])
-app.include_router(stats.router, prefix="/api/stats", tags=["统计"])
-app.include_router(config.router, prefix="/api/config", tags=["配置"])
+# 注册路由 - 统一添加权限校验
+# 只有根路径和健康检查不校验，其他业务接口全部校验
+app.include_router(positions.router, prefix="/api/positions", tags=["持仓"], dependencies=[Depends(verify_auth)])
+app.include_router(trades.router, prefix="/api/trades", tags=["交易"], dependencies=[Depends(verify_auth)])
+app.include_router(status.router, prefix="/api/status", tags=["状态"], dependencies=[Depends(verify_auth)])
+app.include_router(stats.router, prefix="/api/stats", tags=["统计"], dependencies=[Depends(verify_auth)])
+app.include_router(config.router, prefix="/api/config", tags=["配置"], dependencies=[Depends(verify_auth)])
 
 @app.get("/")
 async def root():
