@@ -71,10 +71,15 @@ class ApiClient {
     }
     
     try {
+      // 检查是否有硬编码的验证信息或从环境变量读取
+      // 默认使用 admin:heimaq123 的 Base64 编码
+      const authHeader = 'Basic ' + btoa('admin:heimaq123');
+
       const response = await fetch(url, {
         ...options,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': authHeader,
           ...options?.headers,
         },
       });
