@@ -71,9 +71,10 @@ class ApiClient {
     }
     
     try {
-      // 检查是否有硬编码的验证信息或从环境变量读取
-      // 默认使用 admin:heimaq123 的 Base64 编码
-      const authHeader = 'Basic ' + btoa('admin:heimaq123');
+      // 从环境变量读取账号密码，默认为 admin:heimaq123
+      const authUser = process.env.NEXT_PUBLIC_AUTH_USER || 'admin';
+      const authPass = process.env.NEXT_PUBLIC_AUTH_PASS || 'heimaq123';
+      const authHeader = 'Basic ' + Buffer.from(`${authUser}:${authPass}`).toString('base64');
 
       const response = await fetch(url, {
         ...options,
