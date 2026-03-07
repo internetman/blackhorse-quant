@@ -9,8 +9,8 @@ from typing import Dict, List, Optional
 import akshare as ak
 import yfinance as yf
 import pandas as pd
-from blackhorse_quant.backend.app.store import store
-from blackhorse_quant.backend.app.models import Position, Trade
+from app.store import store
+from app.models import Position, Trade
 
 # Cache for real prices to avoid hitting API rate limits too hard
 PRICE_CACHE = {}
@@ -36,7 +36,10 @@ def get_real_price(symbol: str) -> Optional[float]:
             "TSLA": "TSLA",
             "NVDA": "NVDA",
             "GOOGL": "GOOGL",
-            "AAPL": "AAPL"
+            "AAPL": "AAPL",
+            "MSFT": "MSFT",
+            "AMZN": "AMZN",
+            "META": "META"
         }
         yf_symbol = ticker_map.get(symbol, symbol)
         
@@ -72,9 +75,11 @@ async def update_positions_real():
         
         real_price = get_real_price(symbol)
         if real_price is None:
-            # Fallback to random if API fails
-            num = float(pos.currentPrice.replace(',', ''))
-            real_price = num * (1 + (random.random() - 0.5) * 0.002)
+            # Fallback to current price if API fails, DON'T use random jitter
+            try:
+                real_price = float(pos.currentPrice.replace(',', ''))
+            except:
+                real_price = entry # Ultimate fallback
 
         entry = float(pos.entryPrice.replace(',', ''))
         qty = float(pos.amount.replace(',', ''))

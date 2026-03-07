@@ -5,7 +5,7 @@ from app.auth import verify_auth
 from fastapi import Depends
 import threading
 import asyncio
-from app.engine import engine_loop
+from app.engine_selector import get_engine_loop
 
 app = FastAPI(
     title="黑马量化 API",
@@ -51,11 +51,16 @@ async def health():
 @app.on_event("startup")
 async def startup_event():
     """启动时运行引擎"""
+    import sys
+    print("🚀 App Startup: Preparing engine...", file=sys.stderr)
     def run_engine():
+        print("🧵 Engine Thread: Starting...", file=sys.stderr)
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        loop.run_until_complete(engine_loop())
+        engine_func = get_engine_loop()
+        print(f"⚙️ Running engine function: {engine_func.__name__}", file=sys.stderr)
+        loop.run_until_complete(engine_func())
     
     thread = threading.Thread(target=run_engine, daemon=True)
     thread.start()
-    print("✅ 引擎已启动")
+    print("✅ 引擎启动线程已派出", file=sys.stderr)
