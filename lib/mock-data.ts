@@ -6,17 +6,16 @@ import type {
 export const MOCK_CIRCLE: Circle = {
   id: 'circle_001',
   name: '老王的黑马圈',
-  inviteCode: 'HM2026A',
   memberCount: 6,
 };
 
 export const MOCK_USERS: User[] = [
-  { id: 'u1', nickname: '老王', role: 'leader', joinedAt: '2026-02-10', isActive: true },
-  { id: 'u2', nickname: '大李', role: 'member', joinedAt: '2026-02-15', isActive: true },
-  { id: 'u3', nickname: '小张', role: 'member', joinedAt: '2026-02-18', isActive: true },
-  { id: 'u4', nickname: '阿强', role: 'member', joinedAt: '2026-03-01', isActive: true },
-  { id: 'u5', nickname: '老赵', role: 'member', joinedAt: '2026-03-03', isActive: true },
-  { id: 'u6', nickname: '管理员', role: 'admin', joinedAt: '2026-02-10', isActive: true },
+  { id: 'u1', username: 'laowang', nickname: '老王', role: 'leader', joinedAt: '2026-02-10', isActive: true },
+  { id: 'u2', username: 'dali', nickname: '大李', role: 'member', joinedAt: '2026-02-15', isActive: true },
+  { id: 'u3', username: 'xiaozhang', nickname: '小张', role: 'member', joinedAt: '2026-02-18', isActive: true },
+  { id: 'u4', username: 'aqiang', nickname: '阿强', role: 'member', joinedAt: '2026-03-01', isActive: true },
+  { id: 'u5', username: 'laozhao', nickname: '老赵', role: 'member', joinedAt: '2026-03-03', isActive: true },
+  { id: 'u6', username: 'admin', nickname: '管理员', role: 'admin', joinedAt: '2026-02-10', isActive: true },
 ];
 
 export const MOCK_WATCHLIST: WatchItem[] = [

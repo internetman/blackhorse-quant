@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Sparkles, List, BarChart3, Lock, Settings,
-  Menu, X, ChevronRight
+  Menu, X, ChevronRight, LogOut
 } from 'lucide-react';
-import { getStoredUser, isAdmin, type StoredUser } from '@/lib/auth';
+import { getStoredUser, isAdmin, clearStoredUser, type StoredUser } from '@/lib/auth';
 import { useCircleStore } from '@/lib/store';
 
 const NAV_ITEMS = [
@@ -18,11 +18,12 @@ const NAV_ITEMS = [
 ];
 
 const ADMIN_ITEM = {
-  href: '/admin', label: '圈子管理', icon: Settings, description: '成员与邀请管理'
+  href: '/admin', label: '圈子管理', icon: Settings, description: '成员管理'
 };
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [user, setUser] = useState<StoredUser | null>(null);
   const circle = useCircleStore((s) => s.circle);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -30,6 +31,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setUser(getStoredUser());
   }, []);
+
+  const handleLogout = () => {
+    clearStoredUser();
+    router.push('/login');
+  };
 
   const navItems = isAdmin(user)
     ? [...NAV_ITEMS, ADMIN_ITEM]
@@ -39,7 +45,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex flex-col w-60 bg-sidebar text-sidebar-text shrink-0">
-        {/* Brand */}
         <div className="p-6 pb-2">
           <h1 className="text-xl font-bold text-white tracking-wide">
             <span className="text-amber-400">黑马</span>自选
@@ -49,7 +54,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </p>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-1">
           {navItems.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + '/');
@@ -73,7 +77,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        {/* User info */}
+        {/* User info + logout */}
         <div className="p-4 border-t border-white/10">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-amber-700/30 flex items-center justify-center text-amber-400 text-sm font-medium">
@@ -83,6 +87,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <p className="text-sm text-white truncate">{user?.nickname || '未登录'}</p>
               <p className="text-xs text-stone-500 capitalize">{user?.role || ''}</p>
             </div>
+            <button
+              onClick={handleLogout}
+              title="退出登录"
+              className="p-1.5 rounded-lg text-stone-500 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <LogOut size={16} />
+            </button>
           </div>
         </div>
       </aside>
@@ -157,6 +168,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   );
                 })}
               </nav>
+
+              {/* Mobile logout */}
+              <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-stone-100">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl text-sm text-stone-500 hover:bg-stone-50 hover:text-stone-700 transition-colors"
+                >
+                  <LogOut size={16} />
+                  退出登录
+                </button>
+              </div>
             </div>
           </div>
         )}

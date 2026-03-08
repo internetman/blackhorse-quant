@@ -9,7 +9,7 @@ export default function Home() {
 
   useEffect(() => {
     const user = getStoredUser();
-    router.replace(user ? '/recommendations' : '/join');
+    router.replace(user ? '/recommendations' : '/login');
   }, [router]);
 
   return (

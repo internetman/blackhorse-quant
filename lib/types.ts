@@ -8,6 +8,7 @@ export type VerdictType = '有效' | '一般' | '失效';
 
 export interface User {
   id: string;
+  username: string;
   nickname: string;
   role: UserRole;
   joinedAt: string;
@@ -17,7 +18,6 @@ export interface User {
 export interface Circle {
   id: string;
   name: string;
-  inviteCode: string;
   memberCount: number;
 }
 

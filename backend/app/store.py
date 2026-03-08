@@ -1,30 +1,57 @@
+import os
+import uuid
+import hashlib
+import secrets
 from datetime import date, datetime
 from app.models import (
     User, Circle, WatchItem, Recommendation, DailySummary,
     RecommendationsResponse, Review, ReviewStats, PrivatePosition,
 )
-import uuid
+
+
+def _hash_password(password: str) -> str:
+    salt = secrets.token_hex(16)
+    h = hashlib.sha256((salt + password).encode()).hexdigest()
+    return f"{salt}:{h}"
+
+
+def _verify_password(password: str, stored: str) -> bool:
+    salt, h = stored.split(":", 1)
+    return hashlib.sha256((salt + password).encode()).hexdigest() == h
 
 
 class Store:
     def __init__(self):
         today = date.today().isoformat()
 
+        admin_username = os.environ.get("ADMIN_USERNAME", "admin")
+        admin_password = os.environ.get("ADMIN_PASSWORD", "heimaq123")
+
         self.circle = Circle(
             id="circle_001",
             name="老王的黑马圈",
-            inviteCode="HM2026A",
             memberCount=6,
         )
 
         self.users: list[User] = [
-            User(id="u1", nickname="老王", role="leader", joinedAt="2026-02-10"),
-            User(id="u2", nickname="大李", role="member", joinedAt="2026-02-15"),
-            User(id="u3", nickname="小张", role="member", joinedAt="2026-02-18"),
-            User(id="u4", nickname="阿强", role="member", joinedAt="2026-03-01"),
-            User(id="u5", nickname="老赵", role="member", joinedAt="2026-03-03"),
-            User(id="u6", nickname="管理员", role="admin", joinedAt="2026-02-10"),
+            User(id="u1", username="laowang", nickname="老王", role="leader", joinedAt="2026-02-10"),
+            User(id="u2", username="dali", nickname="大李", role="member", joinedAt="2026-02-15"),
+            User(id="u3", username="xiaozhang", nickname="小张", role="member", joinedAt="2026-02-18"),
+            User(id="u4", username="aqiang", nickname="阿强", role="member", joinedAt="2026-03-01"),
+            User(id="u5", username="laozhao", nickname="老赵", role="member", joinedAt="2026-03-03"),
+            User(id="u6", username=admin_username, nickname="管理员", role="admin", joinedAt="2026-02-10"),
         ]
+
+        self.password_hashes: dict[str, str] = {
+            "u1": _hash_password("laowang123"),
+            "u2": _hash_password("dali123"),
+            "u3": _hash_password("xiaozhang123"),
+            "u4": _hash_password("aqiang123"),
+            "u5": _hash_password("laozhao123"),
+            "u6": _hash_password(admin_password),
+        }
+
+        self.tokens: dict[str, str] = {}
 
         self.watchlist: list[WatchItem] = [
             WatchItem(id="w1", symbol="600519.SH", name="贵州茅台", reason="白酒龙头，长期底仓候选", addedBy="u1", addedByName="老王", addedByRole="leader", addedAt="2026-02-15"),
@@ -70,16 +97,44 @@ class Store:
         watch = len(self.recommendations) - tradable - risky
         return DailySummary(total=len(self.recommendations), tradable=tradable, watch=watch, risky=risky)
 
-    def add_user(self, nickname: str, invite_code: str) -> User | None:
-        if invite_code != self.circle.inviteCode:
+    def authenticate(self, username: str, password: str) -> User | None:
+        for u in self.users:
+            if u.username == username and u.isActive:
+                stored = self.password_hashes.get(u.id)
+                if stored and _verify_password(password, stored):
+                    return u
+        return None
+
+    def create_token(self, user_id: str) -> str:
+        token = secrets.token_urlsafe(32)
+        self.tokens[token] = user_id
+        return token
+
+    def get_user_by_token(self, token: str) -> User | None:
+        user_id = self.tokens.get(token)
+        if not user_id:
             return None
+        for u in self.users:
+            if u.id == user_id and u.isActive:
+                return u
+        return None
+
+    def remove_token(self, token: str) -> None:
+        self.tokens.pop(token, None)
+
+    def add_user_by_admin(self, username: str, password: str, nickname: str, role: str) -> User | None:
+        for u in self.users:
+            if u.username == username:
+                return None
         user = User(
             id=f"u_{uuid.uuid4().hex[:8]}",
+            username=username,
             nickname=nickname,
-            role="member",
+            role=role,
             joinedAt=date.today().isoformat(),
         )
         self.users.append(user)
+        self.password_hashes[user.id] = _hash_password(password)
         self.circle.memberCount = len(self.users)
         return user
 

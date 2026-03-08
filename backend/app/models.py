@@ -14,6 +14,7 @@ UserRole = Literal["admin", "leader", "member"]
 
 class User(BaseModel):
     id: str
+    username: str = ""
     nickname: str
     role: UserRole = "member"
     joinedAt: str = ""
@@ -23,7 +24,6 @@ class User(BaseModel):
 class Circle(BaseModel):
     id: str
     name: str
-    inviteCode: str
     memberCount: int = 0
 
 
@@ -105,9 +105,16 @@ class PrivatePosition(BaseModel):
     updatedAt: str = ""
 
 
-class JoinRequest(BaseModel):
-    inviteCode: str
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class CreateUserRequest(BaseModel):
+    username: str
+    password: str
     nickname: str
+    role: UserRole = "member"
 
 
 class RoleUpdateRequest(BaseModel):
