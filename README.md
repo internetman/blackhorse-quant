@@ -1,59 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 黑马自选
 
-## Getting Started
+> 私有股票小社群 · AI 辅助每日买卖建议与复盘
 
-First, run the development server:
+一个面向小圈子的自选股决策助手，围绕"圈内关注股票"提供结构化 AI 建议，并自动复盘验证建议效果。
+
+## 核心功能
+
+- **每日建议** — 对圈内自选股逐只输出结构化买卖建议（可交易 / 观望 / 风险升高）
+- **自选股池** — 圈子成员共同维护的关注股票列表，支持意见领袖标记
+- **复盘记录** — T+1 / T+3 / T+5 自动追踪建议准确率
+- **私有持仓** — 每人独立记录仓位，彼此不可见
+- **圈子管理** — 邀请制加入、角色体系（管理员 / 意见领袖 / 成员）
+
+## 技术栈
+
+| 层 | 技术 |
+|---|------|
+| 前端 | Next.js 16 · React 19 · Tailwind CSS 4 · Zustand |
+| 后端 | FastAPI · Pydantic · Python 3.11+ |
+| 部署 | Vercel (前端) · Railway (后端) |
+
+## 快速开始
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 前端
+npm install
+npm run dev          # http://localhost:3000
+
+# 后端
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload   # http://localhost:8000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 项目结构
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+app/                    # Next.js 页面
+  recommendations/      # 每日建议（主页）
+  watchlist/            # 自选股池
+  reviews/              # 复盘记录
+  positions/            # 我的持仓
+  admin/                # 圈子管理
+  join/                 # 加入圈子
+components/
+  layout/               # 布局组件 (AppShell)
+  stock/                # 股票卡片组件
+lib/
+  api.ts                # API 客户端
+  store.ts              # Zustand 状态管理
+  types.ts              # TypeScript 类型定义
+  auth.ts               # 认证工具
+  mock-data.ts          # 演示数据
+backend/
+  app/
+    main.py             # FastAPI 入口
+    models.py           # Pydantic 模型
+    store.py            # 内存数据存储
+    api/                # API 路由
+docs/
+  v1.1-product-plan.md  # 产品方案
+  deployment-guide.md   # 部署指南
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 文档
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## 🚀 部署到 Vercel
-
-本项目已配置自动化部署到 Vercel。
-
-### ⚡ 快速开始：GitHub 自动部署
-
-**最简单的方式（推荐）：**
-
-1. 访问 [Vercel Dashboard](https://vercel.com/new)
-2. 点击 "Import Git Repository"
-3. 选择你的 GitHub 仓库
-4. 点击 "Deploy"
-
-完成！之后每次 `git push origin main` 都会自动部署。
-
-📖 **详细步骤请查看：[GitHub 自动部署完整指南](./GITHUB_DEPLOY_GUIDE.md)**
-
-### 其他部署方式
-
-- **手动部署**: 使用 `npm run deploy`
-- **GitHub Actions**: 详见 [DEPLOY.md](./DEPLOY.md)
-- **设置脚本**: 运行 `./scripts/setup-vercel.sh`
-
----
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [v1.1 产品方案](docs/v1.1-product-plan.md) — 详细产品设计文档
+- [部署指南](docs/deployment-guide.md) — Vercel + Railway 部署说明

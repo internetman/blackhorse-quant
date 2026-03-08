@@ -1,179 +1,215 @@
 'use client';
+
 import { create } from 'zustand';
-import { apiClient, type Position, type Trade, type ConfigParams, type Stats } from './api';
+import type {
+  Recommendation, WatchItem, Review, ReviewStats,
+  PrivatePosition, DailySummary, Circle, User
+} from './types';
+import { api } from './api';
+import {
+  MOCK_RECOMMENDATIONS, MOCK_WATCHLIST, MOCK_REVIEWS,
+  MOCK_REVIEW_STATS, MOCK_PRIVATE_POSITIONS, MOCK_DAILY_SUMMARY,
+  MOCK_CIRCLE, MOCK_USERS
+} from './mock-data';
 
-export type SysStatus = 'running' | 'paused' | 'kill';
-
-interface AppState {
-  // 系统状态
-  sysStatus: SysStatus;
-  setSysStatus: (status: SysStatus) => Promise<void>;
-  fetchStatus: () => Promise<void>;
-  
-  // 持仓数据
-  positions: Position[];
-  setPositions: (positions: Position[]) => void;
-  fetchPositions: () => Promise<void>;
-  updatePosition: (id: number, updates: Partial<Position>) => Promise<void>;
-  clearPositions: () => Promise<void>;
-  
-  // 交易记录
-  trades: Trade[];
-  fetchTrades: () => Promise<void>;
-  addTrade: (trade: Trade) => Promise<void>;
-  
-  // 配置参数
-  configParams: ConfigParams | null;
-  fetchConfig: () => Promise<void>;
-  updateConfigParams: (params: Partial<ConfigParams>) => Promise<void>;
-  
-  // 统计数据
-  stats: Stats | null;
-  fetchStats: () => Promise<void>;
-  
-  // 加载状态
+interface RecommendationStore {
+  date: string;
+  summary: DailySummary;
+  recommendations: Recommendation[];
   loading: boolean;
   error: string | null;
-  // 连接状态
-  isConnected: boolean;
-  checkConnection: () => Promise<void>;
+  useMock: boolean;
+  fetch: (date?: string) => Promise<void>;
 }
 
-export const useStore = create<AppState>((set, get) => ({
-  // 初始状态
-  sysStatus: 'running',
-  positions: [],
-  trades: [],
-  configParams: null,
-  stats: null,
+export const useRecommendationStore = create<RecommendationStore>((set) => ({
+  date: new Date().toISOString().split('T')[0],
+  summary: MOCK_DAILY_SUMMARY,
+  recommendations: [],
   loading: false,
   error: null,
-  isConnected: false,
-  
-  // 系统状态
-  fetchStatus: async () => {
+  useMock: false,
+
+  fetch: async (date?: string) => {
+    set({ loading: true, error: null });
     try {
-      const status = await apiClient.getStatus();
-      set({ sysStatus: status.status, isConnected: true, error: null });
-    } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : '获取状态失败',
-        isConnected: false 
-      });
-    }
-  },
-  
-  setSysStatus: async (status) => {
-    try {
-      await apiClient.setStatus(status);
-      set({ sysStatus: status });
-    } catch (error) {
-      set({ error: error instanceof Error ? error.message : '设置状态失败' });
-    }
-  },
-  
-  // 持仓数据
-  setPositions: (positions) => set({ positions }),
-  
-  fetchPositions: async () => {
-    try {
-      set({ loading: true });
-      const positions = await apiClient.getPositions();
-      set({ positions, loading: false, isConnected: true, error: null });
-    } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : '获取持仓失败',
+      const data = await api.getRecommendations(date);
+      set({
+        date: data.date,
+        summary: data.summary,
+        recommendations: data.recommendations,
         loading: false,
-        isConnected: false 
+        useMock: false,
+      });
+    } catch {
+      set({
+        recommendations: MOCK_RECOMMENDATIONS,
+        summary: MOCK_DAILY_SUMMARY,
+        loading: false,
+        useMock: true,
+        error: '使用演示数据',
       });
     }
   },
-  
-  updatePosition: async (id, updates) => {
+}));
+
+interface WatchlistStore {
+  items: WatchItem[];
+  loading: boolean;
+  error: string | null;
+  fetch: () => Promise<void>;
+  add: (data: { symbol: string; name: string; reason: string }) => Promise<void>;
+  remove: (id: string) => Promise<void>;
+}
+
+export const useWatchlistStore = create<WatchlistStore>((set, get) => ({
+  items: [],
+  loading: false,
+  error: null,
+
+  fetch: async () => {
+    set({ loading: true, error: null });
     try {
-      const updated = await apiClient.updatePosition(id, updates);
-      set((state) => ({
-        positions: state.positions.map((pos) =>
-          pos.id === id ? updated : pos
-        ),
-      }));
-    } catch (error) {
-      set({ error: error instanceof Error ? error.message : '更新持仓失败' });
+      const items = await api.getWatchlist();
+      set({ items, loading: false });
+    } catch {
+      set({ items: MOCK_WATCHLIST, loading: false, error: '使用演示数据' });
     }
   },
-  
-  clearPositions: async () => {
+
+  add: async (data) => {
     try {
-      await apiClient.clearPositions();
-      set({ positions: [] });
-    } catch (error) {
-      set({ error: error instanceof Error ? error.message : '清空持仓失败' });
+      const item = await api.addWatchItem(data);
+      set((s) => ({ items: [...s.items, item] }));
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : '添加失败' });
     }
   },
-  
-  // 交易记录
-  fetchTrades: async () => {
+
+  remove: async (id) => {
     try {
-      const trades = await apiClient.getTrades();
-      set({ trades });
-    } catch (error) {
-      set({ error: error instanceof Error ? error.message : '获取交易记录失败' });
+      await api.removeWatchItem(id);
+      set((s) => ({ items: s.items.filter((i) => i.id !== id) }));
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : '删除失败' });
     }
   },
-  
-  addTrade: async (trade) => {
+}));
+
+interface ReviewStore {
+  reviews: Review[];
+  stats: ReviewStats;
+  loading: boolean;
+  error: string | null;
+  filterType: string | null;
+  fetch: (type?: string) => Promise<void>;
+  fetchStats: () => Promise<void>;
+  setFilter: (type: string | null) => void;
+}
+
+export const useReviewStore = create<ReviewStore>((set) => ({
+  reviews: [],
+  stats: MOCK_REVIEW_STATS,
+  loading: false,
+  error: null,
+  filterType: null,
+
+  fetch: async (type?: string) => {
+    set({ loading: true, error: null });
     try {
-      const newTrade = await apiClient.createTrade(trade);
-      set((state) => ({
-        trades: [newTrade, ...state.trades].slice(0, 100),
-      }));
-    } catch (error) {
-      set({ error: error instanceof Error ? error.message : '创建交易记录失败' });
+      const reviews = await api.getReviews(type);
+      set({ reviews, loading: false });
+    } catch {
+      set({ reviews: MOCK_REVIEWS, loading: false, error: '使用演示数据' });
     }
   },
-  
-  // 配置参数
-  fetchConfig: async () => {
-    try {
-      const config = await apiClient.getConfig();
-      set({ configParams: config });
-    } catch (error) {
-      set({ error: error instanceof Error ? error.message : '获取配置失败' });
-    }
-  },
-  
-  updateConfigParams: async (params) => {
-    try {
-      const config = await apiClient.updateConfig(params);
-      set({ configParams: config });
-    } catch (error) {
-      set({ error: error instanceof Error ? error.message : '更新配置失败' });
-    }
-  },
-  
-  // 统计数据
+
   fetchStats: async () => {
     try {
-      const stats = await apiClient.getStats();
-      set({ stats, isConnected: true, error: null });
-    } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : '获取统计数据失败',
-        isConnected: false 
-      });
+      const stats = await api.getReviewStats();
+      set({ stats });
+    } catch {
+      set({ stats: MOCK_REVIEW_STATS });
     }
   },
-  
-  // 检查连接状态
-  checkConnection: async () => {
+
+  setFilter: (type) => set({ filterType: type }),
+}));
+
+interface PositionStore {
+  positions: PrivatePosition[];
+  loading: boolean;
+  error: string | null;
+  fetch: () => Promise<void>;
+  update: (id: string, data: Partial<PrivatePosition>) => Promise<void>;
+}
+
+export const usePositionStore = create<PositionStore>((set) => ({
+  positions: [],
+  loading: false,
+  error: null,
+
+  fetch: async () => {
+    set({ loading: true, error: null });
     try {
-      await apiClient.getStatus();
-      set({ isConnected: true, error: null });
-    } catch (error) {
-      set({ 
-        isConnected: false,
-        error: error instanceof Error ? error.message : '无法连接到后端服务'
-      });
+      const positions = await api.getPositions();
+      set({ positions, loading: false });
+    } catch {
+      set({ positions: MOCK_PRIVATE_POSITIONS, loading: false, error: '使用演示数据' });
     }
   },
+
+  update: async (id, data) => {
+    try {
+      const updated = await api.updatePosition(id, data);
+      set((s) => ({
+        positions: s.positions.map((p) => (p.id === id ? updated : p)),
+      }));
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : '更新失败' });
+    }
+  },
+}));
+
+interface CircleStore {
+  circle: Circle | null;
+  members: User[];
+  loading: boolean;
+  fetch: () => Promise<void>;
+  fetchMembers: () => Promise<void>;
+}
+
+export const useCircleStore = create<CircleStore>((set) => ({
+  circle: MOCK_CIRCLE,
+  members: [],
+  loading: false,
+
+  fetch: async () => {
+    try {
+      const circle = await api.getCircle();
+      set({ circle });
+    } catch {
+      set({ circle: MOCK_CIRCLE });
+    }
+  },
+
+  fetchMembers: async () => {
+    set({ loading: true });
+    try {
+      const members = await api.getMembers();
+      set({ members, loading: false });
+    } catch {
+      set({ members: MOCK_USERS, loading: false });
+    }
+  },
+}));
+
+interface AuthStore {
+  user: User | null;
+  setUser: (user: User | null) => void;
+}
+
+export const useAuthStore = create<AuthStore>((set) => ({
+  user: null,
+  setUser: (user) => set({ user }),
 }));

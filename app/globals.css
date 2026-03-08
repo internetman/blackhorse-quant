@@ -1,48 +1,106 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: #FAF9F7;
+  --color-foreground: #1C1917;
+  --color-card: #FFFFFF;
+  --color-card-border: #E7E5E4;
+  --color-sidebar: #292524;
+  --color-sidebar-text: #D6D3D1;
+  --color-sidebar-active: #FAFAF9;
+  --color-brand: #B45309;
+  --color-brand-light: #FFFBEB;
+  --color-action-tradable: #15803D;
+  --color-action-tradable-bg: #F0FDF4;
+  --color-action-watch: #B45309;
+  --color-action-watch-bg: #FFFBEB;
+  --color-action-risky: #B91C1C;
+  --color-action-risky-bg: #FEF2F2;
+  --color-action-avoid: #78716C;
+  --color-action-avoid-bg: #F5F5F4;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* 移动端优化 */
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
 
-/* 移动端触摸优化 */
-@media (max-width: 768px) {
-  * {
-    -webkit-tap-highlight-color: transparent;
+/* Card entrance animation */
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
   }
-  
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-card-in {
+  animation: cardIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Staggered animation delays */
+.delay-1 { animation-delay: 0.05s; }
+.delay-2 { animation-delay: 0.1s; }
+.delay-3 { animation-delay: 0.15s; }
+.delay-4 { animation-delay: 0.2s; }
+.delay-5 { animation-delay: 0.25s; }
+.delay-6 { animation-delay: 0.3s; }
+.delay-7 { animation-delay: 0.35s; }
+.delay-8 { animation-delay: 0.4s; }
+
+/* Smooth expand/collapse */
+.expand-enter {
+  animation: expandIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes expandIn {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 600px;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #D6D3D1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #A8A29E;
+}
+
+/* Leader glow effect */
+.leader-glow {
+  box-shadow: 0 0 0 1px #FDE68A, 0 2px 8px rgba(180, 83, 9, 0.08);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
   button, a, input, select, textarea {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
-  }
-  
-  /* 防止移动端双击缩放 */
-  button, a {
-    touch-action: manipulation;
   }
 }

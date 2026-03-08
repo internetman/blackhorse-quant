@@ -1,40 +1,114 @@
 from pydantic import BaseModel
 from typing import Literal, Optional
+from datetime import date
 
-# 持仓模型
-class Position(BaseModel):
-    id: int
-    asset: str
-    side: Literal['多', '空']
-    amount: str
-    entryPrice: str
-    currentPrice: str
-    pnl: str
-    pnlValue: str
 
-# 交易记录模型
-class Trade(BaseModel):
-    id: int
-    time: str
-    asset: str
-    side: str
-    price: str
-    status: str
-    reason: Optional[str] = None
+ActionType = Literal["可交易", "观望", "不建议交易", "风险升高"]
+BiasType = Literal["偏低吸", "偏突破", "偏减仓", "暂不参与"]
+ConfidenceLevel = Literal["高", "中", "低"]
+PositionLevel = Literal["空仓", "轻仓", "中仓", "重仓"]
+ReviewType = Literal["T+1", "T+3", "T+5"]
+VerdictType = Literal["有效", "一般", "失效"]
+UserRole = Literal["admin", "leader", "member"]
 
-# 系统状态模型
-class SysStatus(BaseModel):
-    status: Literal['running', 'paused', 'kill']
 
-# 统计数据模型
-class Stats(BaseModel):
-    totalPnl: float
-    todayPnl: float
-    positionCount: int
-    capitalUsage: float
+class User(BaseModel):
+    id: str
+    nickname: str
+    role: UserRole = "member"
+    joinedAt: str = ""
+    isActive: bool = True
 
-# 配置参数模型
-class ConfigParams(BaseModel):
-    strategyName: str
-    maxPositions: int
-    maxDrawdown: float
+
+class Circle(BaseModel):
+    id: str
+    name: str
+    inviteCode: str
+    memberCount: int = 0
+
+
+class WatchItem(BaseModel):
+    id: str
+    symbol: str
+    name: str
+    reason: str = ""
+    addedBy: str = ""
+    addedByName: str = ""
+    addedByRole: UserRole = "member"
+    addedAt: str = ""
+    isActive: bool = True
+
+
+class Recommendation(BaseModel):
+    id: str
+    symbol: str
+    name: str
+    date: str
+    action: ActionType
+    bias: BiasType
+    confidence: ConfidenceLevel
+    pricePlan: str
+    summary: str
+    reasons: list[str] = []
+    risks: list[str] = []
+    invalidCondition: str = ""
+    reviewAt: ReviewType = "T+1"
+    generatedAt: str = ""
+
+
+class DailySummary(BaseModel):
+    total: int = 0
+    tradable: int = 0
+    watch: int = 0
+    risky: int = 0
+
+
+class RecommendationsResponse(BaseModel):
+    date: str
+    summary: DailySummary
+    recommendations: list[Recommendation]
+
+
+class Review(BaseModel):
+    id: str
+    recommendationId: str
+    symbol: str
+    name: str
+    reviewType: ReviewType
+    reviewDate: str
+    originalAction: ActionType
+    originalSummary: str
+    priceAtRecommend: float
+    priceAtReview: float
+    priceChange: str
+    verdict: VerdictType
+    explanation: str
+    generatedAt: str = ""
+
+
+class ReviewStats(BaseModel):
+    total: int = 0
+    effective: int = 0
+    neutral: int = 0
+    ineffective: int = 0
+    effectiveRate: float = 0.0
+
+
+class PrivatePosition(BaseModel):
+    id: str
+    userId: str
+    symbol: str
+    name: str
+    level: PositionLevel = "空仓"
+    costPrice: Optional[float] = None
+    notes: str = ""
+    updatedAt: str = ""
+
+
+class JoinRequest(BaseModel):
+    inviteCode: str
+    nickname: str
+
+
+class RoleUpdateRequest(BaseModel):
+    role: UserRole
