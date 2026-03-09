@@ -36,6 +36,20 @@ export interface StockSearchItem {
   name: string;
 }
 
+export interface Quote {
+  symbol: string;
+  latestPrice: number;
+  changePercent: number;
+  volume: number;
+  updatedAt: string;
+}
+
+export interface NewsItem {
+  title: string;
+  date: string;
+  summary?: string;
+}
+
 export interface Recommendation {
   id: string;
   symbol: string;

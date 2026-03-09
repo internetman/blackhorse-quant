@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, AlertCircle, Target, Clock, UserMinus } from 'lucide-react';
-import type { Recommendation } from '@/lib/types';
+import { ChevronDown, ChevronUp, AlertCircle, Target, Clock, UserMinus, TrendingUp, TrendingDown, Newspaper } from 'lucide-react';
+import type { Recommendation, Quote, NewsItem } from '@/lib/types';
 import ActionBadge from './ActionBadge';
 import ConfidenceDots from './ConfidenceDots';
 
@@ -10,10 +10,15 @@ interface Props {
   rec: Recommendation;
   index?: number;
   onUnfollow?: (symbol: string) => void;
+  quote?: Quote | null;
+  news?: NewsItem[];
 }
 
-export default function StockCard({ rec, index = 0, onUnfollow }: Props) {
+export default function StockCard({ rec, index = 0, onUnfollow, quote, news }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const hasNews = news && news.length > 0;
+  const pct = quote?.changePercent ?? 0;
+  const pctClass = pct > 0 ? 'text-red-600' : pct < 0 ? 'text-emerald-600' : 'text-stone-500';
 
   return (
     <div
@@ -41,6 +46,15 @@ export default function StockCard({ rec, index = 0, onUnfollow }: Props) {
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <ActionBadge action={rec.action} />
               <ConfidenceDots level={rec.confidence} />
+              {quote != null && (
+                <span className={`text-sm font-medium flex items-center gap-0.5 ${pctClass}`}>
+                  {pct > 0 ? <TrendingUp size={14} /> : pct < 0 ? <TrendingDown size={14} /> : null}
+                  ¥{quote.latestPrice.toFixed(2)}
+                  {pct !== 0 && (
+                    <span className="text-xs">({pct > 0 ? '+' : ''}{pct.toFixed(2)}%)</span>
+                  )}
+                </span>
+              )}
             </div>
           </div>
 
@@ -69,6 +83,26 @@ export default function StockCard({ rec, index = 0, onUnfollow }: Props) {
           <Target size={11} className="inline mr-1 -mt-0.5" />
           {rec.pricePlan}
         </p>
+
+        {/* 新闻摘要：首条或「暂无」 */}
+        <div className="mt-3 pt-3 border-t border-stone-100">
+          <h4 className="text-xs font-medium text-stone-500 mb-1 flex items-center gap-1">
+            <Newspaper size={12} />
+            相关新闻
+          </h4>
+          {hasNews ? (
+            <ul className="space-y-1">
+              {news!.slice(0, expanded ? undefined : 2).map((item, i) => (
+                <li key={i} className="text-xs text-stone-600 leading-snug">
+                  {item.title}
+                  {item.date && <span className="text-stone-400 ml-1">{item.date}</span>}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs text-stone-400">暂无该股票相关新闻</p>
+          )}
+        </div>
       </div>
 
       {/* Expanded details */}

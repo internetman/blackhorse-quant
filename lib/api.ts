@@ -47,7 +47,7 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
 
 import type {
   RecommendationsResponse, WatchItem, Review, ReviewStats,
-  StockSearchItem, User
+  StockSearchItem, User, Quote, NewsItem
 } from './types';
 
 export const api = {
@@ -79,10 +79,10 @@ export const api = {
     request<StockSearchItem[]>(`/api/stocks/search?q=${encodeURIComponent(q)}&limit=${limit}`),
 
   getQuote: (symbol: string) =>
-    request<{ symbol: string; latestPrice: number; changePercent: number; volume: number; updatedAt: string }>(`/api/quote/?symbol=${encodeURIComponent(symbol)}`),
+    request<Quote>(`/api/quote/?symbol=${encodeURIComponent(symbol)}`),
 
   getNews: (symbol: string, limit = 10) =>
-    request<unknown[]>(`/api/news/?symbol=${encodeURIComponent(symbol)}&limit=${limit}`),
+    request<NewsItem[]>(`/api/news/?symbol=${encodeURIComponent(symbol)}&limit=${limit}`),
 
   getReviews: (type?: string) =>
     request<Review[]>(type ? `/api/reviews/?type=${type}` : '/api/reviews/'),
