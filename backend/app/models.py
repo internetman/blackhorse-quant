@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Literal, Optional
 from datetime import date
 
@@ -52,6 +52,8 @@ class Recommendation(BaseModel):
     invalidCondition: str = ""
     reviewAt: ReviewType = "T+1"
     generatedAt: str = ""
+    quote: Optional["QuoteData"] = None
+    news: list["NewsItem"] = Field(default_factory=list)
 
 
 class DailySummary(BaseModel):
@@ -91,6 +93,20 @@ class ReviewStats(BaseModel):
     neutral: int = 0
     ineffective: int = 0
     effectiveRate: float = 0.0
+
+
+class QuoteData(BaseModel):
+    symbol: str
+    latestPrice: float
+    changePercent: float
+    volume: int
+    updatedAt: str
+
+
+class NewsItem(BaseModel):
+    title: str
+    date: str
+    summary: str = ""
 
 
 class PrivatePosition(BaseModel):

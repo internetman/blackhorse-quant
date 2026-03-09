@@ -16,9 +16,18 @@ interface Props {
 
 export default function StockCard({ rec, index = 0, onUnfollow, quote, news }: Props) {
   const [expanded, setExpanded] = useState(false);
-  const hasNews = news && news.length > 0;
-  const pct = quote?.changePercent ?? 0;
+  const effectiveQuote = quote ?? rec.quote;
+  const effectiveNews = news ?? rec.news ?? [];
+  const hasNews = effectiveNews.length > 0;
+  const pct = effectiveQuote?.changePercent ?? 0;
   const pctClass = pct > 0 ? 'text-red-600' : pct < 0 ? 'text-emerald-600' : 'text-stone-500';
+  const volumeText = effectiveQuote
+    ? effectiveQuote.volume >= 100000000
+      ? `${(effectiveQuote.volume / 100000000).toFixed(2)}亿`
+      : effectiveQuote.volume >= 10000
+        ? `${(effectiveQuote.volume / 10000).toFixed(2)}万`
+        : `${effectiveQuote.volume}`
+    : '--';
 
   return (
     <div
@@ -46,10 +55,10 @@ export default function StockCard({ rec, index = 0, onUnfollow, quote, news }: P
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <ActionBadge action={rec.action} />
               <ConfidenceDots level={rec.confidence} />
-              {quote != null && (
+              {effectiveQuote != null && (
                 <span className={`text-sm font-medium flex items-center gap-0.5 ${pctClass}`}>
                   {pct > 0 ? <TrendingUp size={14} /> : pct < 0 ? <TrendingDown size={14} /> : null}
-                  ¥{quote.latestPrice.toFixed(2)}
+                  ¥{effectiveQuote.latestPrice.toFixed(2)}
                   {pct !== 0 && (
                     <span className="text-xs">({pct > 0 ? '+' : ''}{pct.toFixed(2)}%)</span>
                   )}
@@ -83,6 +92,12 @@ export default function StockCard({ rec, index = 0, onUnfollow, quote, news }: P
           <Target size={11} className="inline mr-1 -mt-0.5" />
           {rec.pricePlan}
         </p>
+        {effectiveQuote && (
+          <div className="mt-2 text-xs text-stone-500 flex items-center gap-3 flex-wrap">
+            <span>成交量: {volumeText}</span>
+            <span>更新时间: {effectiveQuote.updatedAt?.slice(11, 19) || '--'}</span>
+          </div>
+        )}
 
         {/* 新闻摘要：首条或「暂无」 */}
         <div className="mt-3 pt-3 border-t border-stone-100">
@@ -92,7 +107,7 @@ export default function StockCard({ rec, index = 0, onUnfollow, quote, news }: P
           </h4>
           {hasNews ? (
             <ul className="space-y-1">
-              {news!.slice(0, expanded ? undefined : 2).map((item, i) => (
+              {effectiveNews.slice(0, expanded ? undefined : 2).map((item, i) => (
                 <li key={i} className="text-xs text-stone-600 leading-snug">
                   {item.title}
                   {item.date && <span className="text-stone-400 ml-1">{item.date}</span>}

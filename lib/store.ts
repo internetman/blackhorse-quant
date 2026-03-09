@@ -61,7 +61,7 @@ interface WatchlistStore {
   remove: (symbol: string) => Promise<void>;
 }
 
-export const useWatchlistStore = create<WatchlistStore>((set, get) => ({
+export const useWatchlistStore = create<WatchlistStore>((set) => ({
   items: [],
   loading: false,
   error: null,

@@ -1,4 +1,4 @@
-# 黑马量化 FastAPI 后端
+# 黑马自选 FastAPI 后端（v1.2）
 
 ## 快速开始
 
@@ -26,31 +26,34 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 
-## API 接口
+## API 接口（v1.2）
 
-### 持仓相关
-- `GET /api/positions` - 获取持仓列表
-- `GET /api/positions/{id}` - 获取单个持仓
-- `PUT /api/positions/{id}` - 更新持仓
-- `DELETE /api/positions` - 清空所有持仓
+除 `POST /api/auth/login/` 外，其它业务接口均需 `Authorization: Bearer <token>`。
 
-### 交易记录
-- `GET /api/trades` - 获取交易记录列表
-- `GET /api/trades/{id}` - 获取单个交易记录
-- `POST /api/trades` - 创建新交易记录
+### 认证
+- `POST /api/auth/login/` - 登录并返回 token
+- `GET /api/auth/me/` - 当前用户信息
+- `POST /api/auth/logout/` - 退出登录
 
-### 系统状态
-- `GET /api/status` - 获取系统状态
-- `POST /api/status` - 设置系统状态
+### 我的关注
+- `GET /api/watchlist/` - 获取当前用户关注列表
+- `POST /api/watchlist/` - 添加关注
+- `DELETE /api/watchlist/{symbol}` - 取消关注
+- `GET /api/stocks/search?q=xxx&limit=20` - 股票联想搜索（代码/名称/首字母/拼音）
 
-### 统计数据
-- `GET /api/stats` - 获取统计数据
+### 首页数据
+- `GET /api/recommendations/` - 首页聚合（建议 + 行情 + 新闻）
+- `GET /api/quote/?symbol=600519.SH` - 单股行情（支持 `600519` 自动归一化）
+- `GET /api/news/?symbol=600519.SH&limit=10` - 单股新闻
 
-### 配置参数
-- `GET /api/config` - 获取配置参数
-- `PUT /api/config` - 更新配置参数
-- `PATCH /api/config` - 部分更新配置参数
+### 复盘
+- `GET /api/reviews/` - 复盘记录
+- `GET /api/reviews/stats/` - 复盘统计
 
-## 数据结构
+### 用户管理（管理员）
+- `GET /api/admin/members/` - 成员列表
+- `POST /api/admin/users/` - 添加用户
+- `PATCH /api/admin/members/{user_id}` - 变更角色
 
-所有接口返回的数据结构严格对齐前端 TypeScript 类型定义。
+### 废弃接口
+- `/api/positions/*` - v1.2 已废弃，统一返回 `410 Gone`

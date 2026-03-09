@@ -6,7 +6,7 @@ import AppShell from '@/components/layout/AppShell';
 import StockCard from '@/components/stock/StockCard';
 import { useRecommendationStore, useWatchlistStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import type { StockSearchItem, Quote, NewsItem } from '@/lib/types';
+import type { StockSearchItem } from '@/lib/types';
 
 const DEBOUNCE_MS = 300;
 
@@ -19,8 +19,6 @@ export default function RecommendationsPage() {
   const [searchResults, setSearchResults] = useState<StockSearchItem[]>([]);
   const [searching, setSearching] = useState(false);
   const [adding, setAdding] = useState(false);
-  const [quotes, setQuotes] = useState<Record<string, Quote>>({});
-  const [newsBySymbol, setNewsBySymbol] = useState<Record<string, NewsItem[]>>({});
 
   const load = useCallback(() => {
     fetchWatchlist();
@@ -28,36 +26,6 @@ export default function RecommendationsPage() {
   }, [fetchWatchlist, fetchRecs]);
 
   useEffect(() => { load(); }, [load]);
-
-  // 拉取每只股票的行情与新闻
-  useEffect(() => {
-    if (loading || recommendations.length === 0) {
-      setQuotes({});
-      setNewsBySymbol({});
-      return;
-    }
-    const symbols = [...new Set(recommendations.map((r) => r.symbol))];
-    let cancelled = false;
-    Promise.allSettled(
-      symbols.flatMap((symbol) => [
-        api.getQuote(symbol).then((q) => ({ type: 'quote' as const, symbol, data: q })),
-        api.getNews(symbol, 5).then((n) => ({ type: 'news' as const, symbol, data: n })),
-      ])
-    ).then((results) => {
-      if (cancelled) return;
-      const nextQuotes: Record<string, Quote> = {};
-      const nextNews: Record<string, NewsItem[]> = {};
-      results.forEach((r) => {
-        if (r.status !== 'fulfilled') return;
-        const { type, symbol, data } = r.value;
-        if (type === 'quote') nextQuotes[symbol] = data as Quote;
-        if (type === 'news') nextNews[symbol] = (data as NewsItem[]).filter(Boolean);
-      });
-      setQuotes(nextQuotes);
-      setNewsBySymbol(nextNews);
-    });
-    return () => { cancelled = true; };
-  }, [loading, recommendations.length, recommendations.map((r) => r.symbol).join(',')]);
 
   useEffect(() => {
     if (searchQ.trim().length < 2) {
@@ -238,8 +206,6 @@ export default function RecommendationsPage() {
                 rec={rec}
                 index={i}
                 onUnfollow={handleUnfollow}
-                quote={quotes[rec.symbol]}
-                news={newsBySymbol[rec.symbol]}
               />
             ))}
           </div>

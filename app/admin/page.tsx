@@ -88,7 +88,7 @@ export default function AdminPage() {
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-stone-900 flex items-center gap-2">
             <Settings size={22} className="text-stone-600" />
-            圈子管理
+            用户管理
           </h2>
           <p className="text-sm text-stone-400 mt-0.5">用户与权限</p>
         </div>

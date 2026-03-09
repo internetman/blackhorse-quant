@@ -53,7 +53,7 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold text-stone-900 tracking-tight">
             <span className="text-amber-700">黑马</span>自选
           </h1>
-          <p className="text-stone-400 text-sm mt-2">私有股票圈子 · AI每日建议</p>
+          <p className="text-stone-400 text-sm mt-2">我的关注 · AI 买卖建议与复盘</p>
         </div>
 
         <form onSubmit={handleLogin} className="bg-white rounded-2xl border border-stone-200/60 shadow-sm p-6 space-y-5">

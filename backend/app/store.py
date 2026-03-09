@@ -7,6 +7,7 @@ from app.models import (
     User, Circle, WatchItem, Recommendation, DailySummary,
     RecommendationsResponse, Review, ReviewStats, PrivatePosition,
 )
+from app.market_data import normalize_symbol
 
 
 def _hash_password(password: str) -> str:
@@ -142,7 +143,7 @@ class Store:
         return [w for w in self.watchlist if w.userId == user_id and w.isActive]
 
     def add_watch_item(self, user_id: str, symbol: str, name: str, reason: str = "") -> WatchItem | None:
-        symbol_norm = symbol.upper().strip()
+        symbol_norm = normalize_symbol(symbol)
         for w in self.watchlist:
             if w.userId == user_id and w.symbol == symbol_norm and w.isActive:
                 return None
@@ -159,7 +160,7 @@ class Store:
 
     def remove_watch_item(self, user_id: str, symbol: str) -> bool:
         before = len(self.watchlist)
-        symbol_norm = symbol.upper().strip()
+        symbol_norm = normalize_symbol(symbol)
         self.watchlist = [w for w in self.watchlist if not (w.userId == user_id and w.symbol == symbol_norm)]
         return len(self.watchlist) < before
 

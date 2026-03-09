@@ -46,7 +46,7 @@ export default function ReviewCard({ review, index = 0 }: { review: Review; inde
       <p className="mt-3 text-sm text-stone-600">{review.explanation}</p>
 
       <p className="mt-2 text-xs text-stone-400 italic">
-        "{review.originalSummary}"
+        &quot;{review.originalSummary}&quot;
       </p>
     </div>
   );

@@ -65,6 +65,8 @@ export interface Recommendation {
   invalidCondition: string;
   reviewAt: ReviewType;
   generatedAt: string;
+  quote?: Quote;
+  news?: NewsItem[];
 }
 
 export interface DailySummary {
