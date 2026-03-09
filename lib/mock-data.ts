@@ -1,13 +1,7 @@
 import type {
   User, WatchItem, Recommendation, Review, ReviewStats,
-  PrivatePosition, DailySummary, Circle
+  DailySummary
 } from './types';
-
-export const MOCK_CIRCLE: Circle = {
-  id: 'circle_001',
-  name: '老王的黑马圈',
-  memberCount: 6,
-};
 
 export const MOCK_USERS: User[] = [
   { id: 'u1', username: 'laowang', nickname: '老王', role: 'leader', joinedAt: '2026-02-10', isActive: true },
@@ -19,54 +13,14 @@ export const MOCK_USERS: User[] = [
 ];
 
 export const MOCK_WATCHLIST: WatchItem[] = [
-  {
-    id: 'w1', symbol: '600519.SH', name: '贵州茅台',
-    reason: '白酒龙头，长期底仓候选',
-    addedBy: 'u1', addedByName: '老王', addedByRole: 'leader',
-    addedAt: '2026-02-15', isActive: true,
-  },
-  {
-    id: 'w2', symbol: '300750.SZ', name: '宁德时代',
-    reason: '新能源龙头，跟踪产能扩张',
-    addedBy: 'u2', addedByName: '大李', addedByRole: 'member',
-    addedAt: '2026-02-18', isActive: true,
-  },
-  {
-    id: 'w3', symbol: '601318.SH', name: '中国平安',
-    reason: '低估值金融，分红考虑',
-    addedBy: 'u1', addedByName: '老王', addedByRole: 'leader',
-    addedAt: '2026-02-20', isActive: true,
-  },
-  {
-    id: 'w4', symbol: '600036.SH', name: '招商银行',
-    reason: '银行股代表，观察经济复苏',
-    addedBy: 'u3', addedByName: '小张', addedByRole: 'member',
-    addedAt: '2026-03-01', isActive: true,
-  },
-  {
-    id: 'w5', symbol: '000858.SZ', name: '五粮液',
-    reason: '白酒第二梯队，估值修复',
-    addedBy: 'u1', addedByName: '老王', addedByRole: 'leader',
-    addedAt: '2026-03-02', isActive: true,
-  },
-  {
-    id: 'w6', symbol: '601012.SH', name: '隆基绿能',
-    reason: '光伏龙头，行业触底判断',
-    addedBy: 'u4', addedByName: '阿强', addedByRole: 'member',
-    addedAt: '2026-03-05', isActive: true,
-  },
-  {
-    id: 'w7', symbol: '002594.SZ', name: '比亚迪',
-    reason: '新能源车龙头，出海逻辑',
-    addedBy: 'u1', addedByName: '老王', addedByRole: 'leader',
-    addedAt: '2026-02-16', isActive: true,
-  },
-  {
-    id: 'w8', symbol: '600900.SH', name: '长江电力',
-    reason: '红利资产，防御配置',
-    addedBy: 'u5', addedByName: '老赵', addedByRole: 'member',
-    addedAt: '2026-03-06', isActive: true,
-  },
+  { id: 'w1', userId: 'u1', symbol: '600519.SH', name: '贵州茅台', reason: '白酒龙头，长期底仓候选', addedAt: '2026-02-15', isActive: true },
+  { id: 'w2', userId: 'u2', symbol: '300750.SZ', name: '宁德时代', reason: '新能源龙头，跟踪产能扩张', addedAt: '2026-02-18', isActive: true },
+  { id: 'w3', userId: 'u1', symbol: '601318.SH', name: '中国平安', reason: '低估值金融，分红考虑', addedAt: '2026-02-20', isActive: true },
+  { id: 'w4', userId: 'u3', symbol: '600036.SH', name: '招商银行', reason: '银行股代表，观察经济复苏', addedAt: '2026-03-01', isActive: true },
+  { id: 'w5', userId: 'u1', symbol: '000858.SZ', name: '五粮液', reason: '白酒第二梯队，估值修复', addedAt: '2026-03-02', isActive: true },
+  { id: 'w6', userId: 'u4', symbol: '601012.SH', name: '隆基绿能', reason: '光伏龙头，行业触底判断', addedAt: '2026-03-05', isActive: true },
+  { id: 'w7', userId: 'u1', symbol: '002594.SZ', name: '比亚迪', reason: '新能源车龙头，出海逻辑', addedAt: '2026-02-16', isActive: true },
+  { id: 'w8', userId: 'u5', symbol: '600900.SH', name: '长江电力', reason: '红利资产，防御配置', addedAt: '2026-03-06', isActive: true },
 ];
 
 export const MOCK_DAILY_SUMMARY: DailySummary = {
@@ -270,23 +224,5 @@ export const MOCK_REVIEWS: Review[] = [
     verdict: '有效',
     explanation: '板块轮动判断正确，3 日内涨幅近 3%',
     generatedAt: '2026-03-08T15:30:00+08:00',
-  },
-];
-
-export const MOCK_PRIVATE_POSITIONS: PrivatePosition[] = [
-  {
-    id: 'pp1', userId: 'u3', symbol: '600519.SH', name: '贵州茅台',
-    level: '轻仓', costPrice: 1688, notes: '2/15 首次建仓，等回调加仓',
-    updatedAt: '2026-02-15',
-  },
-  {
-    id: 'pp2', userId: 'u3', symbol: '002594.SZ', name: '比亚迪',
-    level: '中仓', costPrice: 275, notes: '看好出海逻辑，分两批买入',
-    updatedAt: '2026-03-05',
-  },
-  {
-    id: 'pp3', userId: 'u3', symbol: '600036.SH', name: '招商银行',
-    level: '空仓', costPrice: null, notes: '观察中，等待突破 38 再考虑',
-    updatedAt: '2026-03-01',
   },
 ];

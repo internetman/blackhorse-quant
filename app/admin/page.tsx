@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Settings, Users, Shield, Star, User, UserPlus, Eye, EyeOff } from 'lucide-react';
 import AppShell from '@/components/layout/AppShell';
-import { useCircleStore } from '@/lib/store';
+import { useAdminStore } from '@/lib/store';
 import { getStoredUser, isAdmin } from '@/lib/auth';
 import { api } from '@/lib/api';
 import type { UserRole } from '@/lib/types';
@@ -16,7 +16,7 @@ const ROLE_CONFIG: Record<UserRole, { label: string; icon: typeof Star; color: s
 
 export default function AdminPage() {
   const [user, setUser] = useState<ReturnType<typeof getStoredUser>>(null);
-  const { circle, members, fetchMembers } = useCircleStore();
+  const { members, fetchMembers } = useAdminStore();
 
   const [showForm, setShowForm] = useState(false);
   const [newUsername, setNewUsername] = useState('');
@@ -90,7 +90,7 @@ export default function AdminPage() {
             <Settings size={22} className="text-stone-600" />
             圈子管理
           </h2>
-          <p className="text-sm text-stone-400 mt-0.5">{circle?.name || '黑马圈'}</p>
+          <p className="text-sm text-stone-400 mt-0.5">用户与权限</p>
         </div>
 
         {formSuccess && (

@@ -4,28 +4,24 @@ import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Sparkles, List, BarChart3, Lock, Settings,
+  Sparkles, BarChart3, Settings,
   Menu, X, ChevronRight, LogOut
 } from 'lucide-react';
 import { getStoredUser, isAdmin, clearStoredUser, type StoredUser } from '@/lib/auth';
-import { useCircleStore } from '@/lib/store';
 
 const NAV_ITEMS = [
-  { href: '/recommendations', label: '每日建议', icon: Sparkles, description: 'AI 每日荐股' },
-  { href: '/watchlist', label: '自选股池', icon: List, description: '圈子关注的股票' },
+  { href: '/recommendations', label: '我的关注', icon: Sparkles, description: '关注股票与 AI 建议' },
   { href: '/reviews', label: '复盘记录', icon: BarChart3, description: '建议效果验证' },
-  { href: '/positions', label: '我的持仓', icon: Lock, description: '私有持仓记录' },
 ];
 
 const ADMIN_ITEM = {
-  href: '/admin', label: '圈子管理', icon: Settings, description: '成员管理'
+  href: '/admin', label: '用户管理', icon: Settings, description: '用户与权限'
 };
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<StoredUser | null>(null);
-  const circle = useCircleStore((s) => s.circle);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -50,7 +46,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <span className="text-amber-400">黑马</span>自选
           </h1>
           <p className="text-xs text-stone-400 mt-1">
-            {circle?.name || '我的黑马圈'} · {circle?.memberCount || 0}人
+            关注股票 · AI 建议
           </p>
         </div>
 
@@ -108,9 +104,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </h1>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-stone-400">
-              {circle?.name || '黑马圈'}
-            </span>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-lg hover:bg-stone-100 transition-colors"

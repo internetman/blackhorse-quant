@@ -29,12 +29,10 @@ class Circle(BaseModel):
 
 class WatchItem(BaseModel):
     id: str
+    userId: str
     symbol: str
     name: str
     reason: str = ""
-    addedBy: str = ""
-    addedByName: str = ""
-    addedByRole: UserRole = "member"
     addedAt: str = ""
     isActive: bool = True
 
@@ -71,6 +69,7 @@ class RecommendationsResponse(BaseModel):
 
 class Review(BaseModel):
     id: str
+    userId: str
     recommendationId: str
     symbol: str
     name: str

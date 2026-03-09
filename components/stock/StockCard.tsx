@@ -1,39 +1,32 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, AlertCircle, Target, Clock } from 'lucide-react';
-import type { Recommendation, UserRole } from '@/lib/types';
+import { ChevronDown, ChevronUp, AlertCircle, Target, Clock, UserMinus } from 'lucide-react';
+import type { Recommendation } from '@/lib/types';
 import ActionBadge from './ActionBadge';
-import LeaderBadge from './LeaderBadge';
 import ConfidenceDots from './ConfidenceDots';
 
 interface Props {
   rec: Recommendation;
-  addedByName?: string;
-  addedByRole?: UserRole;
   index?: number;
+  onUnfollow?: (symbol: string) => void;
 }
 
-export default function StockCard({ rec, addedByName, addedByRole, index = 0 }: Props) {
+export default function StockCard({ rec, index = 0, onUnfollow }: Props) {
   const [expanded, setExpanded] = useState(false);
-  const isLeaderPick = addedByRole === 'leader' || addedByRole === 'admin';
 
   return (
     <div
       className={`
         animate-card-in delay-${Math.min(index + 1, 8)}
-        bg-white rounded-2xl border transition-all duration-300 cursor-pointer
-        hover:shadow-md group
-        ${isLeaderPick
-          ? 'border-amber-200/80 leader-glow'
-          : 'border-stone-200/60 shadow-sm hover:border-stone-300'
-        }
+        bg-white rounded-2xl border border-stone-200/60 shadow-sm transition-all duration-300 cursor-pointer
+        hover:shadow-md group hover:border-stone-300
       `}
       onClick={() => setExpanded(!expanded)}
     >
       {/* Main content */}
       <div className="p-4 md:p-5">
-        {/* Top row: stock info + action badge */}
+        {/* Top row: stock info + action badge + unfollow */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
@@ -45,20 +38,27 @@ export default function StockCard({ rec, addedByName, addedByRole, index = 0 }: 
               </span>
             </div>
 
-            {/* Tags row */}
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <ActionBadge action={rec.action} />
               <ConfidenceDots level={rec.confidence} />
-              {addedByName && addedByRole && (
-                <LeaderBadge name={addedByName} role={addedByRole} />
-              )}
             </div>
           </div>
 
-          {/* Expand toggle */}
-          <button className="p-1 rounded-lg text-stone-300 group-hover:text-stone-500 transition-colors shrink-0 mt-1">
-            {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            {onUnfollow && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onUnfollow(rec.symbol); }}
+                className="p-1.5 rounded-lg text-stone-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                title="取消关注"
+              >
+                <UserMinus size={16} />
+              </button>
+            )}
+            <button className="p-1 rounded-lg text-stone-300 group-hover:text-stone-500 transition-colors">
+              {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </button>
+          </div>
         </div>
 
         {/* Summary + Price plan */}

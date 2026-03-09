@@ -23,14 +23,17 @@ export interface Circle {
 
 export interface WatchItem {
   id: string;
+  userId: string;
   symbol: string;
   name: string;
   reason: string;
-  addedBy: string;
-  addedByName: string;
-  addedByRole: UserRole;
   addedAt: string;
   isActive: boolean;
+}
+
+export interface StockSearchItem {
+  symbol: string;
+  name: string;
 }
 
 export interface Recommendation {

@@ -3,13 +3,12 @@
 import { create } from 'zustand';
 import type {
   Recommendation, WatchItem, Review, ReviewStats,
-  PrivatePosition, DailySummary, Circle, User
+  DailySummary, User
 } from './types';
 import { api } from './api';
 import {
   MOCK_RECOMMENDATIONS, MOCK_WATCHLIST, MOCK_REVIEWS,
-  MOCK_REVIEW_STATS, MOCK_PRIVATE_POSITIONS, MOCK_DAILY_SUMMARY,
-  MOCK_CIRCLE, MOCK_USERS
+  MOCK_REVIEW_STATS, MOCK_DAILY_SUMMARY, MOCK_USERS
 } from './mock-data';
 
 interface RecommendationStore {
@@ -59,7 +58,7 @@ interface WatchlistStore {
   error: string | null;
   fetch: () => Promise<void>;
   add: (data: { symbol: string; name: string; reason: string }) => Promise<void>;
-  remove: (id: string) => Promise<void>;
+  remove: (symbol: string) => Promise<void>;
 }
 
 export const useWatchlistStore = create<WatchlistStore>((set, get) => ({
@@ -86,10 +85,10 @@ export const useWatchlistStore = create<WatchlistStore>((set, get) => ({
     }
   },
 
-  remove: async (id) => {
+  remove: async (symbol) => {
     try {
-      await api.removeWatchItem(id);
-      set((s) => ({ items: s.items.filter((i) => i.id !== id) }));
+      await api.removeWatchItem(symbol);
+      set((s) => ({ items: s.items.filter((i) => i.symbol !== symbol) }));
     } catch (e) {
       set({ error: e instanceof Error ? e.message : '删除失败' });
     }
@@ -136,62 +135,15 @@ export const useReviewStore = create<ReviewStore>((set) => ({
   setFilter: (type) => set({ filterType: type }),
 }));
 
-interface PositionStore {
-  positions: PrivatePosition[];
-  loading: boolean;
-  error: string | null;
-  fetch: () => Promise<void>;
-  update: (id: string, data: Partial<PrivatePosition>) => Promise<void>;
-}
-
-export const usePositionStore = create<PositionStore>((set) => ({
-  positions: [],
-  loading: false,
-  error: null,
-
-  fetch: async () => {
-    set({ loading: true, error: null });
-    try {
-      const positions = await api.getPositions();
-      set({ positions, loading: false });
-    } catch {
-      set({ positions: MOCK_PRIVATE_POSITIONS, loading: false, error: '使用演示数据' });
-    }
-  },
-
-  update: async (id, data) => {
-    try {
-      const updated = await api.updatePosition(id, data);
-      set((s) => ({
-        positions: s.positions.map((p) => (p.id === id ? updated : p)),
-      }));
-    } catch (e) {
-      set({ error: e instanceof Error ? e.message : '更新失败' });
-    }
-  },
-}));
-
-interface CircleStore {
-  circle: Circle | null;
+interface AdminStore {
   members: User[];
   loading: boolean;
-  fetch: () => Promise<void>;
   fetchMembers: () => Promise<void>;
 }
 
-export const useCircleStore = create<CircleStore>((set) => ({
-  circle: MOCK_CIRCLE,
+export const useAdminStore = create<AdminStore>((set) => ({
   members: [],
   loading: false,
-
-  fetch: async () => {
-    try {
-      const circle = await api.getCircle();
-      set({ circle });
-    } catch {
-      set({ circle: MOCK_CIRCLE });
-    }
-  },
 
   fetchMembers: async () => {
     set({ loading: true });

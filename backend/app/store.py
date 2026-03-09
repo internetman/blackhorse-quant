@@ -54,14 +54,14 @@ class Store:
         self.tokens: dict[str, str] = {}
 
         self.watchlist: list[WatchItem] = [
-            WatchItem(id="w1", symbol="600519.SH", name="贵州茅台", reason="白酒龙头，长期底仓候选", addedBy="u1", addedByName="老王", addedByRole="leader", addedAt="2026-02-15"),
-            WatchItem(id="w2", symbol="300750.SZ", name="宁德时代", reason="新能源龙头，跟踪产能扩张", addedBy="u2", addedByName="大李", addedByRole="member", addedAt="2026-02-18"),
-            WatchItem(id="w3", symbol="601318.SH", name="中国平安", reason="低估值金融，分红考虑", addedBy="u1", addedByName="老王", addedByRole="leader", addedAt="2026-02-20"),
-            WatchItem(id="w4", symbol="600036.SH", name="招商银行", reason="银行股代表，观察经济复苏", addedBy="u3", addedByName="小张", addedByRole="member", addedAt="2026-03-01"),
-            WatchItem(id="w5", symbol="000858.SZ", name="五粮液", reason="白酒第二梯队，估值修复", addedBy="u1", addedByName="老王", addedByRole="leader", addedAt="2026-03-02"),
-            WatchItem(id="w6", symbol="601012.SH", name="隆基绿能", reason="光伏龙头，行业触底判断", addedBy="u4", addedByName="阿强", addedByRole="member", addedAt="2026-03-05"),
-            WatchItem(id="w7", symbol="002594.SZ", name="比亚迪", reason="新能源车龙头，出海逻辑", addedBy="u1", addedByName="老王", addedByRole="leader", addedAt="2026-02-16"),
-            WatchItem(id="w8", symbol="600900.SH", name="长江电力", reason="红利资产，防御配置", addedBy="u5", addedByName="老赵", addedByRole="member", addedAt="2026-03-06"),
+            WatchItem(id="w1", userId="u1", symbol="600519.SH", name="贵州茅台", reason="白酒龙头，长期底仓候选", addedAt="2026-02-15"),
+            WatchItem(id="w2", userId="u2", symbol="300750.SZ", name="宁德时代", reason="新能源龙头，跟踪产能扩张", addedAt="2026-02-18"),
+            WatchItem(id="w3", userId="u1", symbol="601318.SH", name="中国平安", reason="低估值金融，分红考虑", addedAt="2026-02-20"),
+            WatchItem(id="w4", userId="u3", symbol="600036.SH", name="招商银行", reason="银行股代表，观察经济复苏", addedAt="2026-03-01"),
+            WatchItem(id="w5", userId="u1", symbol="000858.SZ", name="五粮液", reason="白酒第二梯队，估值修复", addedAt="2026-03-02"),
+            WatchItem(id="w6", userId="u4", symbol="601012.SH", name="隆基绿能", reason="光伏龙头，行业触底判断", addedAt="2026-03-05"),
+            WatchItem(id="w7", userId="u1", symbol="002594.SZ", name="比亚迪", reason="新能源车龙头，出海逻辑", addedAt="2026-02-16"),
+            WatchItem(id="w8", userId="u5", symbol="600900.SH", name="长江电力", reason="红利资产，防御配置", addedAt="2026-03-06"),
         ]
 
         self.recommendations: list[Recommendation] = [
@@ -76,11 +76,11 @@ class Store:
         ]
 
         self.reviews: list[Review] = [
-            Review(id="rev_001", recommendationId="rec_prev_600519", symbol="600519.SH", name="贵州茅台", reviewType="T+1", reviewDate=today, originalAction="观望", originalSummary="横盘震荡中，等待回调确认信号", priceAtRecommend=1705, priceAtReview=1710, priceChange="+0.3%", verdict="有效", explanation="观望正确，未出现明确买入信号，持续震荡", generatedAt=datetime.now().isoformat()),
-            Review(id="rev_002", recommendationId="rec_prev_601318", symbol="601318.SH", name="中国平安", reviewType="T+1", reviewDate=today, originalAction="可交易", originalSummary="超跌反弹位，可试探性买入", priceAtRecommend=44.2, priceAtReview=43.7, priceChange="-1.1%", verdict="失效", explanation="判断超跌反弹但实际继续下跌，支撑位失守", generatedAt=datetime.now().isoformat()),
-            Review(id="rev_003", recommendationId="rec_prev_002594", symbol="002594.SZ", name="比亚迪", reviewType="T+1", reviewDate=today, originalAction="可交易", originalSummary="出海逻辑强化，可低吸建仓", priceAtRecommend=282, priceAtReview=289, priceChange="+2.5%", verdict="有效", explanation="低吸建议有效，次日涨幅超 2%", generatedAt=datetime.now().isoformat()),
-            Review(id="rev_004", recommendationId="rec_prev_600036", symbol="600036.SH", name="招商银行", reviewType="T+3", reviewDate=today, originalAction="观望", originalSummary="等待突破 38 后再跟进", priceAtRecommend=37.5, priceAtReview=38.2, priceChange="+1.9%", verdict="一般", explanation="观望期间缓慢上行，未追到最佳建仓点", generatedAt=datetime.now().isoformat()),
-            Review(id="rev_005", recommendationId="rec_prev_000858", symbol="000858.SZ", name="五粮液", reviewType="T+3", reviewDate=today, originalAction="可交易", originalSummary="白酒板块轮动，可适当参与", priceAtRecommend=138, priceAtReview=142, priceChange="+2.9%", verdict="有效", explanation="板块轮动判断正确，3 日内涨幅近 3%", generatedAt=datetime.now().isoformat()),
+            Review(id="rev_001", userId="u1", recommendationId="rec_prev_600519", symbol="600519.SH", name="贵州茅台", reviewType="T+1", reviewDate=today, originalAction="观望", originalSummary="横盘震荡中，等待回调确认信号", priceAtRecommend=1705, priceAtReview=1710, priceChange="+0.3%", verdict="有效", explanation="观望正确，未出现明确买入信号，持续震荡", generatedAt=datetime.now().isoformat()),
+            Review(id="rev_002", userId="u1", recommendationId="rec_prev_601318", symbol="601318.SH", name="中国平安", reviewType="T+1", reviewDate=today, originalAction="可交易", originalSummary="超跌反弹位，可试探性买入", priceAtRecommend=44.2, priceAtReview=43.7, priceChange="-1.1%", verdict="失效", explanation="判断超跌反弹但实际继续下跌，支撑位失守", generatedAt=datetime.now().isoformat()),
+            Review(id="rev_003", userId="u1", recommendationId="rec_prev_002594", symbol="002594.SZ", name="比亚迪", reviewType="T+1", reviewDate=today, originalAction="可交易", originalSummary="出海逻辑强化，可低吸建仓", priceAtRecommend=282, priceAtReview=289, priceChange="+2.5%", verdict="有效", explanation="低吸建议有效，次日涨幅超 2%", generatedAt=datetime.now().isoformat()),
+            Review(id="rev_004", userId="u1", recommendationId="rec_prev_600036", symbol="600036.SH", name="招商银行", reviewType="T+3", reviewDate=today, originalAction="观望", originalSummary="等待突破 38 后再跟进", priceAtRecommend=37.5, priceAtReview=38.2, priceChange="+1.9%", verdict="一般", explanation="观望期间缓慢上行，未追到最佳建仓点", generatedAt=datetime.now().isoformat()),
+            Review(id="rev_005", userId="u1", recommendationId="rec_prev_000858", symbol="000858.SZ", name="五粮液", reviewType="T+3", reviewDate=today, originalAction="可交易", originalSummary="白酒板块轮动，可适当参与", priceAtRecommend=138, priceAtReview=142, priceChange="+2.9%", verdict="有效", explanation="板块轮动判断正确，3 日内涨幅近 3%", generatedAt=datetime.now().isoformat()),
         ]
 
         self.review_stats = ReviewStats(total=156, effective=98, neutral=38, ineffective=20, effectiveRate=0.63)
@@ -138,23 +138,29 @@ class Store:
         self.circle.memberCount = len(self.users)
         return user
 
-    def add_watch_item(self, symbol: str, name: str, reason: str, user: User) -> WatchItem:
+    def get_watchlist(self, user_id: str) -> list[WatchItem]:
+        return [w for w in self.watchlist if w.userId == user_id and w.isActive]
+
+    def add_watch_item(self, user_id: str, symbol: str, name: str, reason: str = "") -> WatchItem | None:
+        symbol_norm = symbol.upper().strip()
+        for w in self.watchlist:
+            if w.userId == user_id and w.symbol == symbol_norm and w.isActive:
+                return None
         item = WatchItem(
             id=f"w_{uuid.uuid4().hex[:8]}",
-            symbol=symbol,
-            name=name,
-            reason=reason,
-            addedBy=user.id,
-            addedByName=user.nickname,
-            addedByRole=user.role,
+            userId=user_id,
+            symbol=symbol_norm,
+            name=name.strip() or symbol_norm,
+            reason=reason.strip(),
             addedAt=date.today().isoformat(),
         )
         self.watchlist.append(item)
         return item
 
-    def remove_watch_item(self, item_id: str) -> bool:
+    def remove_watch_item(self, user_id: str, symbol: str) -> bool:
         before = len(self.watchlist)
-        self.watchlist = [w for w in self.watchlist if w.id != item_id]
+        symbol_norm = symbol.upper().strip()
+        self.watchlist = [w for w in self.watchlist if not (w.userId == user_id and w.symbol == symbol_norm)]
         return len(self.watchlist) < before
 
 

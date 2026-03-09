@@ -47,7 +47,7 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
 
 import type {
   RecommendationsResponse, WatchItem, Review, ReviewStats,
-  PrivatePosition, Circle, User
+  StockSearchItem, User
 } from './types';
 
 export const api = {
@@ -69,23 +69,25 @@ export const api = {
 
   getWatchlist: () => request<WatchItem[]>('/api/watchlist/'),
 
-  addWatchItem: (data: { symbol: string; name: string; reason: string }) =>
+  addWatchItem: (data: { symbol: string; name?: string; reason?: string }) =>
     request<WatchItem>('/api/watchlist/', { method: 'POST', body: JSON.stringify(data) }),
 
-  removeWatchItem: (id: string) =>
-    request<void>(`/api/watchlist/${id}`, { method: 'DELETE' }),
+  removeWatchItem: (symbol: string) =>
+    request<{ message: string }>(`/api/watchlist/${encodeURIComponent(symbol)}`, { method: 'DELETE' }),
+
+  searchStocks: (q: string, limit = 20) =>
+    request<StockSearchItem[]>(`/api/stocks/search?q=${encodeURIComponent(q)}&limit=${limit}`),
+
+  getQuote: (symbol: string) =>
+    request<{ symbol: string; latestPrice: number; changePercent: number; volume: number; updatedAt: string }>(`/api/quote/?symbol=${encodeURIComponent(symbol)}`),
+
+  getNews: (symbol: string, limit = 10) =>
+    request<unknown[]>(`/api/news/?symbol=${encodeURIComponent(symbol)}&limit=${limit}`),
 
   getReviews: (type?: string) =>
     request<Review[]>(type ? `/api/reviews/?type=${type}` : '/api/reviews/'),
 
   getReviewStats: () => request<ReviewStats>('/api/reviews/stats/'),
-
-  getPositions: () => request<PrivatePosition[]>('/api/positions/'),
-
-  updatePosition: (id: string, data: Partial<PrivatePosition>) =>
-    request<PrivatePosition>(`/api/positions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-
-  getCircle: () => request<Circle>('/api/circle/'),
 
   getMembers: () => request<User[]>('/api/admin/members/'),
 
