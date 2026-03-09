@@ -49,6 +49,9 @@ MOCK_NEWS: list[tuple[str, str, str]] = [
 
 _QUOTE_CACHE: dict[str, tuple[QuoteData, float]] = {}
 _NEWS_CACHE: dict[str, tuple[list[NewsItem], float]] = {}
+# 全市场实时行情缓存：code -> (latestPrice, changePercent, volume)，避免逐只请求失败
+_SPOT_CACHE: tuple[dict[str, tuple[float, float, int]], float] | None = None
+SPOT_CACHE_TTL_SECONDS = int(os.getenv("QUOTE_CACHE_TTL_SECONDS", "20"))
 
 
 def normalize_symbol(symbol: str) -> str:
@@ -94,31 +97,77 @@ def _cached_news(symbol: str) -> list[NewsItem] | None:
     return data
 
 
+def _fetch_spot_cache() -> dict[str, tuple[float, float, int]] | None:
+    """拉取全 A 股实时行情并缓存，返回 code -> (最新价, 涨跌幅, 成交量)。"""
+    global _SPOT_CACHE
+    if not USE_AKSHARE or ak is None:
+        return None
+    now = time.time()
+    if _SPOT_CACHE is not None:
+        _, ts = _SPOT_CACHE
+        if now - ts <= SPOT_CACHE_TTL_SECONDS:
+            return _SPOT_CACHE[0]
+    try:
+        df = ak.stock_zh_a_spot_em()
+        if df is None or df.empty:
+            return None
+        out: dict[str, tuple[float, float, int]] = {}
+        for _, row in df.iterrows():
+            code = str(row.get("代码", "")).strip()
+            if not code or len(code) != 6:
+                continue
+            try:
+                latest = float(row.get("最新价", 0) or 0)
+                pct = float(row.get("涨跌幅", 0) or 0)
+                vol = int(float(row.get("成交量", 0) or 0))
+                out[code] = (latest, pct, vol)
+            except (TypeError, ValueError):
+                continue
+        _SPOT_CACHE = (out, now)
+        return out
+    except Exception:
+        return None
+
+
 def _get_quote_from_akshare(symbol: str) -> QuoteData | None:
     if not USE_AKSHARE or ak is None:
         return None
+    normalized = normalize_symbol(symbol)
     code = symbol_to_code(symbol)
-    try:
-        df = ak.stock_bid_ask_em(symbol=code)
-        if df is None or df.empty:
-            return None
-        value_map = {
-            str(row["item"]).strip(): str(row["value"]).strip()
-            for _, row in df.iterrows()
-            if "item" in row and "value" in row
-        }
-        latest = float(value_map.get("最新", "0") or 0)
-        pct = float(value_map.get("涨幅", "0") or 0)
-        volume = int(float(value_map.get("总手", "0") or 0))
+    # 优先从全市场实时行情缓存按代码取（真实价）
+    spot = _fetch_spot_cache()
+    if spot and code in spot:
+        latest, pct, volume = spot[code]
         return QuoteData(
-            symbol=normalize_symbol(symbol),
+            symbol=normalized,
             latestPrice=latest,
             changePercent=pct,
             volume=volume,
             updatedAt=datetime.now(SH_TZ).isoformat(timespec="seconds"),
         )
+    # 备用：盘口接口（可能不稳定）
+    try:
+        df = ak.stock_bid_ask_em(symbol=code)
+        if df is not None and not df.empty:
+            value_map = {
+                str(row.get("item", "")).strip(): str(row.get("value", "")).strip()
+                for _, row in df.iterrows()
+                if "item" in row and "value" in row
+            }
+            latest = float(value_map.get("最新", value_map.get("最新价", "0")) or 0)
+            pct = float(value_map.get("涨幅", value_map.get("涨跌幅", "0")) or 0)
+            volume = int(float(value_map.get("总手", value_map.get("成交量", "0")) or 0))
+            if latest > 0:
+                return QuoteData(
+                    symbol=normalized,
+                    latestPrice=latest,
+                    changePercent=pct,
+                    volume=volume,
+                    updatedAt=datetime.now(SH_TZ).isoformat(timespec="seconds"),
+                )
     except Exception:
-        return None
+        pass
+    return None
 
 
 def _get_news_from_akshare(symbol: str, limit: int) -> list[NewsItem] | None:
