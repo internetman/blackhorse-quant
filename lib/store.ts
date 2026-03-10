@@ -11,6 +11,25 @@ import {
   MOCK_REVIEW_STATS, MOCK_DAILY_SUMMARY, MOCK_USERS
 } from './mock-data';
 
+const EMPTY_SUMMARY: DailySummary = {
+  total: 0,
+  tradable: 0,
+  watch: 0,
+  risky: 0,
+};
+
+const EMPTY_REVIEW_STATS: ReviewStats = {
+  total: 0,
+  effective: 0,
+  neutral: 0,
+  ineffective: 0,
+  effectiveRate: 0,
+};
+
+function isAuthError(err: unknown): boolean {
+  return err instanceof Error && err.message.includes('API 401');
+}
+
 interface RecommendationStore {
   date: string;
   summary: DailySummary;
@@ -40,7 +59,17 @@ export const useRecommendationStore = create<RecommendationStore>((set) => ({
         loading: false,
         useMock: false,
       });
-    } catch {
+    } catch (err) {
+      if (isAuthError(err)) {
+        set({
+          recommendations: [],
+          summary: EMPTY_SUMMARY,
+          loading: false,
+          useMock: false,
+          error: '登录已过期，请重新登录',
+        });
+        return;
+      }
       set({
         recommendations: MOCK_RECOMMENDATIONS,
         summary: MOCK_DAILY_SUMMARY,
@@ -71,7 +100,11 @@ export const useWatchlistStore = create<WatchlistStore>((set) => ({
     try {
       const items = await api.getWatchlist();
       set({ items, loading: false });
-    } catch {
+    } catch (err) {
+      if (isAuthError(err)) {
+        set({ items: [], loading: false, error: '登录已过期，请重新登录' });
+        return;
+      }
       set({ items: MOCK_WATCHLIST, loading: false, error: '使用演示数据' });
     }
   },
@@ -118,7 +151,11 @@ export const useReviewStore = create<ReviewStore>((set) => ({
     try {
       const reviews = await api.getReviews(type);
       set({ reviews, loading: false });
-    } catch {
+    } catch (err) {
+      if (isAuthError(err)) {
+        set({ reviews: [], loading: false, error: '登录已过期，请重新登录' });
+        return;
+      }
       set({ reviews: MOCK_REVIEWS, loading: false, error: '使用演示数据' });
     }
   },
@@ -127,7 +164,11 @@ export const useReviewStore = create<ReviewStore>((set) => ({
     try {
       const stats = await api.getReviewStats();
       set({ stats });
-    } catch {
+    } catch (err) {
+      if (isAuthError(err)) {
+        set({ stats: EMPTY_REVIEW_STATS });
+        return;
+      }
       set({ stats: MOCK_REVIEW_STATS });
     }
   },
@@ -150,7 +191,11 @@ export const useAdminStore = create<AdminStore>((set) => ({
     try {
       const members = await api.getMembers();
       set({ members, loading: false });
-    } catch {
+    } catch (err) {
+      if (isAuthError(err)) {
+        set({ members: [], loading: false });
+        return;
+      }
       set({ members: MOCK_USERS, loading: false });
     }
   },

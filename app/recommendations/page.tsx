@@ -1,17 +1,20 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Sparkles, TrendingUp, Eye, AlertTriangle, Wifi, WifiOff, Plus, X } from 'lucide-react';
 import AppShell from '@/components/layout/AppShell';
 import StockCard from '@/components/stock/StockCard';
 import { useRecommendationStore, useWatchlistStore } from '@/lib/store';
 import { api } from '@/lib/api';
+import { clearStoredUser } from '@/lib/auth';
 import type { StockSearchItem } from '@/lib/types';
 
 const DEBOUNCE_MS = 300;
 
 export default function RecommendationsPage() {
-  const { date, summary, recommendations, loading, useMock, fetch: fetchRecs } = useRecommendationStore();
+  const router = useRouter();
+  const { date, summary, recommendations, loading, useMock, error, fetch: fetchRecs } = useRecommendationStore();
   const { items: watchlist, fetch: fetchWatchlist, add: addWatchItem, remove: removeWatchItem } = useWatchlistStore();
 
   const [showAdd, setShowAdd] = useState(false);
@@ -26,6 +29,12 @@ export default function RecommendationsPage() {
   }, [fetchWatchlist, fetchRecs]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (error !== '登录已过期，请重新登录') return;
+    clearStoredUser();
+    router.replace('/login');
+  }, [error, router]);
 
   useEffect(() => {
     if (searchQ.trim().length < 2) {
