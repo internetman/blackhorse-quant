@@ -1,69 +1,79 @@
-# 黑马自选
+# R02 盘面板块雷达
 
-> 私有股票小社群 · AI 辅助每日买卖建议与复盘
+本地 / Vercel 可部署的网页仪表盘，用于同时观察：
 
-一个面向小圈子的自选股决策助手，围绕"圈内关注股票"提供结构化 AI 建议，并自动复盘验证建议效果。
+- 盘面总览：上证指数、创业板指、科创50、纳斯达克、恒生指数。
+- 全市场温度：涨跌幅中位数、上涨占比、P25/P75。
+- 实时板块指数：东方财富行业板块指数按当日涨跌幅排序。
+- Top 5 板块趋势：前 5 名板块最近 10 个交易日相对首日收盘的涨跌幅趋势。
+- 板块归因分析：按上涨家数、龙头强度、10 日相对趋势、成交额拆解上涨来源。
+- 板块领涨股：每个 Top 5 板块内按当日涨跌幅列出前 10 只股票。
+- R02 宽度校验：大盘云图行业市场宽度，用于确认当前主线资格。
 
-## 核心功能
-
-- **每日建议** — 对圈内自选股逐只输出结构化买卖建议（可交易 / 观望 / 风险升高）
-- **圈子选股** — 圈子成员共同维护的关注股票列表，支持意见领袖标记
-- **复盘记录** — T+1 / T+3 / T+5 自动追踪建议准确率
-- **私有持仓** — 每人独立记录仓位，彼此不可见
-- **圈子管理** — 邀请制加入、角色体系（管理员 / 意见领袖 / 成员）
-
-## 技术栈
-
-| 层 | 技术 |
-|---|------|
-| 前端 | Next.js 16 · React 19 · Tailwind CSS 4 · Zustand |
-| 后端 | FastAPI · Pydantic · Python 3.11+ |
-| 部署 | Vercel (前端) · Railway (后端) |
-
-## 快速开始
+## 本地运行
 
 ```bash
-# 前端
-npm install
-npm run dev          # http://localhost:3000
-
-# 后端
-cd backend
-pip install -r requirements.txt
-uvicorn app.main:app --reload   # http://localhost:8000
+python3 server.py
 ```
 
-## 项目结构
+然后打开：
 
-```
-app/                    # Next.js 页面
-  recommendations/      # 每日建议（主页）
-  watchlist/            # 圈子选股
-  reviews/              # 复盘记录
-  positions/            # 我的持仓
-  admin/                # 圈子管理
-  join/                 # 加入圈子
-components/
-  layout/               # 布局组件 (AppShell)
-  stock/                # 股票卡片组件
-lib/
-  api.ts                # API 客户端
-  store.ts              # Zustand 状态管理
-  types.ts              # TypeScript 类型定义
-  auth.ts               # 认证工具
-  mock-data.ts          # 演示数据
-backend/
-  app/
-    main.py             # FastAPI 入口
-    models.py           # Pydantic 模型
-    store.py            # 内存数据存储
-    api/                # API 路由
-docs/
-  v1.1-product-plan.md  # 产品方案
-  deployment-guide.md   # 部署指南
+```text
+http://127.0.0.1:8765/
 ```
 
-## 文档
+也可以指定端口：
 
-- [v1.1 产品方案](docs/v1.1-product-plan.md) — 详细产品设计文档
-- [部署指南](docs/deployment-guide.md) — Vercel + Railway 部署说明
+```bash
+R02_DASHBOARD_PORT=8766 python3 server.py
+```
+
+## Vercel 部署
+
+当前结构支持直接部署到 Vercel：
+
+```text
+index.html          # 静态页面
+server.py           # 本地服务 + 共享数据抓取逻辑
+api/dashboard.py    # Vercel Python Serverless Function
+vercel.json         # Function 超时配置
+```
+
+Vercel 上的访问路径：
+
+- `/`：静态页面
+- `/api/dashboard`：实时数据 JSON
+
+部署步骤：
+
+1. 在本目录初始化独立 Git 仓库并提交文件。
+2. 在 GitHub 创建一个新仓库，把本目录推送上去。
+3. 在 Vercel 新建 Project，导入该 GitHub 仓库。
+4. Framework Preset 选择 `Other` 或保持自动识别；不需要 Build Command。
+5. 部署完成后打开 Vercel URL。
+
+本项目没有 npm / pip 依赖，当前只使用 Python 标准库。
+
+## 口径
+
+- 实时板块排行：东方财富 `push2` 行业板块，`fs=m:90+t:2`，按 `f3` 当日涨跌幅排序。
+- 10 日趋势：东方财富 `push2his` 板块日 K，`secid=90.BKxxxx`，前端按首日收盘归一化为相对涨跌幅。
+- 领涨 10 股：东方财富 `push2` 板块成分股，`fs=b:BKxxxx`，按 `f3` 当日涨跌幅排序。
+- 盘面指数：东方财富 `push2` 指数行情。
+- 全市场涨跌分布：大盘云图 `mkt_idx.cur_chng_pct`。
+- R02 宽度：大盘云图 `industry_ma20_analysis_range`。
+
+## 交易系统边界
+
+- 实时板块涨跌是盘中温度计。
+- R02 宽度是交易系统里的板块资格证。
+- 二者必须分层展示，不能互相替代。
+- 本工具只做盘面监控和数据展示，不输出买卖建议。
+- 正式交易分析必须回到 Vault 里的 R02 / R04 / R05 / R13 / R15 和账户状态完成预检。
+- 若盘中出现强势集群，`R02_CURRENT` 可以临时标记为“盘中临时 R02”；正式周度 R02 仍须等收盘后行业宽度确认。
+
+## 注意事项
+
+- 部署到 Vercel 后，页面会成为公网可访问页面；不要放入账号、持仓截图、API key 或任何私密数据。
+- 东方财富和大盘云图接口是公开前端数据源，可能因为网络、限流、字段变化或跨境访问失败而返回空数据。
+- `R02_CURRENT` 是 `server.py` 中的面板 R02 摘要；若只是盘中临时更新，必须在 note 中保留正式 R02 口径与待收盘确认边界。
