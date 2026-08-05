@@ -1,53 +1,57 @@
 window.M2_DATA = {
-  asOf: "2026-08-04 15:00",
+  asOf: "2026-08-05 收盘",
   market: {
     status: "🟡 震荡 / 分化",
-    note: "风险边际改善，但权重与成长仍然分化；航运主线继续观察。",
+    note: "本次只更新个股收盘导入快照；未提供指数宽度，因此市场环境沿用最近已知的震荡/分化，不升级判断。",
     stats: [
-      { label: "上证", value: "+0.33%" },
-      { label: "深证", value: "+3.25%" },
-      { label: "创业板", value: "+5.64%" },
-      { label: "上涨 / 下跌", value: "1314 / 855" }
+      { label: "收盘导入", value: "42 只" },
+      { label: "均线顺序", value: "42 / 42" },
+      { label: "强势区", value: "37 / 42" },
+      { label: "严格初筛", value: "28 / 42" }
     ]
   },
   decision: {
     title: "今日没有 B1 / B2 触发",
-    text: "候选正在积累形态证据。当前最接近买点的是亿联网络，但还需要有效站上 Pivot 并出现量能确认。",
-    nextFocus: "亿联网络",
-    pivot: "40.88 附近",
-    distance: "3.01%"
+    text: "8-5 收盘表只证明趋势与位置初筛，未提供 RS、历史 OHLCV、Pivot、收缩次数和突破量；当前没有可确认买点。",
+    nextFocus: "明泰铝业",
+    pivot: "未确认",
+    distance: "—"
   },
-  changes: [],
+  changes: [
+    { time: "收盘", text: "招商轮船 18.10，单日 +7.87%；不追，等待缩量回踩或新平台。" },
+    { time: "收盘", text: "8-5 收盘导入 42 只，较早盘名单新增 15 只；名单变化不等于形态失效。" },
+    { time: "数据", text: "本批没有 RS、历史 OHLCV、Pivot 和收缩次数；所有候选仍停留在阶段 2 初筛。" }
+  ],
   candidates: [
     {
-      code: "300628", name: "亿联网络", sector: "通信 / 独立强势", state: "临近", stateClass: "near", stage: "阶段 2 候选",
-      price: "39.65", change: "+1.04%", volume: "1.12×", volumeLabel: "温和放大", pivot: "40.88", distance: "3.01%",
-      range: 78, pivotPrice: 40.88, pivotStatus: "候选", pivotReason: "最近整理平台上沿 40.88；需收盘站上并有量能确认。", stageReason: "阶段 2 候选：均线多头结构待每日重算。", volumeRule: "突破日需明显放量", advice: "突破确认后考虑", adviceClass: "priority", adviceReason: "站上 40.88 并放量后才进入买点复核；当前不追。", action: "等待站上 40.88 附近并放量；未突破不追。", note: "均线多头，距离阶段高点较近。", baseAge: "未接入历史统计", contractions: "未确认", contractionDetail: "需历史 OHLCV 扫描", correction: "未接入历史统计", chart: "m2-assets/亿联网络.jpg", priority: 1
+      code: "300628", name: "亿联网络", sector: "通信 / 历史档案", state: "未入选", stateClass: "review", stage: "历史档案",
+      price: "—", change: "—", volume: "—", volumeLabel: "未出现在收盘表", pivot: "未确认", distance: "—",
+      range: 20, pivotPrice: null, pivotStatus: "未入选", pivotReason: "8-5 收盘导入表未出现；保留历史档案，不据此判定形态失效。", stageReason: "本次未进入收盘初筛，不能把历史看板状态当作今日信号。", volumeRule: "等待新的收盘快照", advice: "继续观察", adviceClass: "wait", adviceReason: "等待重新进入导入表并补齐 RS、Pivot 与收缩证据。", action: "保留历史档案，等重新出现或结构数据更新。", note: "动态历史扫描：40日深度 20.93%，20日波动 18.82%，收缩次数 0；早盘与收盘名单变化不等于买点或失效。", baseAge: "40 个交易日", contractions: "0 次", contractionDetail: "VCP 收缩未确认；量能收缩比 1.31×", correction: "20.93%", chart: "m2-assets/亿联网络.jpg", priority: 1
     },
     {
-      code: "601677", name: "明泰铝业", sector: "铝 / 有色", state: "临近复核", stateClass: "review", stage: "阶段 2 候选",
-      price: "17.00", change: "+1.37%", volume: "0.74×", volumeLabel: "缩量整理", pivot: "未确认", distance: "—",
-      range: 61, pivotPrice: null, pivotStatus: "待确认", pivotReason: "当前平台上沿尚未确认；不能把当天高点直接当 Pivot。", stageReason: "阶段 2 候选：需确认均线顺序和平台持续性。", volumeRule: "突破日需明显放量", advice: "等待平台 / 突破", adviceClass: "wait", adviceReason: "先确认平台上沿、收缩和突破量，再判断是否进入买点。", action: "继续观察平台上沿和突破量，不因上涨直接升级。", note: "平台相对紧凑，MACD 改善。", baseAge: "未接入历史统计", contractions: "未确认", contractionDetail: "需历史 OHLCV 扫描", correction: "未接入历史统计", chart: "m2-assets/明泰铝业.jpg", priority: 2
+      code: "601677", name: "明泰铝业", sector: "铝 / 有色", state: "趋势观察", stateClass: "watch", stage: "阶段 2 初筛",
+      price: "17.17", change: "+1.00%", volume: "数据不足", volumeLabel: "收盘表无量比", pivot: "未确认", distance: "—",
+      range: 42, pivotPrice: null, pivotStatus: "待确认", pivotReason: "当前导出没有 Pivot；不能把当天高点直接当 Pivot。", stageReason: "价格 > MA50 > MA150 > MA200，且位于 52 周高点 86.8%；仍需历史形态确认。", volumeRule: "突破日需明显放量", advice: "等待平台 / 突破", adviceClass: "wait", adviceReason: "先确认平台上沿、收缩次数和突破量，再判断是否进入买点。", action: "重点补历史 OHLCV，确认平台上沿与放量突破。", note: "MA50 +2.61%，20D +9.09%；动态扫描 40日深度16.11%、20日波动14.80%、收缩0次，趋势位置较好但未形成买点。", baseAge: "40 个交易日", contractions: "0 次", contractionDetail: "VCP 收缩未确认；量能收缩比 0.70×", correction: "16.11%", chart: "m2-assets/明泰铝业.jpg", priority: 2
     },
     {
-      code: "002648", name: "卫星化学", sector: "化工材料 / 独立强势", state: "观察", stateClass: "watch", stage: "阶段 2 候选",
-      price: "25.20", change: "−0.32%", volume: "0.93×", volumeLabel: "接近均量", pivot: "25.50", distance: "1.18%",
-      range: 46, pivotPrice: 25.50, pivotStatus: "候选", pivotReason: "近端平台上沿 25.50；需要继续收窄后再验证突破。", stageReason: "阶段 2 候选：价格抬高，但均线与底部仍需复核。", volumeRule: "突破日需明显放量", advice: "等待平台 / 突破", adviceClass: "wait", adviceReason: "25.50 只是候选上沿；先等收窄和量能确认，不把压力位当买点。", action: "等待 24.5–25.5 区间继续收窄，再观察突破。", note: "价格逐步抬高，平台仍未完全确认。", baseAge: "未接入历史统计", contractions: "未确认", contractionDetail: "需历史 OHLCV 扫描", correction: "未接入历史统计", chart: "m2-assets/卫星化学.jpg", priority: 3
+      code: "002648", name: "卫星化学", sector: "化工材料 / 独立强势", state: "趋势观察", stateClass: "watch", stage: "阶段 2 初筛",
+      price: "25.26", change: "+0.24%", volume: "数据不足", volumeLabel: "收盘表无量比", pivot: "未确认", distance: "—",
+      range: 38, pivotPrice: null, pivotStatus: "待复核", pivotReason: "历史看板曾记录候选上沿，但本次收盘表没有 Pivot，需用动态历史数据复核。", stageReason: "价格 > MA50 > MA150 > MA200，且位于 52 周高点 84.6%；趋势初筛通过。", volumeRule: "突破日需明显放量", advice: "等待平台 / 突破", adviceClass: "wait", adviceReason: "先确认收缩和量能，不能把旧压力位直接当买点。", action: "重点补动态 VCP/Pivot，确认平台收紧后再看突破。", note: "MA50 +5.84%，20D +10.21%；动态扫描 20日/10日收缩共2次，量能收缩比0.72×，是当前 VCP 候选但仍未触发。", baseAge: "40 个交易日", contractions: "2 次", contractionDetail: "20日 14.78%、10日 9.08%；量能比 0.60× / 0.77×", correction: "21.26%", chart: "m2-assets/卫星化学.jpg", priority: 3
     },
     {
-      code: "601872", name: "招商轮船", sector: "航运 / 主线共振", state: "主线观察", stateClass: "mainline", stage: "阶段 2 候选",
-      price: "16.78", change: "−1.47%", volume: "1.19×", volumeLabel: "日内活跃", pivot: "16.90–17.00", distance: "—",
-      range: 40, pivotPrice: 17.00, pivotStatus: "候选", pivotReason: "16.90–17.00 近端平台上沿；回落中不把压力区当买点。", stageReason: "阶段 2 候选：主线共振加分，但个股形态尚未收紧。", volumeRule: "突破日需明显放量", advice: "等待平台 / 突破", adviceClass: "wait", adviceReason: "主线共振只能加分；先等个股收紧并有效突破 16.90–17.00。", action: "航运主线未失效，但今天回落，不升级、不追跌。", note: "板块标签加分，形态仍需收紧。", baseAge: "未接入历史统计", contractions: "未确认", contractionDetail: "需历史 OHLCV 扫描", correction: "未接入历史统计", chart: "m2-assets/招商轮船.jpg", priority: 4
+      code: "601872", name: "招商轮船", sector: "航运 / 主线共振", state: "不追", stateClass: "review", stage: "阶段 2 初筛",
+      price: "18.10", change: "+7.87%", volume: "数据不足", volumeLabel: "收盘表无量比", pivot: "未确认", distance: "—",
+      range: 24, pivotPrice: null, pivotStatus: "待复核", pivotReason: "原平台上沿需要用收盘后的历史 OHLCV 重画；今日上涨不能自动形成买点。", stageReason: "趋势初筛通过，且航运主线可观察；但今日单日涨幅过大，先不追。", volumeRule: "突破日需明显放量", advice: "不追当日大涨", adviceClass: "caution", adviceReason: "单日 +7.87%，距 MA50 +11.80%；等待缩量回踩或新平台。", action: "航运主线只作加分项；等待新平台、收缩和有效放量突破。", note: "20D +18.30%，52 周高点位置 82.6%；动态扫描 40日深度37.24%、20日波动24.20%、收缩1次，当前扩张明显。", baseAge: "40 个交易日", contractions: "1 次", contractionDetail: "20日波动24.20%；量能比 0.65×", correction: "37.24%", chart: "m2-assets/招商轮船.jpg", priority: 4
     },
     {
-      code: "300750", name: "宁德时代", sector: "电池新能源 / 独立强势", state: "观察", stateClass: "watch", stage: "阶段 2 候选",
-      price: "395.10", change: "+0.18%", volume: "0.71×", volumeLabel: "缩量", pivot: "400–410 压力区", distance: "—",
-      range: 31, pivotPrice: null, pivotStatus: "压力区", pivotReason: "400–410 只是压力区，不是已经确认的 Pivot。", stageReason: "阶段 2 候选：趋势尚在，但底部较宽，需重新定义平台。", volumeRule: "突破日需明显放量", advice: "等待平台 / 突破", adviceClass: "wait", adviceReason: "趋势尚在但底部较宽；先重新定义紧平台，不把 400–410 当现成买点。", action: "需要更紧的平台和放量突破，不能把压力区当买点。", note: "大市值、趋势尚在，但底部较宽。", baseAge: "未接入历史统计", contractions: "未确认", contractionDetail: "需历史 OHLCV 扫描", correction: "未接入历史统计", chart: "m2-assets/宁德时代.jpg", priority: 5
+      code: "300750", name: "宁德时代", sector: "电池新能源 / 独立强势", state: "趋势观察", stateClass: "watch", stage: "阶段 2 初筛",
+      price: "405.20", change: "+2.56%", volume: "数据不足", volumeLabel: "收盘表无量比", pivot: "未确认", distance: "—",
+      range: 34, pivotPrice: null, pivotStatus: "压力区待复核", pivotReason: "400–410 只能先视为压力/观察区；本次收盘表没有 Pivot。", stageReason: "价格 > MA50 > MA150 > MA200，且位于 52 周高点 86.4%；底部与收缩仍需动态历史数据。", volumeRule: "突破日需明显放量", advice: "等待平台 / 突破", adviceClass: "wait", adviceReason: "趋势尚在但买点证据不完整；先重新定义紧平台，不把压力区当现成买点。", action: "等待更紧的平台、收缩和放量突破。", note: "MA50 +3.68%，20D +12.24%；动态扫描 40日深度16.39%、20日波动15.14%、收缩1次，趋势候选。", baseAge: "40 个交易日", contractions: "1 次", contractionDetail: "10日波动10.27%；量能比 0.84×", correction: "16.39%", chart: "m2-assets/宁德时代.jpg", priority: 5
     },
     {
-      code: "000582", name: "北部湾港", sector: "港口航运 / 主线共振", state: "主线观察", stateClass: "mainline", stage: "阶段 2 候选",
-      price: "12.63", change: "−1.17%", volume: "1.03×", volumeLabel: "接近均量", pivot: "近端平台待定", distance: "—",
-      range: 27, pivotPrice: null, pivotStatus: "待形成", pivotReason: "新平台尚未形成；15.46 前高只能作参考，不能直接作为买点。", stageReason: "阶段 2 候选：主线共振存在，但修复幅度仍较大。", volumeRule: "突破日需明显放量", advice: "暂不建议买入", adviceClass: "avoid", adviceReason: "新平台和 Pivot 尚未形成；主线共振不能替代个股买点。", action: "等待形成新平台，不能直接使用 15.46 前高作为买点。", note: "主线共振存在，但修复幅度仍较大。", baseAge: "未接入历史统计", contractions: "未确认", contractionDetail: "需历史 OHLCV 扫描", correction: "未接入历史统计", chart: "m2-assets/北部湾港.jpg", priority: 6
+      code: "000582", name: "北部湾港", sector: "港口航运 / 主线共振", state: "主线观察", stateClass: "mainline", stage: "阶段 2 初筛",
+      price: "12.91", change: "+2.22%", volume: "数据不足", volumeLabel: "收盘表无量比", pivot: "未确认", distance: "—",
+      range: 29, pivotPrice: null, pivotStatus: "待形成", pivotReason: "本次收盘表没有 Pivot；前高只能作参考，不能直接作为买点。", stageReason: "趋势初筛通过，主线标签可作加分项；但平台与收缩仍未确认。", volumeRule: "突破日需明显放量", advice: "等待平台 / 突破", adviceClass: "wait", adviceReason: "主线共振不能替代个股买点；等待新平台、收缩和量能确认。", action: "航运/港口主线继续观察，但不把前高直接当买点。", note: "MA50 +8.86%，20D +16.20%，52 周高点位置 83.5%；动态扫描 40日深度21.76%、20日波动17.62%、收缩1次，修复仍需控制。", baseAge: "40 个交易日", contractions: "1 次", contractionDetail: "40日波动21.76%；量能比 0.64×", correction: "21.76%", chart: "m2-assets/北部湾港.jpg", priority: 6
     }
   ]
 };
