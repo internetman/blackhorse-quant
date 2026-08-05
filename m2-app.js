@@ -34,6 +34,61 @@
     if (kind === "contractionDetail") return `${metrics.vcpStatus}；需人工确认`;
     return fallback;
   };
+  const bareCode = (value) => String(value || "").split(".")[0];
+  const tableRows = Array.isArray(window.M2_TABLE_DATA?.rows) ? window.M2_TABLE_DATA.rows : [];
+  const previousCandidates = Array.isArray(data.candidates) ? data.candidates : [];
+  const previousByCode = new Map(previousCandidates.map((item) => [bareCode(item.code), item]));
+  const buildObservedCandidate = (row, index) => {
+    const code = bareCode(row.code);
+    const previous = previousByCode.get(code);
+    if (previous) {
+      return {
+        ...previous,
+        code,
+        name: row.name || previous.name,
+        price: formatPrice(row.price),
+        change: formatPct(row.pct),
+        stage: row.stageInference || previous.stage,
+        priority: index + 1,
+        rangeLabel: "形态准备度",
+      };
+    }
+    const caution = row.recommendationClass === "caution";
+    const avoid = row.recommendationClass === "avoid";
+    return {
+      code,
+      name: row.name,
+      sector: "待 R02 板块复核",
+      state: "观察",
+      stateClass: "watch",
+      stage: row.stageInference || "阶段 2 初筛",
+      price: formatPrice(row.price),
+      change: formatPct(row.pct),
+      volume: "数据不足",
+      volumeLabel: "导入表无量比",
+      pivot: "待确认",
+      distance: "—",
+      range: 18,
+      rangeLabel: "证据完整度",
+      pivotPrice: null,
+      pivotStatus: "待确认",
+      pivotReason: "本次导入未包含 Pivot；需补充动态历史 OHLCV 后确认当前平台上沿。",
+      stageReason: "均线与位置初筛通过；RS、平台持续时间、收缩顺序和突破量尚未补齐。",
+      volumeRule: "突破日需明显放量",
+      advice: row.recommendation || (caution ? "不追当日大涨" : avoid ? "等待回到强势区" : "等待平台 / 突破"),
+      adviceClass: row.recommendationClass || "wait",
+      adviceReason: row.recommendationReason || "趋势初筛通过，但还没有买点确认。",
+      action: "补充历史 OHLCV、RS、Pivot、收缩次数和突破量；未确认前不买。",
+      note: "本卡片代表进入 M2 观察阶段，不代表已经形成买点。",
+      baseAge: "待历史 OHLCV",
+      contractions: "未确认",
+      contractionDetail: "等待动态历史扫描；i问财导出未包含收缩次数。",
+      correction: "待历史 OHLCV",
+      chart: null,
+      priority: index + 1,
+    };
+  };
+  if (tableRows.length) data.candidates = tableRows.map(buildObservedCandidate);
   // The cards are rendered more than once (for example when a quote snapshot
   // arrives after the history snapshot). Keep the chart repaint hook alive so
   // a late card refresh cannot replace a loaded SVG with a loading placeholder.
@@ -42,7 +97,7 @@
     if (!container) return;
     const rows = history?.rows || [];
     if (rows.length < 20) {
-      container.innerHTML = `<div class="chart-loading">动态日K暂不可用<br /><small>不使用旧截图替代</small></div>`;
+      container.innerHTML = `<div class="chart-loading">动态日K暂不可用<br /><small>本次仅完成趋势初筛，等待历史 OHLCV；不使用旧截图替代</small></div>`;
       return;
     }
     const width = large ? 1180 : 720;
@@ -150,11 +205,11 @@
     $("watchGrid").innerHTML = data.candidates.map((item) => `
     <article class="stock-card ${item.stateClass}">
       <div class="stock-card-head">
-        <div class="stock-id"><span class="rank">0${item.priority}</span><div><h3>${item.name}</h3><small>${item.code} · ${item.sector}</small></div></div>
+        <div class="stock-id"><span class="rank">${String(item.priority).padStart(2, "0")}</span><div><h3>${item.name}</h3><small>${item.code} · ${item.sector}</small></div></div>
         <span class="state-chip ${item.stateClass}">${item.state}</span>
       </div>
       <div class="stock-price-row"><strong>${item.price}</strong><span class="change ${String(item.change).indexOf("−") === 0 || String(item.change).indexOf("-") === 0 ? "down" : "up"}">${item.change}</span><span class="stage-tag">${item.stage}</span></div>
-      <div class="signal-row"><span>形态准备度</span><div class="signal-bar"><i style="width:${item.range}%"></i></div><b>${item.range}%</b></div>
+      <div class="signal-row"><span>${item.rangeLabel || "形态准备度"}</span><div class="signal-bar"><i style="width:${item.range}%"></i></div><b>${item.range}%</b></div>
       <div class="stock-metrics">
         <div><span>候选 Pivot</span><strong>${item.pivot}</strong></div>
         <div><span>距 Pivot</span><strong>${item.distance}</strong></div>
