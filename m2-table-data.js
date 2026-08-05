@@ -22,7 +22,7 @@ window.M2_TABLE_DATA = (() => {
       recommendationClass = 'avoid';
       recommendationReason = '当前距 52 周高点超过 25%，不符合严格版强势位置要求。';
     }
-    return { code, symbol: code.slice(0,6), name, price, pct, closeAdj: price, ma50, ma150, ma200, periodPct, high52, low52, fromHighPct, fromLowPct, avgAmount, marketCap, exchange,
+    return { code, symbol: code.slice(0,6), name, price, pct, closeAdj: price, ma50, ma150, ma200, periodPct, high52, low52, fromHighPct, fromLowPct, avgAmount, marketCap, exchange: exchange.includes('深') ? '深交所' : exchange.includes('上') ? '上交所' : exchange,
       maStacked: price > ma50 && ma50 > ma150 && ma150 > ma200, aboveMa50: price > ma50, aboveMa200: price > ma200,
       priceToMa50Pct, priceToMa150Pct, priceToMa200Pct, ma50ToMa150Pct, ma150ToMa200Pct, stageInference: '阶段 2 初筛通过',
       recommendation, recommendationClass, recommendationReason, pivot: '待确认', pivotReason: '8-5 收盘导出未包含 Pivot；需结合动态历史 OHLCV 与图形核验。', contractions: '待确认',
