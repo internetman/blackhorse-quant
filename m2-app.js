@@ -282,8 +282,10 @@
       const response = await fetch("/api/m2-history?force=1", { cache: "no-store" });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const payload = await response.json();
-      const entries = Object.entries(payload.history || {});
-      entries.forEach(([code, history]) => historyCache.set(String(code), history));
+      const allEntries = Object.entries(payload.history || {});
+      const candidateCodes = new Set(data.candidates.map((item) => bareCode(item.code)));
+      const entries = allEntries.filter(([code]) => candidateCodes.has(bareCode(code)));
+      allEntries.forEach(([code, history]) => historyCache.set(String(code), history));
       renderCandidates();
       renderDynamicCharts();
       if (!entries.length) throw new Error("没有历史日K数据");
@@ -334,8 +336,10 @@
   };
 
   const applySnapshot = (payload) => {
-    const entries = Object.entries(payload.history || {});
-    entries.forEach(([code, history]) => historyCache.set(String(code), history));
+    const allEntries = Object.entries(payload.history || {});
+    const candidateCodes = new Set(data.candidates.map((item) => bareCode(item.code)));
+    const entries = allEntries.filter(([code]) => candidateCodes.has(bareCode(code)));
+    allEntries.forEach(([code, history]) => historyCache.set(String(code), history));
     const quotes = new Map((payload.quotes || []).map((quote) => [String(quote.code), quote]));
     data.candidates.forEach((item) => {
       const quote = quotes.get(String(item.code));
