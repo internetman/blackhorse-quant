@@ -105,8 +105,8 @@
         <td>${pct(row.fromLowPct)}</td>
         <td>${count(row.avgAmount)}</td>
         <td>${amountYi(row.marketCap)}</td>
-        <td>${price(row.pb)}</td>
-        <td>${price(row.pe)}</td>
+        <td class="trend-pending">${row.ma200Slope || "待复核"}</td>
+        <td class="data-warning" title="${row.dataQuality || ""}">${row.dataQuality || "—"}</td>
         <td class="pivot-pending">${row.pivot}</td>
         <td class="contraction-pending">${row.contractions}</td>
       </tr>
