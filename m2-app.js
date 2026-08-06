@@ -29,6 +29,30 @@
   const historyKey = (value) => bareCode(value);
   const setHistory = (code, history) => historyCache.set(historyKey(code), history);
   const getHistory = (code) => historyCache.get(historyKey(code));
+  const formatPivot = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "待确认";
+  const derivePivot = (history) => {
+    const rows = (history?.rows || []).filter((row) => finite(row.high) !== null);
+    if (!rows.length) return null;
+    const contractionWindows = (history.metrics?.contractions || [])
+      .map((item) => Number(item.window))
+      .filter((value) => Number.isFinite(value) && value >= 5);
+    const lookback = contractionWindows.length ? Math.min(...contractionWindows) : (rows.length >= 20 ? 20 : rows.length);
+    const sample = rows.slice(-lookback);
+    const highRow = sample.reduce((best, row) => finite(row.high) > finite(best.high) ? row : best, sample[0]);
+    const pivot = finite(highRow.high);
+    if (pivot === null) return null;
+    return { price: pivot, date: highRow.date || "", lookback, asOf: history.asOf || rows[rows.length - 1]?.date || "" };
+  };
+  const applyPivotFromHistory = (item, history) => {
+    const pivot = derivePivot(history);
+    if (!pivot) return;
+    item.pivotPrice = pivot.price;
+    item.pivot = formatPivot(pivot.price);
+    item.pivotStatus = `${pivot.lookback}日参考买点`;
+    item.pivotReason = `参考 Pivot 买点取最近 ${pivot.lookback} 日最高价 ${item.pivot}（${pivot.date}）。只有收盘突破并明显放量才算触发；这里先作为观察上沿。`;
+    item.volumeRule = `突破 ${item.pivot} 需明显放量`;
+    item.distance = distanceToPivot(item);
+  };
   const chartMetric = (item, kind, fallback) => {
     const metrics = getHistory(item.code)?.metrics;
     if (!metrics) return fallback;
@@ -194,7 +218,7 @@
       const boxWidth = Math.max(candleWidth * 2, x(end) - x(start) + candleWidth * 2);
       return `<rect x="${boxX.toFixed(1)}" y="${top}" width="${boxWidth.toFixed(1)}" height="${priceHeight}" class="contraction-box"/><text x="${(boxX + 4).toFixed(1)}" y="${(top + 13).toFixed(1)}" class="contraction-label">收缩 ${box.window}日</text>`;
     }).join("");
-    const pivotLine = pivot === null ? `<text x="${left}" y="${(top - 6).toFixed(1)}" class="pivot-label">Pivot 待确认</text>` : `<line x1="${left}" y1="${yPrice(pivot).toFixed(1)}" x2="${width - right}" y2="${yPrice(pivot).toFixed(1)}" class="pivot-line"/><text x="${left + 5}" y="${(yPrice(pivot) - 5).toFixed(1)}" class="pivot-label">Pivot ${escapeXml(item.pivot)}</text>`;
+    const pivotLine = pivot === null ? `<text x="${left}" y="${(top - 6).toFixed(1)}" class="pivot-label">Pivot 待确认</text>` : `<line x1="${left}" y1="${yPrice(pivot).toFixed(1)}" x2="${width - right}" y2="${yPrice(pivot).toFixed(1)}" class="pivot-line"/><text x="${left + 5}" y="${(yPrice(pivot) - 5).toFixed(1)}" class="pivot-label">参考 Pivot ${escapeXml(item.pivot)}</text>`;
     const labels = rows.filter((row, index) => index === 0 || index === rows.length - 1 || index % Math.max(1, Math.floor(rows.length / 5)) === 0).map((row) => {
       const index = rows.indexOf(row);
       return `<text x="${x(index).toFixed(1)}" y="${(plotBottom + 17).toFixed(1)}" class="chart-date-label" text-anchor="middle">${escapeXml(row.date.slice(5))}</text>`;
@@ -238,9 +262,14 @@
         <span class="state-chip ${item.stateClass}">${item.state}</span>
       </div>
       <div class="stock-price-row"><strong>${item.price}</strong><span class="change ${String(item.change).indexOf("−") === 0 || String(item.change).indexOf("-") === 0 ? "down" : "up"}">${item.change}</span><span class="stage-tag">${item.stage}</span></div>
+      <div class="pivot-focus ${item.pivotPrice ? "ready" : "pending"}">
+        <span>参考 PIVOT 买点 / 平台上沿</span>
+        <strong>${item.pivot}</strong>
+        <small>${item.pivotStatus || "等待静态日K快照"} · ${item.distance || "—"}</small>
+      </div>
       <div class="signal-row"><span>${item.rangeLabel || "形态准备度"}</span><div class="signal-bar"><i style="width:${item.range}%"></i></div><b>${item.range}%</b></div>
       <div class="stock-metrics">
-        <div><span>候选 Pivot</span><strong>${item.pivot}</strong></div>
+        <div><span>Pivot 状态</span><strong>${item.pivotStatus || "待确认"}</strong></div>
         <div><span>距 Pivot</span><strong>${item.distance}</strong></div>
         <div><span>量比（结构快照）</span><strong>${item.volume}</strong><small>${item.volumeLabel}</small></div>
       </div>
@@ -316,8 +345,16 @@
       if (!quote) return;
       if (Number.isFinite(Number(quote.price))) item.price = formatPrice(quote.price);
       if (Number.isFinite(Number(quote.pct))) item.change = formatPct(quote.pct);
+    });
+    data.candidates.forEach((item) => {
+      applyPivotFromHistory(item, getHistory(item.code));
       item.distance = distanceToPivot(item);
     });
+    const focus = data.candidates.find((item) => item.name === data.decision.nextFocus) || data.candidates[0];
+    if (focus) {
+      $("nextPivot").textContent = focus.pivot || "待确认";
+      $("nextDistance").textContent = focus.distance || "—";
+    }
     renderCandidates();
     return entries;
   };

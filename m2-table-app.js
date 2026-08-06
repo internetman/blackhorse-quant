@@ -12,6 +12,45 @@
   const amountYi = (value) => Number.isFinite(Number(value)) ? (Number(value) / 100000000).toFixed(1) : "—";
   const count = (value) => Number.isFinite(Number(value)) ? Number(value).toLocaleString("zh-CN") : "—";
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+  const bareCode = (value) => String(value || "").split(".")[0];
+  const finite = (value) => (value === null || value === undefined || value === "") ? null : (Number.isFinite(Number(value)) ? Number(value) : null);
+  const formatPivot = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "待确认";
+  const pivotDistance = (row, pivot) => {
+    const current = finite(row.price);
+    if (current === null || !pivot) return "—";
+    const distance = (pivot - current) / current * 100;
+    if (Math.abs(distance) < 0.01) return "已到上沿";
+    return distance > 0 ? `距上沿 +${distance.toFixed(1)}%` : `已越过 ${Math.abs(distance).toFixed(1)}%`;
+  };
+  const derivePivot = (history) => {
+    const rows = (history?.rows || []).filter((item) => finite(item.high) !== null);
+    if (!rows.length) return null;
+    const contractionWindows = (history.metrics?.contractions || [])
+      .map((item) => Number(item.window))
+      .filter((value) => Number.isFinite(value) && value >= 5);
+    const lookback = contractionWindows.length ? Math.min(...contractionWindows) : (rows.length >= 20 ? 20 : rows.length);
+    const sample = rows.slice(-lookback);
+    const highRow = sample.reduce((best, item) => finite(item.high) > finite(best.high) ? item : best, sample[0]);
+    const pivot = finite(highRow.high);
+    if (pivot === null) return null;
+    return { price: pivot, date: highRow.date || "", lookback };
+  };
+  const applySnapshotPivot = (payload) => {
+    const history = payload.history || {};
+    data.rows.forEach((row) => {
+      const itemHistory = history[bareCode(row.code)] || history[row.code];
+      const pivot = derivePivot(itemHistory);
+      if (!pivot) return;
+      row.pivotPrice = pivot.price;
+      row.pivot = formatPivot(pivot.price);
+      row.pivotStatus = `${pivot.lookback}日参考买点`;
+      row.pivotDistance = pivotDistance(row, pivot.price);
+      row.pivotReason = `参考 Pivot 买点取最近 ${pivot.lookback} 日最高价 ${row.pivot}（${pivot.date}）；收盘突破并明显放量才算触发。`;
+      const countValue = itemHistory?.metrics?.contractionCount;
+      if (Number.isFinite(Number(countValue))) row.contractions = `${countValue} 次`;
+      row.dataQuality = `${row.pivotStatus}已补；仍缺 RS 与人工图形确认`;
+    });
+  };
 
   $("tableAsOf").textContent = `导入快照 ${data.asOf}`;
   $("tableSource").textContent = data.source;
@@ -104,7 +143,7 @@
         <td>${amountYi(row.marketCap)}</td>
         <td class="trend-pending">${row.ma200Slope || "待复核"}</td>
         <td class="data-warning" title="${row.dataQuality || ""}">${row.dataQuality || "—"}</td>
-        <td class="pivot-pending">${row.pivot}</td>
+        <td class="${row.pivotPrice ? "pivot-ready" : "pivot-pending"}" title="${row.pivotReason || ""}"><strong>${row.pivot}</strong><small>${row.pivotStatus || "待确认"} · ${row.pivotDistance || "—"}</small></td>
         <td class="contraction-pending">${row.contractions}</td>
       </tr>
     `).join("");
@@ -112,4 +151,17 @@
 
   ["tableSearch", "tableFilter", "tableSort"].forEach((id) => $(id).addEventListener("input", render));
   render();
+
+  const syncSnapshot = async () => {
+    try {
+      const response = await fetch(`/m2-snapshot.json?ts=${Date.now()}`, { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      applySnapshotPivot(await response.json());
+      renderAnalysis();
+      render();
+    } catch (error) {
+      console.warn("M2 table pivot snapshot failed", error);
+    }
+  };
+  syncSnapshot();
 })();

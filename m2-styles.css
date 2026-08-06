@@ -124,6 +124,12 @@ h3 { font-size: 16px; font-weight: 500; }
 .change.up { color: var(--red); }
 .change.down { color: var(--green); }
 .stage-tag { margin-left: auto; color: var(--muted); border-left: 1px solid var(--line); padding-left: 9px; }
+.pivot-focus { display: grid; grid-template-columns: 1fr auto; gap: 5px 12px; align-items: end; margin: 0 0 14px; padding: 12px 13px 11px; border-left: 2px solid var(--orange); background: linear-gradient(90deg, rgba(237,154,103,.13), rgba(134,184,231,.05)); }
+.pivot-focus span { color: var(--orange); font: 8px var(--mono); letter-spacing: .12em; }
+.pivot-focus strong { grid-column: 2; grid-row: 1 / 3; color: var(--paper); font: 24px var(--mono); line-height: .95; letter-spacing: -.04em; }
+.pivot-focus small { color: #b6c3cb; font: 10px/1.35 var(--mono); }
+.pivot-focus.pending { border-left-color: var(--muted); background: rgba(179,197,210,.05); }
+.pivot-focus.pending span, .pivot-focus.pending strong { color: var(--muted); }
 .signal-row { gap: 8px; color: var(--muted); font: 9px var(--mono); }
 .signal-bar { flex: 1; }
 .signal-bar i { display: block; height: 100%; background: var(--accent, var(--green)); }
