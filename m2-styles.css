@@ -148,6 +148,8 @@ h3 { font-size: 16px; font-weight: 500; }
 .recommendation-band.caution strong { color: var(--orange); }
 .recommendation-band.wait { border-left-color: var(--blue); background: rgba(134,184,231,.06); }
 .recommendation-band.wait strong { color: var(--blue); }
+.recommendation-band.review { border-left-color: #b8a6ff; background: rgba(184,166,255,.06); }
+.recommendation-band.review strong { color: #c8b9ff; }
 .recommendation-band.avoid { border-left-color: var(--red); background: rgba(232,117,117,.06); }
 .recommendation-band.avoid strong { color: var(--red); }
 .structure-note { padding: 11px 0 0; }

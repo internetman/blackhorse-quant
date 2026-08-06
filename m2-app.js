@@ -25,8 +25,12 @@
   const escapeXml = (value) => String(value ?? "").replace(/[<>&'"]/g, (char) => ({"<":"&lt;",">":"&gt;","&":"&amp;","'":"&apos;","\"":"&quot;"}[char]));
   const finite = (value) => (value === null || value === undefined || value === "") ? null : (Number.isFinite(Number(value)) ? Number(value) : null);
   const chartPct = (value) => finite(value) === null ? "—" : `${finite(value) >= 0 ? "+" : "−"}${Math.abs(finite(value)).toFixed(1)}%`;
+  const bareCode = (value) => String(value || "").split(".")[0];
+  const historyKey = (value) => bareCode(value);
+  const setHistory = (code, history) => historyCache.set(historyKey(code), history);
+  const getHistory = (code) => historyCache.get(historyKey(code));
   const chartMetric = (item, kind, fallback) => {
-    const metrics = historyCache.get(String(item.code))?.metrics;
+    const metrics = getHistory(item.code)?.metrics;
     if (!metrics) return fallback;
     if (kind === "baseAge") return `${metrics.baseDays} 个交易日（算法）`;
     if (kind === "contractions") return `${metrics.contractionCount} 次（算法）`;
@@ -34,7 +38,6 @@
     if (kind === "contractionDetail") return `${metrics.vcpStatus}；需人工确认`;
     return fallback;
   };
-  const bareCode = (value) => String(value || "").split(".")[0];
   const tableRows = Array.isArray(window.M2_TABLE_DATA?.rows) ? window.M2_TABLE_DATA.rows : [];
   const previousCandidates = Array.isArray(data.candidates) ? data.candidates : [];
   const previousByCode = new Map(previousCandidates.map((item) => [bareCode(item.code), item]));
@@ -49,6 +52,30 @@
         price: formatPrice(row.price),
         change: formatPct(row.pct),
         stage: row.stageInference || previous.stage,
+        state: row.status || previous.state,
+        stateClass: row.recommendationClass === "review" ? "review" : "watch",
+        sector: row.currentQualified ? (previous.sector || "待 R02 板块复核") : "历史观察 / 待复核",
+        pivot: row.pivot || previous.pivot,
+        pivotPrice: null,
+        pivotStatus: "待确认",
+        pivotReason: row.pivotReason || previous.pivotReason,
+        stageReason: row.currentQualified
+          ? "当前仍通过 M2-01 观察资格；第二阶段、RS、VCP 和 Pivot 仍需历史 OHLCV / 图形复核。"
+          : "历史已进入观察池；当前导出未确认继续合格，保留记录等待收盘或图形复核。",
+        volume: "数据不足",
+        volumeLabel: "导入表无量比",
+        volumeRule: "突破日需明显放量",
+        advice: row.recommendation || previous.advice,
+        adviceClass: row.recommendationClass || previous.adviceClass,
+        adviceReason: row.recommendationReason || previous.adviceReason,
+        action: row.currentQualified
+          ? "继续观察；补 RS、历史 OHLCV、Pivot、收缩次数和突破量。未确认前不买。"
+          : "保留记录待复核；若收盘后仍不满足趋势 / 位置 / 量价，再人工决定是否移出。",
+        note: `${row.transition || "观察池记录"}；距 52 周高点 ${formatPct(row.fromHighPct)}，距 MA50 ${formatPct(row.priceToMa50Pct)}。`,
+        baseAge: "待历史 OHLCV",
+        contractions: row.contractions || "待确认",
+        contractionDetail: "等待动态历史扫描；i问财导出未包含收缩次数。",
+        correction: "待历史 OHLCV",
         priority: index + 1,
         rangeLabel: "形态准备度",
       };
@@ -59,8 +86,8 @@
       code,
       name: row.name,
       sector: "待 R02 板块复核",
-      state: "观察",
-      stateClass: "watch",
+      state: row.status || "观察",
+      stateClass: row.recommendationClass === "review" ? "review" : "watch",
       stage: row.stageInference || "阶段 2 初筛",
       price: formatPrice(row.price),
       change: formatPct(row.pct),
@@ -75,11 +102,13 @@
       pivotReason: "本次导入未包含 Pivot；需补充动态历史 OHLCV 后确认当前平台上沿。",
       stageReason: "均线与位置初筛通过；RS、平台持续时间、收缩顺序和突破量尚未补齐。",
       volumeRule: "突破日需明显放量",
-      advice: row.recommendation || (caution ? "不追当日大涨" : avoid ? "等待回到强势区" : "等待平台 / 突破"),
+      advice: row.recommendation || (caution ? "不追当日大涨" : avoid ? "等待回到强势区" : "待观察"),
       adviceClass: row.recommendationClass || "wait",
       adviceReason: row.recommendationReason || "趋势初筛通过，但还没有买点确认。",
-      action: "补充历史 OHLCV、RS、Pivot、收缩次数和突破量；未确认前不买。",
-      note: "本卡片代表进入 M2 观察阶段，不代表已经形成买点。",
+      action: row.currentQualified
+        ? "补充历史 OHLCV、RS、Pivot、收缩次数和突破量；未确认前不买。"
+        : "保留记录待复核；若收盘后仍不满足趋势 / 位置 / 量价，再人工决定是否移出。",
+      note: row.transition || "本卡片代表进入 M2 观察阶段，不代表已经形成买点。",
       baseAge: "待历史 OHLCV",
       contractions: "未确认",
       contractionDetail: "等待动态历史扫描；i问财导出未包含收缩次数。",
@@ -256,10 +285,10 @@
   $("watchGrid").addEventListener("click", (event) => {
     const button = event.target.closest(".dynamic-chart-thumb");
     if (!button) return;
-    const item = data.candidates.find((candidate) => String(candidate.code) === String(button.dataset.code));
+    const item = data.candidates.find((candidate) => historyKey(candidate.code) === historyKey(button.dataset.code));
     if (!item) return;
     modalTitle.textContent = button.dataset.name;
-    renderVcpChart(modalChart, historyCache.get(String(item.code)), item, true);
+    renderVcpChart(modalChart, getHistory(item.code), item, true);
     modal.classList.add("open");
     modal.setAttribute("aria-hidden", "false");
   });
@@ -272,77 +301,18 @@
   renderDynamicCharts = () => {
     data.candidates.forEach((item) => {
       const container = document.querySelector(`.dynamic-chart-thumb[data-code="${item.code}"] .dynamic-chart-content`);
-      if (container) renderVcpChart(container, historyCache.get(String(item.code)), item);
+      if (container) renderVcpChart(container, getHistory(item.code), item);
     });
-  };
-
-  const syncHistory = async () => {
-    const historySync = $("historySync");
-    try {
-      const response = await fetch("/api/m2-history?force=1", { cache: "no-store" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const payload = await response.json();
-      const allEntries = Object.entries(payload.history || {});
-      const candidateCodes = new Set(data.candidates.map((item) => bareCode(item.code)));
-      const entries = allEntries.filter(([code]) => candidateCodes.has(bareCode(code)));
-      allEntries.forEach(([code, history]) => historyCache.set(String(code), history));
-      renderCandidates();
-      renderDynamicCharts();
-      if (!entries.length) throw new Error("没有历史日K数据");
-      const stale = payload.sourceStatus === "stale" || payload.sourceStatus === "partial";
-      historySync.textContent = `${stale ? "动态日K部分沿用" : "动态日K已同步"} ${entries.length}/${data.candidates.length} · ${payload.generatedAt || ""}`;
-      historySync.classList.toggle("stale", stale);
-      historySync.classList.toggle("ready", !stale);
-    } catch (error) {
-      historySync.textContent = "动态日K同步失败，未使用旧截图";
-      historySync.classList.add("stale");
-      renderDynamicCharts();
-      console.warn("M2 history sync failed", error);
-    }
-  };
-
-  const syncLiveQuotes = async () => {
-    const quoteSync = $("quoteSync");
-    try {
-      const response = await fetch("/api/m2-watchlist?force=1", { cache: "no-store" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const payload = await response.json();
-      const quotes = new Map((payload.quotes || []).map((quote) => [String(quote.code), quote]));
-      let updated = 0;
-      data.candidates.forEach((item) => {
-        const quote = quotes.get(String(item.code));
-        if (!quote) return;
-        if (Number.isFinite(Number(quote.price))) item.price = formatPrice(quote.price);
-        if (Number.isFinite(Number(quote.pct))) item.change = formatPct(quote.pct);
-        item.distance = distanceToPivot(item);
-        updated += 1;
-      });
-      renderCandidates();
-      if (!updated) throw new Error("没有匹配到候选股报价");
-      const focus = data.candidates.find((item) => item.name === data.decision.nextFocus);
-      if (focus) {
-        $("nextPivot").textContent = focus.pivot;
-        $("nextDistance").textContent = focus.distance;
-      }
-      const stale = payload.sourceStatus === "stale";
-      quoteSync.textContent = `${stale ? "个股行情沿用上次" : "个股行情已同步"} ${payload.generatedAt || ""}`;
-      quoteSync.classList.toggle("stale", stale);
-      quoteSync.classList.toggle("ready", !stale);
-    } catch (error) {
-      quoteSync.textContent = "个股行情同步失败，保留结构快照";
-      quoteSync.classList.add("stale");
-      console.warn("M2 live quote sync failed", error);
-    }
   };
 
   const applySnapshot = (payload) => {
     const allEntries = Object.entries(payload.history || {});
     const candidateCodes = new Set(data.candidates.map((item) => bareCode(item.code)));
     const entries = allEntries.filter(([code]) => candidateCodes.has(bareCode(code)));
-    allEntries.forEach(([code, history]) => historyCache.set(String(code), history));
-    const quotes = new Map((payload.quotes || []).map((quote) => [String(quote.code), quote]));
+    allEntries.forEach(([code, history]) => setHistory(code, history));
+    const quotes = new Map((payload.quotes || []).map((quote) => [historyKey(quote.code), quote]));
     data.candidates.forEach((item) => {
-      const quote = quotes.get(String(item.code));
+      const quote = quotes.get(historyKey(item.code));
       if (!quote) return;
       if (Number.isFinite(Number(quote.price))) item.price = formatPrice(quote.price);
       if (Number.isFinite(Number(quote.pct))) item.change = formatPct(quote.pct);
@@ -363,8 +333,8 @@
     const historySync = $("historySync");
     try {
       // The normal path is a static snapshot produced by the local Session.
-      // This makes the page a display layer and avoids six cold-start requests
-      // every time the page is opened.
+      // This makes the page a display layer and avoids one cold-start request
+      // per candidate every time the page is opened.
       const response = await fetch(`/m2-snapshot.json?ts=${Date.now()}`, { cache: "no-store" });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const payload = await response.json();
@@ -384,18 +354,9 @@
       historySync.classList.toggle("stale", expired);
       historySync.classList.toggle("ready", !expired);
     } catch (error) {
-      // Keep an API fallback for development and for the first deployment
-      // before the local Session has uploaded its first snapshot.
-      try {
-        await syncHistory();
-        await syncLiveQuotes();
-        historySync.textContent = "本地快照未就绪，临时读取数据源";
-        historySync.classList.add("stale");
-      } catch (fallbackError) {
-        historySync.textContent = "选股快照读取失败";
-        historySync.classList.add("stale");
-        console.warn("M2 snapshot sync failed", error, fallbackError);
-      }
+      historySync.textContent = "选股快照读取失败，等待本地刷新";
+      historySync.classList.add("stale");
+      console.warn("M2 snapshot sync failed", error);
     }
   };
 

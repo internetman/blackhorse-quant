@@ -37,6 +37,7 @@
 .bar-track i.priority { background: var(--green); }
 .bar-track i.caution { background: var(--orange); }
 .bar-track i.wait { background: var(--blue); }
+.bar-track i.review { background: #b8a6ff; }
 .bar-track i.avoid { background: var(--red); }
 .bar-track i.near { background: var(--orange); }
 .bar-track i.ma { background: var(--green); }
@@ -83,6 +84,7 @@
 .advice-cell.priority strong { color: var(--green); }
 .advice-cell.caution strong { color: var(--orange); }
 .advice-cell.wait strong { color: var(--blue); }
+.advice-cell.review strong { color: #c8b9ff; }
 .advice-cell.avoid strong { color: var(--red); }
 .table-footnote { display: flex; gap: 10px; align-items: flex-start; padding: 14px 17px; border-top: 1px solid var(--line); color: var(--muted); }
 .table-footnote p { font-size: 10px; line-height: 1.6; }

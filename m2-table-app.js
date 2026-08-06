@@ -16,27 +16,25 @@
   $("tableAsOf").textContent = `导入快照 ${data.asOf}`;
   $("tableSource").textContent = data.source;
   $("summaryTotal").textContent = data.rowCount;
-  $("summaryStacked").textContent = data.rows.filter((row) => row.maStacked).length;
-  $("summaryAbove200").textContent = data.rows.filter((row) => row.aboveMa200).length;
-  $("summaryNearHigh").textContent = data.rows.filter((row) => row.recommendationClass === "priority").length;
+  $("summaryStacked").textContent = data.currentQualifiedCount || data.rows.filter((row) => row.currentQualified).length;
+  $("summaryAbove200").textContent = data.newSinceClose || 0;
+  $("summaryNearHigh").textContent = data.carryForwardCount || 0;
   $("summaryUp").textContent = data.rows.filter((row) => row.pct > 0).length;
 
   const renderAnalysis = () => {
     const nearHigh = data.rows.filter((row) => row.fromHighPct >= -10).length;
-    const priority = data.rows.filter((row) => row.recommendationClass === "priority").length;
     const confirmed = data.rows.filter((row) => row.pivot && row.pivot !== "待确认" && row.contractions && row.contractions !== "待确认").length;
-    $("flowTotal").textContent = data.rowCount;
-    $("flowStacked").textContent = data.rows.filter((row) => row.maStacked).length;
-    $("flowAbove200").textContent = data.rows.filter((row) => row.aboveMa200).length;
-    $("flowNearHigh").textContent = nearHigh;
-    $("flowPriority").textContent = priority;
-    $("flowConfirmed").textContent = confirmed;
+    $("flowTotal").textContent = data.priorCloseQualified || "—";
+    $("flowStacked").textContent = data.importedCount || "—";
+    $("flowAbove200").textContent = data.currentQualifiedCount || "—";
+    $("flowNearHigh").textContent = data.newSinceClose || 0;
+    $("flowPriority").textContent = data.rowCount;
+    $("flowConfirmed").textContent = data.rowCount - confirmed;
 
     const adviceRows = [
-      { label: "突破确认后考虑", key: "priority", color: "priority" },
-      { label: "不追当日大涨", key: "caution", color: "caution" },
-      { label: "等待平台 / 突破", key: "wait", color: "wait" },
-      { label: "暂不建议买入", key: "avoid", color: "avoid" },
+      { label: "待观察", key: "wait", color: "wait" },
+      { label: "过热不追，保留观察", key: "caution", color: "caution" },
+      { label: "待复核观察", key: "review", color: "review" },
     ].map((item) => ({ ...item, value: data.rows.filter((row) => row.recommendationClass === item.key).length }));
     const maxAdvice = Math.max(1, ...adviceRows.map((item) => item.value));
     $("adviceChart").innerHTML = adviceRows.map((item) => `
@@ -67,10 +65,9 @@
       const matchesFilter = filter === "all"
         || (filter === "stacked" && row.maStacked)
         || (filter === "nearHigh" && row.fromHighPct >= -10)
-        || (filter === "priority" && row.recommendationClass === "priority")
         || (filter === "caution" && row.recommendationClass === "caution")
         || (filter === "wait" && row.recommendationClass === "wait")
-        || (filter === "avoid" && row.recommendationClass === "avoid")
+        || (filter === "review" && row.recommendationClass === "review")
         || filter === "needsPivot";
       return matchesSearch && matchesFilter;
     });
