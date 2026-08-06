@@ -50,6 +50,11 @@
 .table-controls input:focus, .table-controls select:focus { border-color: var(--green); box-shadow: 0 0 0 2px rgba(152,229,155,.08); }
 .table-count { margin-left: auto; padding: 0 4px 8px 12px; white-space: nowrap; color: var(--muted); font: 9px var(--mono); }
 .table-count strong { color: var(--green); font-size: 16px; margin-right: 5px; }
+.export-group { display: flex; align-items: center; gap: 6px; padding-bottom: 5px; white-space: nowrap; }
+.export-group span { max-width: 118px; overflow: hidden; color: var(--muted); font: 8px var(--mono); text-overflow: ellipsis; }
+.export-action { display: inline-grid; place-items: center; min-width: 42px; height: 30px; border: 1px solid var(--line-bright); border-radius: 0; background: #0b121a; color: var(--muted); font: 9px var(--mono); cursor: pointer; }
+.export-action:hover, .export-action:focus-visible { border-color: var(--green); color: var(--paper); outline: 0; box-shadow: 0 0 0 2px rgba(152,229,155,.08); }
+.export-action.primary { border-color: rgba(152,229,155,.5); color: var(--green); background: rgba(152,229,155,.06); }
 .table-card { border: 1px solid var(--line); background: rgba(15, 23, 32, .9); overflow: hidden; }
 .table-scroll { overflow: auto; max-height: calc(100vh - 360px); min-height: 430px; }
 .table-scroll table { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; color: #d5dee1; font: 10px var(--mono); }
@@ -97,6 +102,7 @@
   .table-controls { flex-wrap: wrap; }
   .table-controls .table-search { flex: 1 1 100%; }
   .table-count { margin-left: 0; }
+  .export-group { margin-left: auto; }
   .deduction-flow { flex-wrap: wrap; }
   .deduction-flow > div { flex: 1 1 28%; }
   .deduction-flow i { display: none; }
@@ -111,6 +117,8 @@
   .table-controls label { min-width: 0; }
   .table-controls .table-search { grid-column: 1 / -1; }
   .table-count { grid-column: 1 / -1; padding: 5px 0 0; }
+  .export-group { grid-column: 1 / -1; margin-left: 0; justify-content: flex-start; padding-bottom: 0; }
+  .export-group span { max-width: none; }
   .table-scroll { max-height: none; min-height: 460px; }
   .deduction-board { padding: 19px 17px 16px; }
   .deduction-heading { display: block; }

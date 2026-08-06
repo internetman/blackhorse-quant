@@ -120,6 +120,165 @@
     return rows.sort((a, b) => Number(valueOf(b) ?? -Infinity) - Number(valueOf(a) ?? -Infinity));
   };
 
+  const cleanText = (value) => String(value ?? "").replace(/\s+/g, " ").trim();
+  const markdownCell = (value) => cleanText(value).replace(/\|/g, "/") || "—";
+  const csvCell = (value) => {
+    const text = cleanText(value);
+    return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  };
+  const exportStamp = () => (data.asOf || "m2").replace(/[^\d]+/g, "-").replace(/^-|-$/g, "") || "m2";
+  const portableRows = (rows) => rows.map((row, index) => ({
+    rank: index + 1,
+    code: row.code,
+    name: row.name,
+    exchange: row.exchange,
+    sourceDate: row.sourceDate,
+    currentQualified: Boolean(row.currentQualified),
+    status: row.status,
+    recommendation: row.recommendation,
+    recommendationClass: row.recommendationClass,
+    recommendationReason: row.recommendationReason,
+    price: finite(row.price),
+    pct: finite(row.pct),
+    ma50: finite(row.ma50),
+    ma150: finite(row.ma150),
+    ma200: finite(row.ma200),
+    maStacked: Boolean(row.maStacked),
+    aboveMa50: Boolean(row.aboveMa50),
+    priceToMa50Pct: finite(row.priceToMa50Pct),
+    priceToMa200Pct: finite(row.priceToMa200Pct),
+    ma50ToMa150Pct: finite(row.ma50ToMa150Pct),
+    ma150ToMa200Pct: finite(row.ma150ToMa200Pct),
+    periodPct: finite(row.periodPct),
+    fromHighPct: finite(row.fromHighPct),
+    fromLowPct: finite(row.fromLowPct),
+    avgAmount: finite(row.avgAmount),
+    marketCapYi: Number.isFinite(Number(row.marketCap)) ? Number((Number(row.marketCap) / 100000000).toFixed(2)) : null,
+    pivot: row.pivot,
+    pivotPrice: finite(row.pivotPrice),
+    pivotStatus: row.pivotStatus,
+    pivotDistance: row.pivotDistance,
+    pivotReason: row.pivotReason,
+    contractions: row.contractions,
+    dataQuality: row.dataQuality,
+    transition: row.transition,
+  }));
+  const exportColumns = [
+    ["#", (row) => row.rank],
+    ["代码", (row) => row.code],
+    ["名称", (row) => row.name],
+    ["状态", (row) => row.status],
+    ["建议", (row) => row.recommendation],
+    ["现价", (row) => price(row.price)],
+    ["涨跌", (row) => pct(row.pct)],
+    ["参考Pivot", (row) => row.pivot],
+    ["距Pivot", (row) => row.pivotDistance],
+    ["收缩", (row) => row.contractions],
+    ["MA50", (row) => price(row.ma50)],
+    ["MA150", (row) => price(row.ma150)],
+    ["MA200", (row) => price(row.ma200)],
+    ["均线结构", (row) => row.maStacked && row.aboveMa50 ? "多头通过" : "待复核"],
+    ["距MA50", (row) => pct(row.priceToMa50Pct)],
+    ["距MA200", (row) => pct(row.priceToMa200Pct)],
+    ["阶段涨幅", (row) => pct(row.periodPct)],
+    ["距区间高点", (row) => pct(row.fromHighPct)],
+    ["从低点反弹", (row) => pct(row.fromLowPct)],
+    ["均额", (row) => count(row.avgAmount)],
+    ["市值亿元", (row) => row.marketCapYi ?? "—"],
+    ["来源", (row) => row.sourceDate],
+    ["备注", (row) => `${row.transition || ""} ${row.recommendationReason || ""}`],
+  ];
+  const markdownExport = (rows) => {
+    const portable = portableRows(rows);
+    const header = exportColumns.map(([label]) => label);
+    const body = portable.map((row) => exportColumns.map(([, value]) => markdownCell(value(row))));
+    return [
+      `# M2 待观察股票池导出 - ${data.asOf}`,
+      "",
+      `数据源：${data.source}`,
+      `导出范围：当前筛选视图 ${rows.length} 行 / 全观察池 ${data.rowCount} 行。`,
+      `统计：当前合格 ${data.currentQualifiedCount}；新进观察 ${data.newSinceClose}；待复核保留 ${data.carryForwardCount}。`,
+      "",
+      "说明：参考 Pivot 是平台上沿观察价，不是买入指令。真正买点仍需 RS、VCP 收缩、收盘突破、明显放量、止损和仓位确认。",
+      "",
+      `| ${header.join(" | ")} |`,
+      `| ${header.map(() => "---").join(" | ")} |`,
+      ...body.map((values) => `| ${values.join(" | ")} |`),
+      "",
+    ].join("\n");
+  };
+  const csvExport = (rows) => {
+    const portable = portableRows(rows);
+    const header = exportColumns.map(([label]) => csvCell(label)).join(",");
+    const body = portable.map((row) => exportColumns.map(([, value]) => csvCell(value(row))).join(","));
+    return [header, ...body].join("\n");
+  };
+  const jsonExport = (rows) => JSON.stringify({
+    asOf: data.asOf,
+    source: data.source,
+    rowCount: data.rowCount,
+    exportedCount: rows.length,
+    currentQualifiedCount: data.currentQualifiedCount,
+    newSinceClose: data.newSinceClose,
+    carryForwardCount: data.carryForwardCount,
+    caution: "参考 Pivot 不是买入指令；真正买点仍需 RS、VCP、收盘突破、明显放量、止损和仓位确认。",
+    rows: portableRows(rows),
+  }, null, 2);
+  const downloadText = (filename, mime, text) => {
+    const blob = new Blob([text], { type: `${mime};charset=utf-8` });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+  const copyText = async (text) => {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    textarea.remove();
+  };
+  const setExportStatus = (message) => {
+    $("exportStatus").textContent = message;
+    window.clearTimeout(setExportStatus.timer);
+    setExportStatus.timer = window.setTimeout(() => {
+      $("exportStatus").textContent = "导出当前视图";
+    }, 2600);
+  };
+  $("copyMarkdown").addEventListener("click", async () => {
+    const rows = getRows();
+    try {
+      await copyText(markdownExport(rows));
+      setExportStatus(`已复制 ${rows.length} 行`);
+    } catch (error) {
+      console.warn("Markdown export copy failed", error);
+      downloadText(`m2-watchlist-${exportStamp()}.md`, "text/markdown", markdownExport(rows));
+      setExportStatus(`已下载 ${rows.length} 行`);
+    }
+  });
+  $("downloadCsv").addEventListener("click", () => {
+    const rows = getRows();
+    downloadText(`m2-watchlist-${exportStamp()}.csv`, "text/csv", csvExport(rows));
+    setExportStatus(`CSV ${rows.length} 行`);
+  });
+  $("downloadJson").addEventListener("click", () => {
+    const rows = getRows();
+    downloadText(`m2-watchlist-${exportStamp()}.json`, "application/json", jsonExport(rows));
+    setExportStatus(`JSON ${rows.length} 行`);
+  });
+
   const render = () => {
     const rows = getRows();
     $("visibleCount").textContent = rows.length;
