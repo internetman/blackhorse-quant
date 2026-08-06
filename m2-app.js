@@ -142,8 +142,8 @@
     };
   };
   if (tableRows.length) data.candidates = tableRows.map(buildObservedCandidate);
-  // The cards are rendered more than once (for example when a quote snapshot
-  // arrives after the history snapshot). Keep the chart repaint hook alive so
+  // The cards are rendered more than once (for example when the OHLCV snapshot
+  // arrives after the import table). Keep the chart repaint hook alive so
   // a late card refresh cannot replace a loaded SVG with a loading placeholder.
   let renderDynamicCharts = () => {};
   const renderVcpChart = (container, history, item, large = false) => {
@@ -339,13 +339,6 @@
     const candidateCodes = new Set(data.candidates.map((item) => bareCode(item.code)));
     const entries = allEntries.filter(([code]) => candidateCodes.has(bareCode(code)));
     allEntries.forEach(([code, history]) => setHistory(code, history));
-    const quotes = new Map((payload.quotes || []).map((quote) => [historyKey(quote.code), quote]));
-    data.candidates.forEach((item) => {
-      const quote = quotes.get(historyKey(item.code));
-      if (!quote) return;
-      if (Number.isFinite(Number(quote.price))) item.price = formatPrice(quote.price);
-      if (Number.isFinite(Number(quote.pct))) item.change = formatPct(quote.pct);
-    });
     data.candidates.forEach((item) => {
       applyPivotFromHistory(item, getHistory(item.code));
       item.distance = distanceToPivot(item);
@@ -383,7 +376,7 @@
       const partial = payload.barStatus === "partial";
       const expired = payload.sourceStatus !== "live" || partial || (ageHours !== null && ageHours > maxAgeHours);
       $("lastSync").textContent = `选股快照 ${payload.asOf || data.asOf}`;
-      $("quoteSync").textContent = `报价随快照 · ${displayTime(payload.generatedAt)}`;
+      $("quoteSync").textContent = `图形快照 · ${displayTime(payload.generatedAt)}`;
       $("quoteSync").classList.toggle("stale", expired);
       $("quoteSync").classList.toggle("ready", !expired);
       const statusText = partial ? "选股日K盘中临时" : (expired ? "选股日K已过期" : "选股日K已就绪");

@@ -51,9 +51,9 @@
 
         <section class="table-summary" aria-label="导入表摘要">
           <article><span>观察池</span><strong id="summaryTotal">—</strong><small>持续记录</small></article>
-          <article><span>当前合格</span><strong id="summaryStacked">—</strong><small>8-6 盘中仍过硬条件</small></article>
-          <article><span>新进观察</span><strong id="summaryAbove200">—</strong><small>8-6 新进入</small></article>
-          <article><span>待复核保留</span><strong id="summaryNearHigh">—</strong><small>8-5 已入池，等待确认</small></article>
+          <article><span>当前合格</span><strong id="summaryStacked">—</strong><small>8-6 收盘仍过硬条件</small></article>
+          <article><span>新进观察</span><strong id="summaryAbove200">—</strong><small>收盘新进入</small></article>
+          <article><span>待复核保留</span><strong id="summaryNearHigh">—</strong><small>旧观察池保留确认</small></article>
           <article><span>今日上涨</span><strong id="summaryUp">—</strong><small>导出时点涨跌幅</small></article>
         </section>
 
@@ -64,12 +64,12 @@
               <h2>从每日导出到观察池</h2>
               <p>先记录该观察的股票，再等图形证据补齐。进入观察池不等于买点，真正触发仍要有 RS、VCP、Pivot、收缩和突破量。</p>
             </div>
-            <div class="deduction-stamp"><span>推演基准</span><strong>8-5 收盘 + 8-6 盘中</strong><small>观察池并集 · 39 只</small></div>
+            <div class="deduction-stamp"><span>推演基准</span><strong>8-6 收盘</strong><small>观察池并集 · 45 只</small></div>
           </div>
           <div class="deduction-flow" aria-label="筛选推演路径">
-            <div><small>01 / 8-5</small><strong id="flowTotal">—</strong><span>收盘合格</span></div>
+            <div><small>01 / 旧池</small><strong id="flowTotal">—</strong><span>上一观察池</span></div>
             <i>→</i>
-            <div><small>02 / 8-6</small><strong id="flowStacked">—</strong><span>盘中有效行</span></div>
+            <div><small>02 / 8-6</small><strong id="flowStacked">—</strong><span>收盘有效行</span></div>
             <i>→</i>
             <div><small>03 / 当前</small><strong id="flowAbove200">—</strong><span>仍满足硬条件</span></div>
             <i>→</i>
@@ -130,7 +130,7 @@
         <footer class="page-footer">M2 / 候选池负责横向筛选 · 卡片页负责候选足迹 · R02 负责板块环境 <a class="footer-link" href="/">返回 M2 首页 ↗</a></footer>
       </main>
     </div>
-    <script src="m2-table-data.js?v=20260806-pivot-focus"></script>
-    <script src="m2-table-app.js?v=20260806-pivot-focus"></script>
+    <script src="m2-table-data.js?v=20260806-close"></script>
+    <script src="m2-table-app.js?v=20260806-close"></script>
   </body>
 </html>
