@@ -4,6 +4,8 @@
 
   const $ = (id) => document.getElementById(id);
   const formatPrice = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "—";
+  const formatAmountYi = (value) => Number.isFinite(Number(value)) ? `${Number(value).toFixed(1)}亿` : "数据不足";
+  const formatPlainPct = (value) => Number.isFinite(Number(value)) ? `${Number(value).toFixed(2)}%` : "盘中报价";
   const formatPct = (value) => {
     if (!Number.isFinite(Number(value))) return "—";
     const number = Number(value);
@@ -86,8 +88,8 @@
         stageReason: row.currentQualified
           ? "当前仍通过 M2-01 观察资格；第二阶段、RS、VCP 和 Pivot 仍需历史 OHLCV / 图形复核。"
           : "历史已进入观察池；当前导出未确认继续合格，保留记录等待收盘或图形复核。",
-        volume: "数据不足",
-        volumeLabel: "导入表无量比",
+        volume: formatAmountYi(row.quoteAmountYi),
+        volumeLabel: `换手 ${formatPlainPct(row.quoteTurnover)} · 振幅 ${formatPlainPct(row.quoteAmplitude)}`,
         volumeRule: "突破日需明显放量",
         advice: row.recommendation || previous.advice,
         adviceClass: row.recommendationClass || previous.adviceClass,
@@ -95,7 +97,7 @@
         action: row.currentQualified
           ? "继续观察；补 RS、历史 OHLCV、Pivot、收缩次数和突破量。未确认前不买。"
           : "保留记录待复核；若收盘后仍不满足趋势 / 位置 / 量价，再人工决定是否移出。",
-        note: `${row.transition || "观察池记录"}；距 52 周高点 ${formatPct(row.fromHighPct)}，距 MA50 ${formatPct(row.priceToMa50Pct)}。`,
+        note: `${row.transition || "观察池记录"}；8-7 盘中 ${formatPct(row.pct)}，距 52 周高点 ${formatPct(row.fromHighPct)}，距 MA50 ${formatPct(row.priceToMa50Pct)}。`,
         baseAge: "待历史 OHLCV",
         contractions: row.contractions || "待确认",
         contractionDetail: "等待动态历史扫描；i问财导出未包含收缩次数。",
@@ -115,8 +117,8 @@
       stage: row.stageInference || "阶段 2 初筛",
       price: formatPrice(row.price),
       change: formatPct(row.pct),
-      volume: "数据不足",
-      volumeLabel: "导入表无量比",
+      volume: formatAmountYi(row.quoteAmountYi),
+      volumeLabel: `换手 ${formatPlainPct(row.quoteTurnover)} · 振幅 ${formatPlainPct(row.quoteAmplitude)}`,
       pivot: "待确认",
       distance: "—",
       range: 18,
@@ -237,7 +239,7 @@
     </svg><div class="dynamic-chart-caption">${escapeXml(caption)}</div>`;
   };
 
-  $("lastSync").textContent = `结构快照 ${data.asOf}`;
+  $("lastSync").textContent = data.quoteGeneratedAt ? `监控报价 ${data.asOf}` : `结构快照 ${data.asOf}`;
   $("marketStatus").textContent = data.market.status;
   $("marketNote").textContent = data.market.note;
   $("marketStats").innerHTML = data.market.stats.map((item) => `
@@ -271,7 +273,7 @@
       <div class="stock-metrics">
         <div><span>Pivot 状态</span><strong>${item.pivotStatus || "待确认"}</strong></div>
         <div><span>距 Pivot</span><strong>${item.distance}</strong></div>
-        <div><span>量比（结构快照）</span><strong>${item.volume}</strong><small>${item.volumeLabel}</small></div>
+        <div><span>成交额 / 换手</span><strong>${item.volume}</strong><small>${item.volumeLabel}</small></div>
       </div>
       <div class="pivot-evidence">
         <div><span>为什么是这个突破点</span><strong>${item.pivotReason}</strong></div>
@@ -375,7 +377,7 @@
       const maxAgeHours = Number(payload.maxAgeHours || 36);
       const partial = payload.barStatus === "partial";
       const expired = payload.sourceStatus !== "live" || partial || (ageHours !== null && ageHours > maxAgeHours);
-      $("lastSync").textContent = `选股快照 ${payload.asOf || data.asOf}`;
+      $("lastSync").textContent = data.quoteGeneratedAt ? `监控报价 ${data.asOf}` : `选股快照 ${payload.asOf || data.asOf}`;
       $("quoteSync").textContent = `图形快照 · ${displayTime(payload.generatedAt)}`;
       $("quoteSync").classList.toggle("stale", expired);
       $("quoteSync").classList.toggle("ready", !expired);

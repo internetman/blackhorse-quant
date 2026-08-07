@@ -8,6 +8,7 @@
     const n = Number(value);
     return `${n >= 0 ? "+" : "−"}${Math.abs(n).toFixed(1)}%`;
   };
+  const plainPct = (value) => Number.isFinite(Number(value)) ? `${Number(value).toFixed(2)}%` : "—";
   const price = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "—";
   const amountYi = (value) => Number.isFinite(Number(value)) ? (Number(value) / 100000000).toFixed(1) : "—";
   const count = (value) => Number.isFinite(Number(value)) ? Number(value).toLocaleString("zh-CN") : "—";
@@ -52,7 +53,7 @@
     });
   };
 
-  $("tableAsOf").textContent = `导入快照 ${data.asOf}`;
+  $("tableAsOf").textContent = data.quoteGeneratedAt ? `监控报价 ${data.asOf}` : `导入快照 ${data.asOf}`;
   $("tableSource").textContent = data.source;
   $("summaryTotal").textContent = data.rowCount;
   $("summaryStacked").textContent = data.currentQualifiedCount || data.rows.filter((row) => row.currentQualified).length;
@@ -132,7 +133,8 @@
     code: row.code,
     name: row.name,
     exchange: row.exchange,
-    sourceDate: row.sourceDate,
+    sourceDate: row.quoteAsOf || row.dataAsOf,
+    observationDate: row.dataAsOf,
     currentQualified: Boolean(row.currentQualified),
     status: row.status,
     recommendation: row.recommendation,
@@ -154,6 +156,10 @@
     fromLowPct: finite(row.fromLowPct),
     avgAmount: finite(row.avgAmount),
     marketCapYi: Number.isFinite(Number(row.marketCap)) ? Number((Number(row.marketCap) / 100000000).toFixed(2)) : null,
+    quoteAmountYi: finite(row.quoteAmountYi),
+    quoteTurnover: finite(row.quoteTurnover),
+    quoteAmplitude: finite(row.quoteAmplitude),
+    quoteVolumeLots: finite(row.quoteVolumeLots),
     pivot: row.pivot,
     pivotPrice: finite(row.pivotPrice),
     pivotStatus: row.pivotStatus,
@@ -171,6 +177,9 @@
     ["建议", (row) => row.recommendation],
     ["现价", (row) => price(row.price)],
     ["涨跌", (row) => pct(row.pct)],
+    ["成交额亿", (row) => row.quoteAmountYi ?? "—"],
+    ["换手", (row) => plainPct(row.quoteTurnover)],
+    ["振幅", (row) => plainPct(row.quoteAmplitude)],
     ["参考Pivot", (row) => row.pivot],
     ["距Pivot", (row) => row.pivotDistance],
     ["收缩", (row) => row.contractions],
@@ -185,7 +194,8 @@
     ["从低点反弹", (row) => pct(row.fromLowPct)],
     ["均额", (row) => count(row.avgAmount)],
     ["市值亿元", (row) => row.marketCapYi ?? "—"],
-    ["来源", (row) => row.sourceDate],
+    ["报价时点", (row) => row.sourceDate],
+    ["观察来源", (row) => row.observationDate],
     ["备注", (row) => `${row.transition || ""} ${row.recommendationReason || ""}`],
   ];
   const markdownExport = (rows) => {
@@ -196,6 +206,7 @@
       `# M2 待观察股票池导出 - ${data.asOf}`,
       "",
       `数据源：${data.source}`,
+      data.quoteGeneratedAt ? `行情抓取：${data.quoteGeneratedAt}` : "",
       `导出范围：当前筛选视图 ${rows.length} 行 / 全观察池 ${data.rowCount} 行。`,
       `统计：当前合格 ${data.currentQualifiedCount}；新进观察 ${data.newSinceClose}；待复核保留 ${data.carryForwardCount}。`,
       "",
@@ -216,6 +227,10 @@
   const jsonExport = (rows) => JSON.stringify({
     asOf: data.asOf,
     source: data.source,
+    selectionAsOf: data.selectionAsOf,
+    quoteGeneratedAt: data.quoteGeneratedAt,
+    quoteSource: data.quoteSource,
+    quoteSourceStatus: data.quoteSourceStatus,
     rowCount: data.rowCount,
     exportedCount: rows.length,
     currentQualifiedCount: data.currentQualifiedCount,
