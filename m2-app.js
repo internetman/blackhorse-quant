@@ -32,6 +32,22 @@
   const setHistory = (code, history) => historyCache.set(historyKey(code), history);
   const getHistory = (code) => historyCache.get(historyKey(code));
   const formatPivot = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "待确认";
+  const starText = (value) => "★★★★★".slice(0, value) + "☆☆☆☆☆".slice(0, 5 - value);
+  const setupRating = (row) => {
+    if (row.recommendationClass === "priority") {
+      return { stars: 4, label: "4星 确认中", action: "等收盘站稳 Pivot、明显放量、止损位明确后才可执行。" };
+    }
+    if (String(row.recommendation || "").includes("贴近 Pivot")) {
+      return { stars: 3, label: "3星 重点盯", action: "接近触发区，等突破与量能；不提前买。" };
+    }
+    if (row.recommendationClass === "caution") {
+      return { stars: 1, label: "1星 不追", action: "涨幅或均线偏离过高，等回踩或新平台。" };
+    }
+    if (row.recommendationClass === "review") {
+      return { stars: 1, label: "1星 待复核", action: "旧观察池保留，先复核趋势和图形。" };
+    }
+    return { stars: row.currentQualified ? 2 : 1, label: row.currentQualified ? "2星 观察" : "1星 待复核", action: "记录观察，不是买点。" };
+  };
   const derivePivot = (history) => {
     const rows = (history?.rows || []).filter((row) => finite(row.high) !== null);
     if (!rows.length) return null;
@@ -94,6 +110,9 @@
         advice: row.recommendation || previous.advice,
         adviceClass: row.recommendationClass || previous.adviceClass,
         adviceReason: row.recommendationReason || previous.adviceReason,
+        executionStars: setupRating(row).stars,
+        executionLabel: setupRating(row).label,
+        executionAction: setupRating(row).action,
         action: row.currentQualified
           ? "继续观察；补 RS、历史 OHLCV、Pivot、收缩次数和突破量。未确认前不买。"
           : "保留记录待复核；若收盘后仍不满足趋势 / 位置 / 量价，再人工决定是否移出。",
@@ -131,6 +150,9 @@
       advice: row.recommendation || (caution ? "不追当日大涨" : avoid ? "等待回到强势区" : "待观察"),
       adviceClass: row.recommendationClass || "wait",
       adviceReason: row.recommendationReason || "趋势初筛通过，但还没有买点确认。",
+      executionStars: setupRating(row).stars,
+      executionLabel: setupRating(row).label,
+      executionAction: setupRating(row).action,
       action: row.currentQualified
         ? "补充历史 OHLCV、RS、Pivot、收缩次数和突破量；未确认前不买。"
         : "保留记录待复核；若收盘后仍不满足趋势 / 位置 / 量价，再人工决定是否移出。",
@@ -279,7 +301,7 @@
         <div><span>为什么是这个突破点</span><strong>${item.pivotReason}</strong></div>
         <div><span>阶段证据</span><strong>${item.stageReason}</strong></div>
       </div>
-      <div class="recommendation-band ${item.adviceClass || "wait"}"><span>M2 建议</span><strong>${item.advice || "等待进一步确认"}</strong><small>${item.adviceReason || "需结合 Pivot、收缩和突破量复核。"}</small></div>
+      <div class="recommendation-band ${item.adviceClass || "wait"}"><span>M2 建议</span><strong>${item.advice || "等待进一步确认"}</strong><small>${item.adviceReason || "需结合 Pivot、收缩和突破量复核。"}</small><em>${starText(item.executionStars || 2)} ${item.executionLabel || "2星 观察"} · ${item.executionAction || "记录观察，不是买点。"}</em></div>
       <div class="footprint-grid">
         <div><span>底部时间</span><strong>${chartMetric(item, "baseAge", item.baseAge)}</strong></div>
         <div><span>收缩次数</span><strong>${chartMetric(item, "contractions", item.contractions)}</strong></div>

@@ -150,6 +150,7 @@ h3 { font-size: 16px; font-weight: 500; }
 .recommendation-band span { color: var(--muted); font: 8px var(--mono); }
 .recommendation-band strong { color: var(--green); font: 12px var(--display); font-weight: 500; }
 .recommendation-band small { color: #aeb9c3; font: 9px/1.45 var(--mono); }
+.recommendation-band em { display: block; color: var(--yellow); font: 8px/1.45 var(--mono); font-style: normal; letter-spacing: .02em; }
 .recommendation-band.caution { border-left-color: var(--orange); background: rgba(232,166,91,.07); }
 .recommendation-band.caution strong { color: var(--orange); }
 .recommendation-band.wait { border-left-color: var(--blue); background: rgba(134,184,231,.06); }

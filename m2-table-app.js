@@ -16,6 +16,23 @@
   const bareCode = (value) => String(value || "").split(".")[0];
   const finite = (value) => (value === null || value === undefined || value === "") ? null : (Number.isFinite(Number(value)) ? Number(value) : null);
   const formatPivot = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "待确认";
+  const starText = (value) => "★★★★★".slice(0, value) + "☆☆☆☆☆".slice(0, 5 - value);
+  const setupRating = (row) => {
+    if (row.executionRating) return row.executionRating;
+    if (row.recommendationClass === "priority") {
+      return { stars: 4, label: "4星 确认中", action: "等收盘站稳 Pivot、明显放量、止损位明确后才可执行。" };
+    }
+    if (String(row.recommendation || "").includes("贴近 Pivot")) {
+      return { stars: 3, label: "3星 重点盯", action: "接近触发区，等突破与量能；不提前买。" };
+    }
+    if (row.recommendationClass === "caution") {
+      return { stars: 1, label: "1星 不追", action: "涨幅或均线偏离过高，等回踩或新平台。" };
+    }
+    if (row.recommendationClass === "review") {
+      return { stars: 1, label: "1星 待复核", action: "旧观察池保留，先复核趋势和图形。" };
+    }
+    return { stars: row.currentQualified ? 2 : 1, label: row.currentQualified ? "2星 观察" : "1星 待复核", action: "记录观察，不是买点。" };
+  };
   const pivotDistance = (row, pivot) => {
     const current = finite(row.price);
     if (current === null || !pivot) return "—";
@@ -57,7 +74,7 @@
   $("tableSource").textContent = data.source;
   $("summaryTotal").textContent = data.rowCount;
   $("summaryStacked").textContent = data.currentQualifiedCount || data.rows.filter((row) => row.currentQualified).length;
-  $("summaryAbove200").textContent = data.priorityCount || 0;
+  $("summaryAbove200").textContent = data.rows.filter((row) => setupRating(row).stars >= 5).length;
   $("summaryNearHigh").textContent = data.nearPivotCount || 0;
   $("summaryUp").textContent = data.rows.filter((row) => row.pct > 0).length;
 
@@ -72,11 +89,22 @@
     $("flowConfirmed").textContent = data.rowCount - confirmed;
 
     const adviceRows = [
-      { label: "买点候选，等收盘确认", key: "priority", color: "priority" },
+      { label: "5星 可执行", key: "star5", color: "priority" },
+      { label: "4星 确认中", key: "star4", color: "priority" },
+      { label: "3星 重点盯", key: "star3", color: "wait" },
       { label: "待观察", key: "wait", color: "wait" },
       { label: "过热不追，保留观察", key: "caution", color: "caution" },
       { label: "待复核观察", key: "review", color: "review" },
-    ].map((item) => ({ ...item, value: data.rows.filter((row) => row.recommendationClass === item.key).length }));
+    ].map((item) => ({
+      ...item,
+      value: data.rows.filter((row) => {
+        const rating = setupRating(row);
+        if (item.key === "star5") return rating.stars >= 5;
+        if (item.key === "star4") return rating.stars === 4;
+        if (item.key === "star3") return rating.stars === 3;
+        return row.recommendationClass === item.key;
+      }).length,
+    }));
     const maxAdvice = Math.max(1, ...adviceRows.map((item) => item.value));
     $("adviceChart").innerHTML = adviceRows.map((item) => `
       <div class="bar-row"><span>${item.label}</span><div class="bar-track"><i class="${item.color}" style="width:${Math.max(4, item.value / maxAdvice * 100)}%"></i></div><strong>${item.value}</strong></div>
@@ -107,6 +135,9 @@
         || (filter === "stacked" && row.maStacked)
         || (filter === "nearHigh" && row.fromHighPct >= -10)
         || (filter === "caution" && row.recommendationClass === "caution")
+        || (filter === "star5" && setupRating(row).stars >= 5)
+        || (filter === "star4" && setupRating(row).stars === 4)
+        || (filter === "star3" && setupRating(row).stars === 3)
         || (filter === "priority" && row.recommendationClass === "priority")
         || (filter === "wait" && row.recommendationClass === "wait")
         || (filter === "review" && row.recommendationClass === "review")
@@ -139,6 +170,9 @@
     observationDate: row.dataAsOf,
     currentQualified: Boolean(row.currentQualified),
     status: row.status,
+    setupStars: setupRating(row).stars,
+    setupRating: setupRating(row).label,
+    setupAction: setupRating(row).action,
     recommendation: row.recommendation,
     recommendationClass: row.recommendationClass,
     recommendationReason: row.recommendationReason,
@@ -175,6 +209,7 @@
     ["#", (row) => row.rank],
     ["代码", (row) => row.code],
     ["名称", (row) => row.name],
+    ["星级", (row) => `${starText(row.setupStars)} ${row.setupRating}`],
     ["状态", (row) => row.status],
     ["建议", (row) => row.recommendation],
     ["现价", (row) => price(row.price)],
@@ -210,9 +245,9 @@
       `数据源：${data.source}`,
       data.quoteGeneratedAt ? `行情抓取：${data.quoteGeneratedAt}` : "",
       `导出范围：当前筛选视图 ${rows.length} 行 / 全观察池 ${data.rowCount} 行。`,
-      `统计：当前合格 ${data.currentQualifiedCount}；买点候选 ${data.priorityCount || 0}；贴近 Pivot ${data.nearPivotCount || 0}；盘中上涨 ${data.upCount || 0}。`,
+      `统计：当前合格 ${data.currentQualifiedCount}；5星可执行 ${data.rows.filter((row) => setupRating(row).stars >= 5).length}；4星确认中 ${data.rows.filter((row) => setupRating(row).stars === 4).length}；3星重点盯 ${data.rows.filter((row) => setupRating(row).stars === 3).length}；盘中上涨 ${data.upCount || 0}。`,
       "",
-      "说明：参考 Pivot 是平台上沿观察价，不是买入指令。真正买点仍需 RS、VCP 收缩、收盘突破、明显放量、止损和仓位确认。",
+      "星级说明：5星才代表可执行下单；4星只是进入触发区、必须等收盘确认；3星是重点盯盘；2星普通观察；1星不追或待复核。参考 Pivot 不是买入指令，真正买点仍需 RS、VCP 收缩、收盘突破、明显放量、止损和仓位确认。",
       "",
       `| ${header.join(" | ")} |`,
       `| ${header.map(() => "---").join(" | ")} |`,
@@ -239,7 +274,7 @@
     currentQualifiedCount: data.currentQualifiedCount,
     newSinceClose: data.newSinceClose,
     carryForwardCount: data.carryForwardCount,
-    caution: "参考 Pivot 不是买入指令；真正买点仍需 RS、VCP、收盘突破、明显放量、止损和仓位确认。",
+    caution: "5星才代表可执行下单；4星只是进入触发区、必须等收盘确认；参考 Pivot 不是买入指令。",
     rows: portableRows(rows),
   }, null, 2);
   const downloadText = (filename, mime, text) => {
@@ -304,6 +339,7 @@
       <tr>
         <td>${String(index + 1).padStart(2, "0")}</td>
         <td class="sticky-name name-cell"><strong>${row.name}</strong><small>${row.code} · ${row.exchange}</small></td>
+        <td class="star-cell star-${setupRating(row).stars}" title="${setupRating(row).action}"><strong>${starText(setupRating(row).stars)}</strong><small>${setupRating(row).label} · ${setupRating(row).action}</small></td>
         <td class="advice-cell ${row.recommendationClass}" title="${row.recommendationReason}"><strong>${row.recommendation}</strong><small>${row.recommendationReason}</small></td>
         <td>${price(row.price)}</td>
         <td class="${row.pct >= 0 ? "pct-up" : "pct-down"}">${pct(row.pct)}</td>

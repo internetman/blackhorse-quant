@@ -94,6 +94,13 @@
 .advice-cell.wait strong { color: var(--blue); }
 .advice-cell.review strong { color: #c8b9ff; }
 .advice-cell.avoid strong { color: var(--red); }
+.star-cell { min-width: 150px; max-width: 190px; text-align: left !important; white-space: normal !important; vertical-align: top; }
+.star-cell strong { display: block; color: var(--muted); font: 13px var(--mono); letter-spacing: .06em; }
+.star-cell small { display: block; margin-top: 5px; color: var(--muted); font: 8px/1.45 var(--mono); }
+.star-cell.star-5 strong { color: var(--green); }
+.star-cell.star-4 strong { color: var(--yellow); }
+.star-cell.star-3 strong { color: var(--blue); }
+.star-cell.star-1 strong { color: #8d98a3; }
 .table-footnote { display: flex; gap: 10px; align-items: flex-start; padding: 14px 17px; border-top: 1px solid var(--line); color: var(--muted); }
 .table-footnote p { font-size: 10px; line-height: 1.6; }
 .footnote-mark { display: inline-grid; place-items: center; width: 16px; height: 16px; flex: 0 0 auto; border: 1px solid var(--yellow); color: var(--yellow); font: 10px var(--mono); }

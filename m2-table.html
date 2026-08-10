@@ -7,7 +7,7 @@
     <title>M2 待观察股票池 · Mark Minervini 2</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c1118'/%3E%3Cpath d='M5 22 12 14l5 4 10-11' fill='none' stroke='%2398e59b' stroke-width='3'/%3E%3C/svg%3E" />
     <link rel="stylesheet" href="m2-styles.css" />
-    <link rel="stylesheet" href="m2-table.css?v=20260806-export" />
+    <link rel="stylesheet" href="m2-table.css?v=20260810-stars" />
   </head>
   <body>
     <div class="noise"></div>
@@ -52,7 +52,7 @@
         <section class="table-summary" aria-label="导入表摘要">
           <article><span>观察池</span><strong id="summaryTotal">—</strong><small>持续记录</small></article>
           <article><span>当前合格</span><strong id="summaryStacked">—</strong><small>8-6 收盘仍过硬条件</small></article>
-          <article><span>买点候选</span><strong id="summaryAbove200">—</strong><small>等收盘确认</small></article>
+          <article><span>5星可执行</span><strong id="summaryAbove200">—</strong><small>全部条件满足</small></article>
           <article><span>贴近 Pivot</span><strong id="summaryNearHigh">—</strong><small>盘中重点盯</small></article>
           <article><span>今日上涨</span><strong id="summaryUp">—</strong><small>导出时点涨跌幅</small></article>
         </section>
@@ -61,8 +61,8 @@
           <div class="deduction-heading">
             <div>
               <div class="section-kicker">DATA DEDUCTION</div>
-              <h2>从每日导出到观察池</h2>
-              <p>先记录该观察的股票，再等图形证据补齐。进入观察池不等于买点，真正触发仍要有 RS、VCP、Pivot、收缩和突破量。</p>
+              <h2>从每日导出到执行星级</h2>
+              <p>先记录该观察的股票，再按证据完整度给星级。5 星才代表可执行；4 星只是进入触发区，仍要等收盘、量能、止损和仓位确认。</p>
             </div>
             <div class="deduction-stamp"><span>推演基准</span><strong>8-10 盘中</strong><small>观察池并集 · 45 只</small></div>
           </div>
@@ -80,7 +80,7 @@
             <div class="flow-pending"><small>06 / 待补</small><strong id="flowConfirmed">—</strong><span>图形 / RS / Pivot</span></div>
           </div>
           <div class="analysis-charts">
-            <article class="analysis-panel"><div class="analysis-panel-head"><span>建议分层</span><small>当前快照</small></div><div id="adviceChart" class="bar-chart"></div></article>
+            <article class="analysis-panel"><div class="analysis-panel-head"><span>执行星级</span><small>当前快照</small></div><div id="adviceChart" class="bar-chart"></div></article>
             <article class="analysis-panel"><div class="analysis-panel-head"><span>接近区间高点</span><small>越接近右侧越强</small></div><div id="highChart" class="bar-chart"></div></article>
             <article class="analysis-panel"><div class="analysis-panel-head"><span>价格相对 MA200</span><small>价格高于 MA200 的幅度</small></div><div id="maChart" class="bar-chart"></div></article>
           </div>
@@ -89,7 +89,7 @@
 
         <section class="table-controls" aria-label="表格筛选">
           <label class="table-search"><span>查找股票</span><input id="tableSearch" type="search" placeholder="代码或简称" /></label>
-          <label><span>观察视图</span><select id="tableFilter"><option value="all">全部待观察</option><option value="priority">买点候选</option><option value="wait">当前待观察</option><option value="caution">过热不追，保留观察</option><option value="review">待复核观察</option><option value="stacked">MA50 &gt; MA150 &gt; MA200</option><option value="nearHigh">距区间高点 ≤ 10%</option><option value="needsPivot">Pivot / 收缩待确认</option></select></label>
+          <label><span>观察视图</span><select id="tableFilter"><option value="all">全部待观察</option><option value="star5">5星可执行</option><option value="star4">4星确认中</option><option value="star3">3星重点盯</option><option value="priority">买点候选</option><option value="wait">当前待观察</option><option value="caution">过热不追，保留观察</option><option value="review">待复核观察</option><option value="stacked">MA50 &gt; MA150 &gt; MA200</option><option value="nearHigh">距区间高点 ≤ 10%</option><option value="needsPivot">Pivot / 收缩待确认</option></select></label>
           <label><span>排序</span><select id="tableSort"><option value="pct">今日涨跌幅</option><option value="fromHigh">距离区间高点</option><option value="fromLow">从区间低点反弹</option><option value="amount">平均成交额</option><option value="price">现价</option></select></label>
           <div class="table-count"><strong id="visibleCount">—</strong><span>行可见</span></div>
           <div class="export-group" aria-label="导出当前列表">
@@ -107,6 +107,7 @@
                 <tr>
                   <th>#</th>
                   <th class="sticky-name">股票</th>
+                  <th>执行星级<br /><small>5 星才可下单</small></th>
                   <th>M2 建议<br /><small>只作筛选参考</small></th>
                   <th>现价</th>
                   <th>今日涨跌</th>
@@ -136,7 +137,7 @@
         <footer class="page-footer">M2 / 候选池负责横向筛选 · 卡片页负责候选足迹 · R02 负责板块环境 <a class="footer-link" href="/">返回 M2 首页 ↗</a></footer>
       </main>
     </div>
-    <script src="m2-table-data.js?v=20260810-quotes"></script>
-    <script src="m2-table-app.js?v=20260810-quotes"></script>
+    <script src="m2-table-data.js?v=20260810-stars"></script>
+    <script src="m2-table-app.js?v=20260810-stars"></script>
   </body>
 </html>
