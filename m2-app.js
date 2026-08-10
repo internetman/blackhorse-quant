@@ -283,7 +283,10 @@
     <article class="stock-card ${item.stateClass}">
       <div class="stock-card-head">
         <div class="stock-id"><span class="rank">${String(item.priority).padStart(2, "0")}</span><div><h3>${item.name}</h3><small>${item.code} · ${item.sector}</small></div></div>
-        <span class="state-chip ${item.stateClass}">${item.state}</span>
+        <div class="card-badges">
+          <span class="rating-badge stars-${item.executionStars || 2}"><b>${starText(item.executionStars || 2)}</b><small>${item.executionLabel || "2星 观察"}</small></span>
+          <span class="state-chip ${item.stateClass}">${item.state}</span>
+        </div>
       </div>
       <div class="stock-price-row"><strong>${item.price}</strong><span class="change ${String(item.change).indexOf("−") === 0 || String(item.change).indexOf("-") === 0 ? "down" : "up"}">${item.change}</span><span class="stage-tag">${item.stage}</span></div>
       <div class="pivot-focus ${item.pivotPrice ? "ready" : "pending"}">

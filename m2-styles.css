@@ -113,6 +113,18 @@ h3 { font-size: 16px; font-weight: 500; }
 .stock-id { display: flex; align-items: center; gap: 10px; }
 .rank { color: var(--muted); font: 10px var(--mono); }
 .stock-id small { display: block; font: 9px var(--mono); color: var(--muted); margin-top: 5px; max-width: 170px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-badges { display: grid; justify-items: end; gap: 7px; margin-left: 12px; }
+.rating-badge { display: grid; gap: 4px; min-width: 112px; padding: 8px 9px 7px; border: 1px solid rgba(232,199,109,.42); background: linear-gradient(135deg, rgba(232,199,109,.14), rgba(9,14,20,.35)); text-align: right; }
+.rating-badge b { color: var(--yellow); font: 14px var(--mono); letter-spacing: .08em; line-height: 1; }
+.rating-badge small { color: #d7c47a; font: 8px var(--mono); letter-spacing: .05em; }
+.rating-badge.stars-5 { border-color: rgba(152,229,155,.56); background: linear-gradient(135deg, rgba(152,229,155,.18), rgba(9,14,20,.35)); }
+.rating-badge.stars-5 b, .rating-badge.stars-5 small { color: var(--green); }
+.rating-badge.stars-4 { border-color: rgba(232,199,109,.54); }
+.rating-badge.stars-3 { border-color: rgba(134,184,231,.48); background: linear-gradient(135deg, rgba(134,184,231,.14), rgba(9,14,20,.35)); }
+.rating-badge.stars-3 b, .rating-badge.stars-3 small { color: var(--blue); }
+.rating-badge.stars-1, .rating-badge.stars-2 { border-color: rgba(139,154,168,.32); background: rgba(139,154,168,.07); }
+.rating-badge.stars-1 b, .rating-badge.stars-2 b { color: #9aa8b5; }
+.rating-badge.stars-1 small, .rating-badge.stars-2 small { color: var(--muted); }
 .state-chip { padding: 5px 7px; border: 1px solid rgba(139,154,168,.25); color: var(--muted); }
 .state-chip.near { color: var(--green); border-color: rgba(152,229,155,.34); }
 .state-chip.review { color: var(--blue); border-color: rgba(134,184,231,.34); }
