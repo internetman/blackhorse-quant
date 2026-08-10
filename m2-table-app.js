@@ -33,6 +33,7 @@
     }
     return { stars: row.currentQualified ? 2 : 1, label: row.currentQualified ? "2星 观察" : "1星 待复核", action: "记录观察，不是买点。" };
   };
+  const starSortValue = (row) => setupRating(row).stars * 1000000 + Number(row.buyRank || 0) * 1000 + Number(row.pct || 0);
   const pivotDistance = (row, pivot) => {
     const current = finite(row.price);
     if (current === null || !pivot) return "—";
@@ -145,6 +146,7 @@
       return matchesSearch && matchesFilter;
     });
     const valueOf = (row) => ({
+      stars: starSortValue(row),
       pct: row.pct,
       fromHigh: row.fromHighPct,
       fromLow: row.fromLowPct,

@@ -48,6 +48,12 @@
     }
     return { stars: row.currentQualified ? 2 : 1, label: row.currentQualified ? "2星 观察" : "1星 待复核", action: "记录观察，不是买点。" };
   };
+  const ratingSortValue = (item) => {
+    const stars = Number(item.executionStars || 0);
+    const buyRank = Number(item.buyRank || 0);
+    const change = Number.parseFloat(String(item.change || "").replace(/[+%]/g, "").replace("−", "-")) || 0;
+    return stars * 1000000 + buyRank * 1000 + change;
+  };
   const derivePivot = (history) => {
     const rows = (history?.rows || []).filter((row) => finite(row.high) !== null);
     if (!rows.length) return null;
@@ -113,6 +119,7 @@
         executionStars: setupRating(row).stars,
         executionLabel: setupRating(row).label,
         executionAction: setupRating(row).action,
+        buyRank: row.buyRank || 0,
         action: row.currentQualified
           ? "继续观察；补 RS、历史 OHLCV、Pivot、收缩次数和突破量。未确认前不买。"
           : "保留记录待复核；若收盘后仍不满足趋势 / 位置 / 量价，再人工决定是否移出。",
@@ -153,6 +160,7 @@
       executionStars: setupRating(row).stars,
       executionLabel: setupRating(row).label,
       executionAction: setupRating(row).action,
+      buyRank: row.buyRank || 0,
       action: row.currentQualified
         ? "补充历史 OHLCV、RS、Pivot、收缩次数和突破量；未确认前不买。"
         : "保留记录待复核；若收盘后仍不满足趋势 / 位置 / 量价，再人工决定是否移出。",
@@ -165,7 +173,12 @@
       priority: index + 1,
     };
   };
-  if (tableRows.length) data.candidates = tableRows.map(buildObservedCandidate);
+  if (tableRows.length) {
+    data.candidates = tableRows
+      .map(buildObservedCandidate)
+      .sort((a, b) => ratingSortValue(b) - ratingSortValue(a))
+      .map((item, index) => ({ ...item, priority: index + 1 }));
+  }
   // The cards are rendered more than once (for example when the OHLCV snapshot
   // arrives after the import table). Keep the chart repaint hook alive so
   // a late card refresh cannot replace a loaded SVG with a loading placeholder.
