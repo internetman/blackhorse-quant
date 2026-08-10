@@ -7,7 +7,7 @@
     <title>M2 待观察股票池 · Mark Minervini 2</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c1118'/%3E%3Cpath d='M5 22 12 14l5 4 10-11' fill='none' stroke='%2398e59b' stroke-width='3'/%3E%3C/svg%3E" />
     <link rel="stylesheet" href="m2-styles.css" />
-    <link rel="stylesheet" href="m2-table.css?v=20260810-star-sort" />
+    <link rel="stylesheet" href="m2-table.css?v=20260810-close" />
   </head>
   <body>
     <div class="noise"></div>
@@ -51,9 +51,9 @@
 
         <section class="table-summary" aria-label="导入表摘要">
           <article><span>观察池</span><strong id="summaryTotal">—</strong><small>持续记录</small></article>
-          <article><span>当前合格</span><strong id="summaryStacked">—</strong><small>8-6 收盘仍过硬条件</small></article>
+          <article><span>当前合格</span><strong id="summaryStacked">—</strong><small>8-10 收盘仍过硬条件</small></article>
           <article><span>5星可执行</span><strong id="summaryAbove200">—</strong><small>全部条件满足</small></article>
-          <article><span>贴近 Pivot</span><strong id="summaryNearHigh">—</strong><small>盘中重点盯</small></article>
+          <article><span>贴近 Pivot</span><strong id="summaryNearHigh">—</strong><small>收盘重点盯</small></article>
           <article><span>今日上涨</span><strong id="summaryUp">—</strong><small>导出时点涨跌幅</small></article>
         </section>
 
@@ -64,12 +64,12 @@
               <h2>从每日导出到执行星级</h2>
               <p>先记录该观察的股票，再按证据完整度给星级。5 星才代表可执行；4 星只是进入触发区，仍要等收盘、量能、止损和仓位确认。</p>
             </div>
-            <div class="deduction-stamp"><span>推演基准</span><strong>8-10 盘中</strong><small>观察池并集 · 45 只</small></div>
+            <div class="deduction-stamp"><span>推演基准</span><strong>8-10 收盘</strong><small>观察池并集 · 自动更新</small></div>
           </div>
           <div class="deduction-flow" aria-label="筛选推演路径">
             <div><small>01 / 旧池</small><strong id="flowTotal">—</strong><span>上一观察池</span></div>
             <i>→</i>
-            <div><small>02 / 8-6</small><strong id="flowStacked">—</strong><span>收盘有效行</span></div>
+            <div><small>02 / 8-10</small><strong id="flowStacked">—</strong><span>收盘有效行</span></div>
             <i>→</i>
             <div><small>03 / 当前</small><strong id="flowAbove200">—</strong><span>仍满足硬条件</span></div>
             <i>→</i>
@@ -117,7 +117,7 @@
                   <th>均线结构</th>
                   <th>均线距离推演<br /><small>相对值</small></th>
                   <th>阶段推演</th>
-                  <th>阶段涨幅<br /><small>7/10 → 8/6</small></th>
+                  <th>阶段涨幅<br /><small>7/14 → 8/10</small></th>
                   <th>距区间高点</th>
                   <th>从低点反弹</th>
                   <th>均额<br /><small>元</small></th>
@@ -137,7 +137,7 @@
         <footer class="page-footer">M2 / 候选池负责横向筛选 · 卡片页负责候选足迹 · R02 负责板块环境 <a class="footer-link" href="/">返回 M2 首页 ↗</a></footer>
       </main>
     </div>
-    <script src="m2-table-data.js?v=20260810-star-sort"></script>
-    <script src="m2-table-app.js?v=20260810-star-sort"></script>
+    <script src="m2-table-data.js?v=20260810-close"></script>
+    <script src="m2-table-app.js?v=20260810-close"></script>
   </body>
 </html>

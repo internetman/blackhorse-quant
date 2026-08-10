@@ -89,7 +89,7 @@
 .advice-cell { min-width: 225px; max-width: 275px; text-align: left !important; white-space: normal !important; vertical-align: top; }
 .advice-cell strong { display: block; font-family: var(--display); font-size: 11px; font-weight: 500; }
 .advice-cell small { display: block; margin-top: 5px; color: var(--muted); font: 8px/1.45 var(--mono); }
-.advice-cell.priority strong { color: var(--green); }
+.advice-cell.execute strong, .advice-cell.priority strong { color: var(--green); }
 .advice-cell.caution strong { color: var(--orange); }
 .advice-cell.wait strong { color: var(--blue); }
 .advice-cell.review strong { color: #c8b9ff; }

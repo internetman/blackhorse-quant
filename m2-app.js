@@ -34,6 +34,10 @@
   const formatPivot = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "待确认";
   const starText = (value) => "★★★★★".slice(0, value) + "☆☆☆☆☆".slice(0, 5 - value);
   const setupRating = (row) => {
+    if (row.executionRating) return row.executionRating;
+    if (row.recommendationClass === "execute") {
+      return { stars: 5, label: "5星 可执行", action: "规则化触发已满足；下单前复核止损、仓位和盘口成交。" };
+    }
     if (row.recommendationClass === "priority") {
       return { stars: 4, label: "4星 确认中", action: "等收盘站稳 Pivot、明显放量、止损位明确后才可执行。" };
     }
@@ -104,8 +108,9 @@
         stateClass: row.recommendationClass === "review" ? "review" : "watch",
         sector: row.currentQualified ? (previous.sector || "待 R02 板块复核") : "历史观察 / 待复核",
         pivot: row.pivot || previous.pivot,
-        pivotPrice: null,
-        pivotStatus: "待确认",
+        pivotPrice: row.pivotPrice || previous.pivotPrice || null,
+        pivotLocked: Boolean(row.pivotLocked || previous.pivotLocked),
+        pivotStatus: row.pivotStatus || previous.pivotStatus || "待确认",
         pivotReason: row.pivotReason || previous.pivotReason,
         stageReason: row.currentQualified
           ? "当前仍通过 M2-01 观察资格；第二阶段、RS、VCP 和 Pivot 仍需历史 OHLCV / 图形复核。"
@@ -123,7 +128,7 @@
         action: row.currentQualified
           ? "继续观察；补 RS、历史 OHLCV、Pivot、收缩次数和突破量。未确认前不买。"
           : "保留记录待复核；若收盘后仍不满足趋势 / 位置 / 量价，再人工决定是否移出。",
-        note: `${row.transition || "观察池记录"}；8-7 盘中 ${formatPct(row.pct)}，距 52 周高点 ${formatPct(row.fromHighPct)}，距 MA50 ${formatPct(row.priceToMa50Pct)}。`,
+        note: `${row.transition || "观察池记录"}；8-10 收盘 ${formatPct(row.pct)}，距 52 周高点 ${formatPct(row.fromHighPct)}，距 MA50 ${formatPct(row.priceToMa50Pct)}。`,
         baseAge: "待历史 OHLCV",
         contractions: row.contractions || "待确认",
         contractionDetail: "等待动态历史扫描；i问财导出未包含收缩次数。",
@@ -149,9 +154,10 @@
       distance: "—",
       range: 18,
       rangeLabel: "证据完整度",
-      pivotPrice: null,
-      pivotStatus: "待确认",
-      pivotReason: "本次导入未包含 Pivot；需补充动态历史 OHLCV 后确认当前平台上沿。",
+      pivotPrice: row.pivotPrice || null,
+      pivotLocked: Boolean(row.pivotLocked),
+      pivotStatus: row.pivotStatus || "待确认",
+      pivotReason: row.pivotReason || "本次导入未包含 Pivot；需补充动态历史 OHLCV 后确认当前平台上沿。",
       stageReason: "均线与位置初筛通过；RS、平台持续时间、收缩顺序和突破量尚未补齐。",
       volumeRule: "突破日需明显放量",
       advice: row.recommendation || (caution ? "不追当日大涨" : avoid ? "等待回到强势区" : "待观察"),
@@ -380,7 +386,7 @@
     const entries = allEntries.filter(([code]) => candidateCodes.has(bareCode(code)));
     allEntries.forEach(([code, history]) => setHistory(code, history));
     data.candidates.forEach((item) => {
-      applyPivotFromHistory(item, getHistory(item.code));
+      if (!item.pivotLocked) applyPivotFromHistory(item, getHistory(item.code));
       item.distance = distanceToPivot(item);
     });
     const focus = data.candidates.find((item) => item.name === data.decision.nextFocus) || data.candidates[0];

@@ -19,6 +19,9 @@
   const starText = (value) => "★★★★★".slice(0, value) + "☆☆☆☆☆".slice(0, 5 - value);
   const setupRating = (row) => {
     if (row.executionRating) return row.executionRating;
+    if (row.recommendationClass === "execute") {
+      return { stars: 5, label: "5星 可执行", action: "规则化触发已满足；下单前复核止损、仓位和盘口成交。" };
+    }
     if (row.recommendationClass === "priority") {
       return { stars: 4, label: "4星 确认中", action: "等收盘站稳 Pivot、明显放量、止损位明确后才可执行。" };
     }
@@ -57,6 +60,7 @@
   const applySnapshotPivot = (payload) => {
     const history = payload.history || {};
     data.rows.forEach((row) => {
+      if (row.pivotLocked) return;
       const itemHistory = history[bareCode(row.code)] || history[row.code];
       const pivot = derivePivot(itemHistory);
       if (!pivot) return;
@@ -139,7 +143,7 @@
         || (filter === "star5" && setupRating(row).stars >= 5)
         || (filter === "star4" && setupRating(row).stars === 4)
         || (filter === "star3" && setupRating(row).stars === 3)
-        || (filter === "priority" && row.recommendationClass === "priority")
+        || (filter === "priority" && ["execute", "priority"].includes(row.recommendationClass))
         || (filter === "wait" && row.recommendationClass === "wait")
         || (filter === "review" && row.recommendationClass === "review")
         || filter === "needsPivot";
