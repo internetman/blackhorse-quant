@@ -57,8 +57,8 @@
   $("tableSource").textContent = data.source;
   $("summaryTotal").textContent = data.rowCount;
   $("summaryStacked").textContent = data.currentQualifiedCount || data.rows.filter((row) => row.currentQualified).length;
-  $("summaryAbove200").textContent = data.newSinceClose || 0;
-  $("summaryNearHigh").textContent = data.carryForwardCount || 0;
+  $("summaryAbove200").textContent = data.priorityCount || 0;
+  $("summaryNearHigh").textContent = data.nearPivotCount || 0;
   $("summaryUp").textContent = data.rows.filter((row) => row.pct > 0).length;
 
   const renderAnalysis = () => {
@@ -72,6 +72,7 @@
     $("flowConfirmed").textContent = data.rowCount - confirmed;
 
     const adviceRows = [
+      { label: "买点候选，等收盘确认", key: "priority", color: "priority" },
       { label: "待观察", key: "wait", color: "wait" },
       { label: "过热不追，保留观察", key: "caution", color: "caution" },
       { label: "待复核观察", key: "review", color: "review" },
@@ -106,6 +107,7 @@
         || (filter === "stacked" && row.maStacked)
         || (filter === "nearHigh" && row.fromHighPct >= -10)
         || (filter === "caution" && row.recommendationClass === "caution")
+        || (filter === "priority" && row.recommendationClass === "priority")
         || (filter === "wait" && row.recommendationClass === "wait")
         || (filter === "review" && row.recommendationClass === "review")
         || filter === "needsPivot";
@@ -208,7 +210,7 @@
       `数据源：${data.source}`,
       data.quoteGeneratedAt ? `行情抓取：${data.quoteGeneratedAt}` : "",
       `导出范围：当前筛选视图 ${rows.length} 行 / 全观察池 ${data.rowCount} 行。`,
-      `统计：当前合格 ${data.currentQualifiedCount}；新进观察 ${data.newSinceClose}；待复核保留 ${data.carryForwardCount}。`,
+      `统计：当前合格 ${data.currentQualifiedCount}；买点候选 ${data.priorityCount || 0}；贴近 Pivot ${data.nearPivotCount || 0}；盘中上涨 ${data.upCount || 0}。`,
       "",
       "说明：参考 Pivot 是平台上沿观察价，不是买入指令。真正买点仍需 RS、VCP 收缩、收盘突破、明显放量、止损和仓位确认。",
       "",
@@ -228,6 +230,7 @@
     asOf: data.asOf,
     source: data.source,
     selectionAsOf: data.selectionAsOf,
+    snapshotAsOf: data.snapshotAsOf,
     quoteGeneratedAt: data.quoteGeneratedAt,
     quoteSource: data.quoteSource,
     quoteSourceStatus: data.quoteSourceStatus,
