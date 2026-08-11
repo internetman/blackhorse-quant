@@ -91,6 +91,10 @@
     return fallback;
   };
   const tableRows = Array.isArray(window.M2_TABLE_DATA?.rows) ? window.M2_TABLE_DATA.rows : [];
+  const selectionLabel = String(data.selectionAsOf || data.asOf || "当前快照")
+    .replace(/^\d{4}-0?/, "")
+    .replace(/ 收盘.*$/, " 收盘")
+    .replace(/-0?/, "-");
   const previousCandidates = Array.isArray(data.candidates) ? data.candidates : [];
   const previousByCode = new Map(previousCandidates.map((item) => [bareCode(item.code), item]));
   const buildObservedCandidate = (row, index) => {
@@ -128,7 +132,7 @@
         action: row.currentQualified
           ? "继续观察；补 RS、历史 OHLCV、Pivot、收缩次数和突破量。未确认前不买。"
           : "保留记录待复核；若收盘后仍不满足趋势 / 位置 / 量价，再人工决定是否移出。",
-        note: `${row.transition || "观察池记录"}；8-10 收盘 ${formatPct(row.pct)}，距 52 周高点 ${formatPct(row.fromHighPct)}，距 MA50 ${formatPct(row.priceToMa50Pct)}。`,
+        note: `${row.transition || "观察池记录"}；${selectionLabel} ${formatPct(row.pct)}，距 52 周高点 ${formatPct(row.fromHighPct)}，距 MA50 ${formatPct(row.priceToMa50Pct)}。`,
         baseAge: "待历史 OHLCV",
         contractions: row.contractions || "待确认",
         contractionDetail: "等待动态历史扫描；i问财导出未包含收缩次数。",
