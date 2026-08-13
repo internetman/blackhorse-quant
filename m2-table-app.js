@@ -14,6 +14,12 @@
   const count = (value) => Number.isFinite(Number(value)) ? Number(value).toLocaleString("zh-CN") : "—";
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
   const bareCode = (value) => String(value || "").split(".")[0];
+  const marketBoard = (value) => {
+    const code = bareCode(value);
+    if (/^68[89]/.test(code)) return { label: "科创板", className: "sci" };
+    if (/^30[01]/.test(code)) return { label: "创业板", className: "growth" };
+    return { label: "普通A股", className: "main" };
+  };
   const finite = (value) => (value === null || value === undefined || value === "") ? null : (Number.isFinite(Number(value)) ? Number(value) : null);
   const formatPivot = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "待确认";
   const starText = (value) => "★★★★★".slice(0, value) + "☆☆☆☆☆".slice(0, 5 - value);
@@ -135,7 +141,8 @@
     const filter = $("tableFilter").value;
     const sort = $("tableSort").value;
     const rows = data.rows.filter((row) => {
-      const matchesSearch = !query || `${row.code} ${row.name}`.toLowerCase().includes(query);
+      const board = marketBoard(row.code).label;
+      const matchesSearch = !query || `${row.code} ${row.name} ${board}`.toLowerCase().includes(query);
       const matchesFilter = filter === "all"
         || (filter === "stacked" && row.maStacked)
         || (filter === "nearHigh" && row.fromHighPct >= -10)
@@ -171,6 +178,8 @@
     rank: index + 1,
     code: row.code,
     name: row.name,
+    marketBoard: marketBoard(row.code).label,
+    marketBoardClass: marketBoard(row.code).className,
     exchange: row.exchange,
     sourceDate: row.quoteAsOf || row.dataAsOf,
     observationDate: row.dataAsOf,
@@ -215,6 +224,7 @@
     ["#", (row) => row.rank],
     ["代码", (row) => row.code],
     ["名称", (row) => row.name],
+    ["板块", (row) => row.marketBoard],
     ["星级", (row) => `${starText(row.setupStars)} ${row.setupRating}`],
     ["状态", (row) => row.status],
     ["建议", (row) => row.recommendation],
@@ -344,7 +354,7 @@
     $("tableBody").innerHTML = rows.map((row, index) => `
       <tr>
         <td>${String(index + 1).padStart(2, "0")}</td>
-        <td class="sticky-name name-cell"><strong>${row.name}</strong><small>${row.code} · ${row.exchange}</small></td>
+        <td class="sticky-name name-cell"><div class="name-line"><strong>${row.name}</strong><span class="board-chip board-${marketBoard(row.code).className}">${marketBoard(row.code).label}</span></div><small>${row.code} · ${row.exchange}</small></td>
         <td class="star-cell star-${setupRating(row).stars}" title="${setupRating(row).action}"><strong>${starText(setupRating(row).stars)}</strong><small>${setupRating(row).label} · ${setupRating(row).action}</small></td>
         <td class="advice-cell ${row.recommendationClass}" title="${row.recommendationReason}"><strong>${row.recommendation}</strong><small>${row.recommendationReason}</small></td>
         <td>${price(row.price)}</td>

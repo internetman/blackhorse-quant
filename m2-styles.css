@@ -112,7 +112,13 @@ h3 { font-size: 16px; font-weight: 500; }
 .stock-card-head, .stock-price-row, .signal-row, .stock-metrics { display: flex; align-items: center; justify-content: space-between; }
 .stock-id { display: flex; align-items: center; gap: 10px; }
 .rank { color: var(--muted); font: 10px var(--mono); }
+.stock-title-line { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.stock-title-line h3 { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stock-id small { display: block; font: 9px var(--mono); color: var(--muted); margin-top: 5px; max-width: 170px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.board-chip { display: inline-flex; align-items: center; flex: 0 0 auto; height: 18px; padding: 0 6px; border: 1px solid rgba(139,154,168,.36); color: var(--muted); background: rgba(139,154,168,.07); font: 8px var(--mono); letter-spacing: .04em; white-space: nowrap; }
+.board-chip.board-sci { color: var(--blue); border-color: rgba(134,184,231,.46); background: rgba(134,184,231,.09); }
+.board-chip.board-growth { color: var(--yellow); border-color: rgba(232,199,109,.48); background: rgba(232,199,109,.08); }
+.board-chip.board-main { color: #a2adb7; border-color: rgba(139,154,168,.32); background: rgba(139,154,168,.06); }
 .card-badges { display: grid; justify-items: end; gap: 7px; margin-left: 12px; }
 .rating-badge { display: grid; gap: 4px; min-width: 112px; padding: 8px 9px 7px; border: 1px solid rgba(232,199,109,.42); background: linear-gradient(135deg, rgba(232,199,109,.14), rgba(9,14,20,.35)); text-align: right; }
 .rating-badge b { color: var(--yellow); font: 14px var(--mono); letter-spacing: .08em; line-height: 1; }

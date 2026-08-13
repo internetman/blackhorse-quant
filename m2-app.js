@@ -29,6 +29,12 @@
   const chartPct = (value) => finite(value) === null ? "—" : `${finite(value) >= 0 ? "+" : "−"}${Math.abs(finite(value)).toFixed(1)}%`;
   const bareCode = (value) => String(value || "").split(".")[0];
   const historyKey = (value) => bareCode(value);
+  const marketBoard = (value) => {
+    const code = bareCode(value);
+    if (/^68[89]/.test(code)) return { label: "科创板", className: "sci" };
+    if (/^30[01]/.test(code)) return { label: "创业板", className: "growth" };
+    return { label: "普通A股", className: "main" };
+  };
   const setHistory = (code, history) => historyCache.set(historyKey(code), history);
   const getHistory = (code) => historyCache.get(historyKey(code));
   const formatPivot = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "待确认";
@@ -105,6 +111,7 @@
         ...previous,
         code,
         name: row.name || previous.name,
+        marketBoard: marketBoard(row.code),
         price: formatPrice(row.price),
         change: formatPct(row.pct),
         stage: row.stageInference || previous.stage,
@@ -146,6 +153,7 @@
     return {
       code,
       name: row.name,
+      marketBoard: marketBoard(row.code),
       sector: "待 R02 板块复核",
       state: row.status || "观察",
       stateClass: row.recommendationClass === "review" ? "review" : "watch",
@@ -305,7 +313,7 @@
     $("watchGrid").innerHTML = data.candidates.map((item) => `
     <article class="stock-card ${item.stateClass}">
       <div class="stock-card-head">
-        <div class="stock-id"><span class="rank">${String(item.priority).padStart(2, "0")}</span><div><h3>${item.name}</h3><small>${item.code} · ${item.sector}</small></div></div>
+        <div class="stock-id"><span class="rank">${String(item.priority).padStart(2, "0")}</span><div><div class="stock-title-line"><h3>${item.name}</h3><span class="board-chip board-${item.marketBoard?.className || "main"}">${item.marketBoard?.label || "普通A股"}</span></div><small>${item.code} · ${item.sector}</small></div></div>
         <div class="card-badges">
           <span class="rating-badge stars-${item.executionStars || 2}"><b>${starText(item.executionStars || 2)}</b><small>${item.executionLabel || "2星 观察"}</small></span>
           <span class="state-chip ${item.stateClass}">${item.state}</span>

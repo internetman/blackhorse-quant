@@ -68,6 +68,7 @@
 .table-scroll tbody tr:hover td { background: rgba(152,229,155,.055); }
 .table-scroll tbody tr:hover td.sticky-name { background: #172a2c; }
 .table-scroll td.name-cell { text-align: left; min-width: 146px; font-family: var(--display); }
+.name-line { display: flex; align-items: center; gap: 7px; min-width: 0; }
 .name-cell strong { display: block; color: var(--paper); font-size: 12px; font-weight: 500; }
 .name-cell small { display: block; margin-top: 4px; color: var(--muted); font: 8px var(--mono); }
 .pct-up { color: var(--red); }
