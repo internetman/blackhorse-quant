@@ -35,6 +35,30 @@
     if (/^30[01]/.test(code)) return { label: "创业板", className: "growth" };
     return { label: "普通A股", className: "main" };
   };
+  const sectorMap = window.M2_SECTOR_MAP?.items || {};
+  const sectorInfo = (code) => sectorMap[code] || sectorMap[bareCode(code)] || {
+    industry: "行业待补",
+    region: "地域待补",
+    concepts: [],
+    sectorGroup: "其它主题",
+  };
+  const sectorClass = (value) => {
+    const key = String(value || "");
+    if (key.includes("半导体")) return "semi";
+    if (key.includes("医药")) return "health";
+    if (key.includes("资源")) return "resource";
+    if (key.includes("新能源") || key.includes("光伏")) return "energy";
+    if (key.includes("高端")) return "manufacture";
+    if (key.includes("交通")) return "transport";
+    if (key.includes("金融")) return "finance";
+    if (key.includes("消费")) return "consumer";
+    if (key.includes("化工")) return "chemical";
+    return "other";
+  };
+  const sectorLabel = (code) => {
+    const info = sectorInfo(code);
+    return `${info.sectorGroup || "其它主题"} · ${info.industry || "行业待补"}`;
+  };
   const setHistory = (code, history) => historyCache.set(historyKey(code), history);
   const getHistory = (code) => historyCache.get(historyKey(code));
   const formatPivot = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "待确认";
@@ -112,12 +136,13 @@
         code,
         name: row.name || previous.name,
         marketBoard: marketBoard(row.code),
+        sectorInfo: sectorInfo(row.code),
         price: formatPrice(row.price),
         change: formatPct(row.pct),
         stage: row.stageInference || previous.stage,
         state: row.status || previous.state,
         stateClass: row.recommendationClass === "review" ? "review" : "watch",
-        sector: row.currentQualified ? (previous.sector || "待 R02 板块复核") : "历史观察 / 待复核",
+        sector: row.currentQualified ? sectorLabel(row.code) : `${sectorLabel(row.code)} / 待复核`,
         pivot: row.pivot || previous.pivot,
         pivotPrice: row.pivotPrice || previous.pivotPrice || null,
         pivotLocked: Boolean(row.pivotLocked || previous.pivotLocked),
@@ -154,7 +179,8 @@
       code,
       name: row.name,
       marketBoard: marketBoard(row.code),
-      sector: "待 R02 板块复核",
+      sectorInfo: sectorInfo(row.code),
+      sector: sectorLabel(row.code),
       state: row.status || "观察",
       stateClass: row.recommendationClass === "review" ? "review" : "watch",
       stage: row.stageInference || "阶段 2 初筛",
@@ -313,7 +339,7 @@
     $("watchGrid").innerHTML = data.candidates.map((item) => `
     <article class="stock-card ${item.stateClass}">
       <div class="stock-card-head">
-        <div class="stock-id"><span class="rank">${String(item.priority).padStart(2, "0")}</span><div><div class="stock-title-line"><h3>${item.name}</h3><span class="board-chip board-${item.marketBoard?.className || "main"}">${item.marketBoard?.label || "普通A股"}</span></div><small>${item.code} · ${item.sector}</small></div></div>
+        <div class="stock-id"><span class="rank">${String(item.priority).padStart(2, "0")}</span><div><div class="stock-title-line"><h3>${item.name}</h3><span class="board-chip board-${item.marketBoard?.className || "main"}">${item.marketBoard?.label || "普通A股"}</span></div><small>${item.code} · ${item.sector}</small><div class="card-sector-line"><span class="sector-chip sector-${sectorClass(item.sectorInfo?.sectorGroup)}">${item.sectorInfo?.sectorGroup || "其它主题"}</span>${(item.sectorInfo?.concepts || []).slice(0, 2).map((concept) => `<i>${concept}</i>`).join("")}</div></div></div>
         <div class="card-badges">
           <span class="rating-badge stars-${item.executionStars || 2}"><b>${starText(item.executionStars || 2)}</b><small>${item.executionLabel || "2星 观察"}</small></span>
           <span class="state-chip ${item.stateClass}">${item.state}</span>

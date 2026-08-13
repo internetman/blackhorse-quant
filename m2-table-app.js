@@ -20,6 +20,35 @@
     if (/^30[01]/.test(code)) return { label: "创业板", className: "growth" };
     return { label: "普通A股", className: "main" };
   };
+  const sectorMap = window.M2_SECTOR_MAP?.items || {};
+  const sectorInfo = (row) => sectorMap[row.code] || sectorMap[bareCode(row.code)] || {
+    industry: "行业待补",
+    region: "地域待补",
+    concepts: [],
+    sectorGroup: "其它主题",
+  };
+  const sectorSearchText = (row) => {
+    const info = sectorInfo(row);
+    return `${info.sectorGroup || ""} ${info.industry || ""} ${info.region || ""} ${(info.concepts || []).join(" ")}`;
+  };
+  const sectorClass = (value) => {
+    const key = String(value || "");
+    if (key.includes("半导体")) return "semi";
+    if (key.includes("医药")) return "health";
+    if (key.includes("资源")) return "resource";
+    if (key.includes("新能源") || key.includes("光伏")) return "energy";
+    if (key.includes("高端")) return "manufacture";
+    if (key.includes("交通")) return "transport";
+    if (key.includes("金融")) return "finance";
+    if (key.includes("消费")) return "consumer";
+    if (key.includes("化工")) return "chemical";
+    return "other";
+  };
+  const renderSectorTags = (row) => {
+    const info = sectorInfo(row);
+    const concepts = (info.concepts || []).slice(0, 3);
+    return `<div class="sector-stack"><div class="sector-line"><span class="sector-chip sector-${sectorClass(info.sectorGroup)}">${info.sectorGroup || "其它主题"}</span><strong>${info.industry || "行业待补"}</strong></div>${concepts.length ? `<div class="concept-line">${concepts.map((item) => `<span>${item}</span>`).join("")}</div>` : ""}</div>`;
+  };
   const finite = (value) => (value === null || value === undefined || value === "") ? null : (Number.isFinite(Number(value)) ? Number(value) : null);
   const formatPivot = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "待确认";
   const starText = (value) => "★★★★★".slice(0, value) + "☆☆☆☆☆".slice(0, 5 - value);
@@ -89,6 +118,14 @@
   $("summaryNearHigh").textContent = data.nearPivotCount || 0;
   $("summaryUp").textContent = data.rows.filter((row) => row.pct > 0).length;
 
+  const populateSectorFilter = () => {
+    const select = $("sectorFilter");
+    if (!select) return;
+    const groups = [...new Set(data.rows.map((row) => sectorInfo(row).sectorGroup || "其它主题"))].sort((a, b) => a.localeCompare(b, "zh-CN"));
+    select.innerHTML = `<option value="all">全部板块</option>${groups.map((group) => `<option value="${group}">${group}</option>`).join("")}`;
+  };
+  populateSectorFilter();
+
   const renderAnalysis = () => {
     const nearHigh = data.rows.filter((row) => row.fromHighPct >= -10).length;
     const confirmed = data.rows.filter((row) => row.pivot && row.pivot !== "待确认" && row.contractions && row.contractions !== "待确认").length;
@@ -139,10 +176,13 @@
   const getRows = () => {
     const query = $("tableSearch").value.trim().toLowerCase();
     const filter = $("tableFilter").value;
+    const sectorFilter = $("sectorFilter")?.value || "all";
     const sort = $("tableSort").value;
     const rows = data.rows.filter((row) => {
       const board = marketBoard(row.code).label;
-      const matchesSearch = !query || `${row.code} ${row.name} ${board}`.toLowerCase().includes(query);
+      const info = sectorInfo(row);
+      const matchesSearch = !query || `${row.code} ${row.name} ${board} ${sectorSearchText(row)}`.toLowerCase().includes(query);
+      const matchesSector = sectorFilter === "all" || info.sectorGroup === sectorFilter;
       const matchesFilter = filter === "all"
         || (filter === "stacked" && row.maStacked)
         || (filter === "nearHigh" && row.fromHighPct >= -10)
@@ -154,7 +194,7 @@
         || (filter === "wait" && row.recommendationClass === "wait")
         || (filter === "review" && row.recommendationClass === "review")
         || filter === "needsPivot";
-      return matchesSearch && matchesFilter;
+      return matchesSearch && matchesSector && matchesFilter;
     });
     const valueOf = (row) => ({
       stars: starSortValue(row),
@@ -180,6 +220,10 @@
     name: row.name,
     marketBoard: marketBoard(row.code).label,
     marketBoardClass: marketBoard(row.code).className,
+    sectorGroup: sectorInfo(row).sectorGroup,
+    industry: sectorInfo(row).industry,
+    region: sectorInfo(row).region,
+    concepts: sectorInfo(row).concepts || [],
     exchange: row.exchange,
     sourceDate: row.quoteAsOf || row.dataAsOf,
     observationDate: row.dataAsOf,
@@ -224,7 +268,10 @@
     ["#", (row) => row.rank],
     ["代码", (row) => row.code],
     ["名称", (row) => row.name],
-    ["板块", (row) => row.marketBoard],
+    ["交易板块", (row) => row.marketBoard],
+    ["板块分类", (row) => row.sectorGroup],
+    ["所属行业", (row) => row.industry],
+    ["概念标签", (row) => (row.concepts || []).join(" / ")],
     ["星级", (row) => `${starText(row.setupStars)} ${row.setupRating}`],
     ["状态", (row) => row.status],
     ["建议", (row) => row.recommendation],
@@ -354,7 +401,7 @@
     $("tableBody").innerHTML = rows.map((row, index) => `
       <tr>
         <td>${String(index + 1).padStart(2, "0")}</td>
-        <td class="sticky-name name-cell"><div class="name-line"><strong>${row.name}</strong><span class="board-chip board-${marketBoard(row.code).className}">${marketBoard(row.code).label}</span></div><small>${row.code} · ${row.exchange}</small></td>
+        <td class="sticky-name name-cell"><div class="name-line"><strong>${row.name}</strong><span class="board-chip board-${marketBoard(row.code).className}">${marketBoard(row.code).label}</span></div><small>${row.code} · ${row.exchange}</small>${renderSectorTags(row)}</td>
         <td class="star-cell star-${setupRating(row).stars}" title="${setupRating(row).action}"><strong>${starText(setupRating(row).stars)}</strong><small>${setupRating(row).label} · ${setupRating(row).action}</small></td>
         <td class="advice-cell ${row.recommendationClass}" title="${row.recommendationReason}"><strong>${row.recommendation}</strong><small>${row.recommendationReason}</small></td>
         <td>${price(row.price)}</td>
@@ -378,7 +425,7 @@
     `).join("");
   };
 
-  ["tableSearch", "tableFilter", "tableSort"].forEach((id) => $(id).addEventListener("input", render));
+  ["tableSearch", "tableFilter", "sectorFilter", "tableSort"].forEach((id) => $(id)?.addEventListener("input", render));
   render();
 
   const syncSnapshot = async () => {

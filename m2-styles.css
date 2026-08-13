@@ -119,6 +119,19 @@ h3 { font-size: 16px; font-weight: 500; }
 .board-chip.board-sci { color: var(--blue); border-color: rgba(134,184,231,.46); background: rgba(134,184,231,.09); }
 .board-chip.board-growth { color: var(--yellow); border-color: rgba(232,199,109,.48); background: rgba(232,199,109,.08); }
 .board-chip.board-main { color: #a2adb7; border-color: rgba(139,154,168,.32); background: rgba(139,154,168,.06); }
+.sector-chip { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border: 1px solid rgba(139,154,168,.34); color: #aab7c2; background: rgba(139,154,168,.06); font: 8px var(--mono); letter-spacing: .04em; white-space: nowrap; }
+.sector-chip.sector-other { border-color: rgba(139,154,168,.34); color: #aab7c2; }
+.sector-chip.sector-semi { color: #8ec8ff; border-color: rgba(134,184,231,.44); background: rgba(134,184,231,.08); }
+.sector-chip.sector-health { color: #e98aa2; border-color: rgba(233,138,162,.46); background: rgba(233,138,162,.08); }
+.sector-chip.sector-resource { color: #d8c275; border-color: rgba(216,194,117,.48); background: rgba(216,194,117,.08); }
+.sector-chip.sector-energy { color: #98e59b; border-color: rgba(152,229,155,.44); background: rgba(152,229,155,.08); }
+.sector-chip.sector-manufacture { color: #a7d4dc; border-color: rgba(167,212,220,.44); background: rgba(167,212,220,.07); }
+.sector-chip.sector-transport { color: #edb277; border-color: rgba(237,178,119,.45); background: rgba(237,178,119,.07); }
+.sector-chip.sector-finance { color: #c8b9ff; border-color: rgba(200,185,255,.42); background: rgba(200,185,255,.07); }
+.sector-chip.sector-consumer { color: #f0b7d1; border-color: rgba(240,183,209,.38); background: rgba(240,183,209,.07); }
+.sector-chip.sector-chemical { color: #8ed8c1; border-color: rgba(142,216,193,.42); background: rgba(142,216,193,.07); }
+.card-sector-line { display: flex; align-items: center; gap: 5px; margin-top: 7px; max-width: 245px; overflow: hidden; }
+.card-sector-line i { flex: 0 0 auto; color: #7f8e9a; border: 1px solid rgba(139,154,168,.2); padding: 2px 5px; font: 8px var(--mono); font-style: normal; white-space: nowrap; }
 .card-badges { display: grid; justify-items: end; gap: 7px; margin-left: 12px; }
 .rating-badge { display: grid; gap: 4px; min-width: 112px; padding: 8px 9px 7px; border: 1px solid rgba(232,199,109,.42); background: linear-gradient(135deg, rgba(232,199,109,.14), rgba(9,14,20,.35)); text-align: right; }
 .rating-badge b { color: var(--yellow); font: 14px var(--mono); letter-spacing: .08em; line-height: 1; }
