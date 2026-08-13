@@ -31,6 +31,7 @@ STATIC_FILES = {
     "/radar": (ROOT / "radar.html", "text/html; charset=utf-8"),
     "/m2-styles.css": (ROOT / "m2-styles.css", "text/css; charset=utf-8"),
     "/m2-data.js": (ROOT / "m2-data.js", "text/javascript; charset=utf-8"),
+    "/m2-sector-map.js": (ROOT / "m2-sector-map.js", "text/javascript; charset=utf-8"),
     "/m2-app.js": (ROOT / "m2-app.js", "text/javascript; charset=utf-8"),
     "/m2-table": (ROOT / "m2-table.html", "text/html; charset=utf-8"),
     "/m2-table.html": (ROOT / "m2-table.html", "text/html; charset=utf-8"),

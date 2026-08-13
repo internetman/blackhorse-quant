@@ -59,6 +59,15 @@
     const info = sectorInfo(code);
     return `${info.sectorGroup || "其它主题"} · ${info.industry || "行业待补"}`;
   };
+  const filterValueFor = (item) => {
+    const info = item.sectorInfo || sectorInfo(item.code);
+    const board = item.marketBoard || marketBoard(item.code);
+    return {
+      sectorGroup: info.sectorGroup || "其它主题",
+      industry: info.industry || "行业待补",
+      board: board.label || "普通A股",
+    };
+  };
   const setHistory = (code, history) => historyCache.set(historyKey(code), history);
   const getHistory = (code) => historyCache.get(historyKey(code));
   const formatPivot = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "待确认";
@@ -335,8 +344,46 @@
   $("changeCount").textContent = String(data.changes.length).padStart(2, "0");
   $("changeNote").textContent = data.changes.length ? "状态正在变化" : "今日无状态变化";
 
+  const homeCategoryFilter = $("homeCategoryFilter");
+  const populateHomeFilter = () => {
+    if (!homeCategoryFilter) return;
+    const option = (kind, value) => `<option value="${kind}:${escapeXml(value)}">${escapeXml(value)}</option>`;
+    const sectorGroups = [...new Set(data.candidates.map((item) => filterValueFor(item).sectorGroup))]
+      .sort((a, b) => a.localeCompare(b, "zh-CN"));
+    const industries = [...new Set(data.candidates.map((item) => filterValueFor(item).industry))]
+      .filter((value) => value && value !== "行业待补")
+      .sort((a, b) => a.localeCompare(b, "zh-CN"));
+    homeCategoryFilter.innerHTML = `
+      <option value="all">全部分类</option>
+      <optgroup label="行业分类">
+        ${sectorGroups.map((value) => option("sector", value)).join("")}
+      </optgroup>
+      <optgroup label="交易板块">
+        ${["科创板", "创业板", "普通A股"].map((value) => option("board", value)).join("")}
+      </optgroup>
+      <optgroup label="所属行业">
+        ${industries.map((value) => option("industry", value)).join("")}
+      </optgroup>
+    `;
+  };
+  const filteredCandidates = () => {
+    const value = homeCategoryFilter?.value || "all";
+    if (value === "all") return data.candidates;
+    const [kind, target] = value.split(":", 2);
+    return data.candidates.filter((item) => {
+      const fields = filterValueFor(item);
+      if (kind === "sector") return fields.sectorGroup === target;
+      if (kind === "board") return fields.board === target;
+      if (kind === "industry") return fields.industry === target;
+      return true;
+    });
+  };
   const renderCandidates = () => {
-    $("watchGrid").innerHTML = data.candidates.map((item) => `
+    const visibleCandidates = filteredCandidates();
+    if ($("homeFilterCount")) {
+      $("homeFilterCount").textContent = `${visibleCandidates.length} / ${data.candidates.length}`;
+    }
+    $("watchGrid").innerHTML = visibleCandidates.length ? visibleCandidates.map((item) => `
     <article class="stock-card ${item.stateClass}">
       <div class="stock-card-head">
         <div class="stock-id"><span class="rank">${String(item.priority).padStart(2, "0")}</span><div><div class="stock-title-line"><h3>${item.name}</h3><span class="board-chip board-${item.marketBoard?.className || "main"}">${item.marketBoard?.label || "普通A股"}</span></div><small>${item.code} · ${item.sector}</small><div class="card-sector-line"><span class="sector-chip sector-${sectorClass(item.sectorInfo?.sectorGroup)}">${item.sectorInfo?.sectorGroup || "其它主题"}</span>${(item.sectorInfo?.concepts || []).slice(0, 2).map((concept) => `<i>${concept}</i>`).join("")}</div></div></div>
@@ -375,10 +422,12 @@
       <div class="stock-action"><span class="action-mark">↳</span><p>${item.action}</p></div>
       <div class="stock-note">${item.note}</div>
     </article>
-    `).join("");
+    `).join("") : `<div class="empty-filter-state"><strong>当前分类没有候选</strong><small>换一个分类继续看，或回到全部分类。</small></div>`;
     renderDynamicCharts();
   };
 
+  populateHomeFilter();
+  homeCategoryFilter?.addEventListener("input", renderCandidates);
   data.candidates.forEach((item) => {
     item.distance = distanceToPivot(item);
   });
