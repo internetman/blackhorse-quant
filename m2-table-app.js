@@ -11,6 +11,12 @@
   const plainPct = (value) => Number.isFinite(Number(value)) ? `${Number(value).toFixed(2)}%` : "—";
   const price = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "—";
   const amountYi = (value) => Number.isFinite(Number(value)) ? (Number(value) / 100000000).toFixed(1) : "—";
+  const pe = (value) => {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n === 0) return "—";
+    if (n < 0) return "亏损";
+    return n.toFixed(1);
+  };
   const count = (value) => Number.isFinite(Number(value)) ? Number(value).toLocaleString("zh-CN") : "—";
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
   const bareCode = (value) => String(value || "").split(".")[0];
@@ -21,6 +27,8 @@
     return { label: "普通A股", className: "main" };
   };
   const sectorMap = window.M2_SECTOR_MAP?.items || {};
+  const valuationMap = window.M2_VALUATION_MAP?.items || {};
+  const valuationInfo = (row) => valuationMap[row.code] || valuationMap[bareCode(row.code)] || {};
   const sectorInfo = (row) => sectorMap[row.code] || sectorMap[bareCode(row.code)] || {
     industry: "行业待补",
     region: "地域待补",
@@ -202,6 +210,8 @@
       fromHigh: row.fromHighPct,
       fromLow: row.fromLowPct,
       amount: row.avgAmount,
+      marketCap: row.marketCap ?? valuationInfo(row).marketCap,
+      pe: row.peRatio ?? valuationInfo(row).peRatio,
       price: row.price,
     }[sort]);
     return rows.sort((a, b) => Number(valueOf(b) ?? -Infinity) - Number(valueOf(a) ?? -Infinity));
@@ -250,7 +260,10 @@
     fromHighPct: finite(row.fromHighPct),
     fromLowPct: finite(row.fromLowPct),
     avgAmount: finite(row.avgAmount),
-    marketCapYi: Number.isFinite(Number(row.marketCap)) ? Number((Number(row.marketCap) / 100000000).toFixed(2)) : null,
+    marketCapYi: Number.isFinite(Number(row.marketCap ?? valuationInfo(row).marketCap)) ? Number((Number(row.marketCap ?? valuationInfo(row).marketCap) / 100000000).toFixed(2)) : null,
+    peRatio: finite(row.peRatio ?? valuationInfo(row).peRatio),
+    pbRatio: finite(row.pbRatio ?? valuationInfo(row).pbRatio),
+    floatMarketCapYi: Number.isFinite(Number(row.floatMarketCap ?? valuationInfo(row).floatMarketCap)) ? Number((Number(row.floatMarketCap ?? valuationInfo(row).floatMarketCap) / 100000000).toFixed(2)) : null,
     quoteAmountYi: finite(row.quoteAmountYi),
     quoteTurnover: finite(row.quoteTurnover),
     quoteAmplitude: finite(row.quoteAmplitude),
@@ -294,6 +307,8 @@
     ["从低点反弹", (row) => pct(row.fromLowPct)],
     ["均额", (row) => count(row.avgAmount)],
     ["市值亿元", (row) => row.marketCapYi ?? "—"],
+    ["PE动态", (row) => pe(row.peRatio)],
+    ["流通市值亿元", (row) => row.floatMarketCapYi ?? "—"],
     ["报价时点", (row) => row.sourceDate],
     ["观察来源", (row) => row.observationDate],
     ["备注", (row) => `${row.transition || ""} ${row.recommendationReason || ""}`],
@@ -416,7 +431,8 @@
         <td class="${row.fromHighPct >= -10 ? "near-high" : ""}">${pct(row.fromHighPct)}</td>
         <td>${pct(row.fromLowPct)}</td>
         <td>${count(row.avgAmount)}</td>
-        <td>${amountYi(row.marketCap)}</td>
+        <td class="valuation-cell"><strong>${amountYi(row.marketCap ?? valuationInfo(row).marketCap)}</strong><small>总市值</small></td>
+        <td class="valuation-cell"><strong>${pe(row.peRatio ?? valuationInfo(row).peRatio)}</strong><small>动态 PE</small></td>
         <td class="trend-pending">${row.ma200Slope || "待复核"}</td>
         <td class="data-warning" title="${row.dataQuality || ""}">${row.dataQuality || "—"}</td>
         <td class="${row.pivotPrice ? "pivot-ready" : "pivot-pending"}" title="${row.pivotReason || ""}"><strong>${row.pivot}</strong><small>${row.pivotStatus || "待确认"} · ${row.pivotDistance || "—"}</small></td>

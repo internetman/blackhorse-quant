@@ -314,6 +314,7 @@ h3 { font-size: 16px; font-weight: 500; }
   .mini-track { grid-column: 1; margin-top: 13px; }
   .metric-foot { grid-column: 1 / -1; }
   .watch-grid { grid-template-columns: 1fr; }
+  .stock-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .home-filter-control { width: 100%; align-items: flex-end; justify-content: space-between; }
   .home-filter-control label { min-width: 0; flex: 1; }
   .chart-modal { padding: 10px; }

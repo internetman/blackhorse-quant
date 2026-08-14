@@ -6,6 +6,18 @@
   const formatPrice = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "—";
   const formatAmountYi = (value) => Number.isFinite(Number(value)) ? `${Number(value).toFixed(1)}亿` : "数据不足";
   const formatPlainPct = (value) => Number.isFinite(Number(value)) ? `${Number(value).toFixed(2)}%` : "盘中报价";
+  const formatMarketCap = (value) => {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return "市值 —";
+    const yi = number / 100000000;
+    return `市值 ${yi >= 1000 ? yi.toFixed(0) : yi.toFixed(1)}亿`;
+  };
+  const formatPe = (value) => {
+    const number = Number(value);
+    if (!Number.isFinite(number) || number === 0) return "PE —";
+    if (number < 0) return "PE 亏损";
+    return `PE ${number.toFixed(1)}`;
+  };
   const formatPct = (value) => {
     if (!Number.isFinite(Number(value))) return "—";
     const number = Number(value);
@@ -36,6 +48,7 @@
     return { label: "普通A股", className: "main" };
   };
   const sectorMap = window.M2_SECTOR_MAP?.items || {};
+  const valuationMap = window.M2_VALUATION_MAP?.items || {};
   const sectorInfo = (code) => sectorMap[code] || sectorMap[bareCode(code)] || {
     industry: "行业待补",
     region: "地域待补",
@@ -59,6 +72,7 @@
     const info = sectorInfo(code);
     return `${info.sectorGroup || "其它主题"} · ${info.industry || "行业待补"}`;
   };
+  const valuationInfo = (code) => valuationMap[code] || valuationMap[bareCode(code)] || {};
   const filterValueFor = (item) => {
     const info = item.sectorInfo || sectorInfo(item.code);
     const board = item.marketBoard || marketBoard(item.code);
@@ -146,6 +160,8 @@
         name: row.name || previous.name,
         marketBoard: marketBoard(row.code),
         sectorInfo: sectorInfo(row.code),
+        marketCap: row.marketCap ?? valuationInfo(row.code).marketCap ?? previous.marketCap ?? null,
+        peRatio: row.peRatio ?? valuationInfo(row.code).peRatio ?? previous.peRatio ?? null,
         price: formatPrice(row.price),
         change: formatPct(row.pct),
         stage: row.stageInference || previous.stage,
@@ -189,6 +205,8 @@
       name: row.name,
       marketBoard: marketBoard(row.code),
       sectorInfo: sectorInfo(row.code),
+      marketCap: row.marketCap ?? valuationInfo(row.code).marketCap ?? null,
+      peRatio: row.peRatio ?? valuationInfo(row.code).peRatio ?? null,
       sector: sectorLabel(row.code),
       state: row.status || "观察",
       stateClass: row.recommendationClass === "review" ? "review" : "watch",
@@ -402,6 +420,7 @@
       <div class="stock-metrics">
         <div><span>Pivot 状态</span><strong>${item.pivotStatus || "待确认"}</strong></div>
         <div><span>距 Pivot</span><strong>${item.distance}</strong></div>
+        <div><span>市值 / PE</span><strong>${formatMarketCap(item.marketCap)}</strong><small>${formatPe(item.peRatio)}</small></div>
         <div><span>成交额 / 换手</span><strong>${item.volume}</strong><small>${item.volumeLabel}</small></div>
       </div>
       <div class="pivot-evidence">

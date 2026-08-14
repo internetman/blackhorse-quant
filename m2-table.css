@@ -85,6 +85,9 @@
 .pivot-ready { min-width: 136px; color: var(--orange); text-align: left !important; }
 .pivot-ready strong, .pivot-pending strong { display: block; color: var(--paper); font: 12px var(--mono); }
 .pivot-ready small, .pivot-pending small { display: block; margin-top: 5px; color: var(--muted); font: 8px/1.35 var(--mono); }
+.valuation-cell { min-width: 82px; text-align: right !important; }
+.valuation-cell strong { display: block; color: var(--paper); font: 11px var(--mono); }
+.valuation-cell small { display: block; margin-top: 4px; color: var(--muted); font: 8px var(--mono); }
 .derived-cell { min-width: 205px; text-align: left !important; white-space: normal !important; }
 .derived-cell strong, .stage-cell strong { display: block; font: 10px var(--mono); }
 .derived-cell strong { color: var(--green); }
