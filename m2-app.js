@@ -1,6 +1,7 @@
 (function () {
   const data = window.M2_DATA;
   if (!data) return;
+  const archiveStore = window.M2Archive;
 
   const $ = (id) => document.getElementById(id);
   const formatPrice = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "—";
@@ -443,15 +444,45 @@
   const homeStarFilter = $("homeStarFilter");
   const homeStageFilter = $("homeStageFilter");
   const homeMarketFilter = $("homeMarketFilter");
+  const homeArchiveToggle = $("homeArchiveToggle");
   const poolButtons = [...document.querySelectorAll("[data-stage-pool]")];
   let activePool = "transition";
+  let archiveView = false;
+  let poolBeforeArchive = activePool;
+  const isArchived = (item) => Boolean(archiveStore?.isArchived(item.code));
+  const activeCandidates = () => data.candidates.filter((item) => !isArchived(item));
+  const archivedCandidates = () => data.candidates.filter(isArchived);
   const itemStars = (item) => Number(item.executionStars || setupRating(item).stars || 0);
+  const refreshArchiveAwareSummary = () => {
+    const candidates = activeCandidates();
+    const formal = candidates.filter((item) => ["S1→S2过渡", "S2趋势", "S2延伸"].includes(item.stage));
+    const transitionCount = candidates.filter((item) => item.stage === "S1→S2过渡").length;
+    const s2Count = candidates.filter((item) => item.stage === "S2趋势").length;
+    const extendedCount = candidates.filter((item) => item.stage === "S2延伸").length;
+    const executableCount = candidates.filter((item) => itemStars(item) >= 5).length;
+    const next = candidates[0];
+    if ($("marketStats")) {
+      $("marketStats").innerHTML = [
+        { label: "S1→S2过渡", value: `${transitionCount} 只` },
+        { label: "S2趋势", value: `${s2Count} 只` },
+        { label: "S2延伸", value: `${extendedCount} 只` },
+        { label: "5星可执行", value: `${executableCount} 只` },
+      ].map((item) => `<div class="market-stat"><span>${item.label}</span><strong>${item.value}</strong></div>`).join("");
+    }
+    if ($("decisionTitle")) $("decisionTitle").textContent = `正式阶段池：${formal.length} 只`;
+    if ($("decisionText")) $("decisionText").textContent = `S1→S2过渡 ${transitionCount} 只，S2趋势 ${s2Count} 只，S2延伸 ${extendedCount} 只；5星 ${executableCount} 只。`;
+    if ($("nextFocus")) $("nextFocus").textContent = next?.name || "暂无候选";
+    if ($("nextPivot")) $("nextPivot").textContent = next?.pivot || "—";
+    if ($("nextDistance")) $("nextDistance").textContent = next?.distance || "—";
+  };
   const populateHomeFilter = () => {
     if (!homeCategoryFilter) return;
+    const currentValue = homeCategoryFilter.value;
+    const candidates = activeCandidates();
     const option = (kind, value) => `<option value="${kind}:${escapeXml(value)}">${escapeXml(value)}</option>`;
-    const sectorGroups = [...new Set(data.candidates.map((item) => filterValueFor(item).sectorGroup))]
+    const sectorGroups = [...new Set(candidates.map((item) => filterValueFor(item).sectorGroup))]
       .sort((a, b) => a.localeCompare(b, "zh-CN"));
-    const industries = [...new Set(data.candidates.map((item) => filterValueFor(item).industry))]
+    const industries = [...new Set(candidates.map((item) => filterValueFor(item).industry))]
       .filter((value) => value && value !== "行业待补")
       .sort((a, b) => a.localeCompare(b, "zh-CN"));
     homeCategoryFilter.innerHTML = `
@@ -466,32 +497,42 @@
         ${industries.map((value) => option("industry", value)).join("")}
       </optgroup>
     `;
+    if ([...homeCategoryFilter.options].some((item) => item.value === currentValue)) homeCategoryFilter.value = currentValue;
   };
   const populateStageFilter = () => {
     if (!homeStageFilter) return;
+    const currentValue = homeStageFilter.value;
+    const candidates = activeCandidates();
     const stages = ["S1→S2过渡", "S2趋势", "S2延伸", "待复核"];
-    homeStageFilter.innerHTML = `<option value="all">全部阶段 · ${data.candidates.length}只</option>${stages.map((stage) => {
-      const count = data.candidates.filter((item) => item.stage === stage).length;
+    homeStageFilter.innerHTML = `<option value="all">全部阶段 · ${candidates.length}只</option>${stages.map((stage) => {
+      const count = candidates.filter((item) => item.stage === stage).length;
       return `<option value="${stage}">${stage} · ${count}只</option>`;
     }).join("")}`;
-    if ($("transitionPoolCount")) $("transitionPoolCount").textContent = `${data.candidates.filter((item) => item.stage === "S1→S2过渡").length}只`;
-    if ($("s2PoolCount")) $("s2PoolCount").textContent = `${data.candidates.filter((item) => ["S2趋势", "S2延伸"].includes(item.stage)).length}只`;
+    if ([...homeStageFilter.options].some((item) => item.value === currentValue)) homeStageFilter.value = currentValue;
+    if ($("transitionPoolCount")) $("transitionPoolCount").textContent = `${candidates.filter((item) => item.stage === "S1→S2过渡").length}只`;
+    if ($("s2PoolCount")) $("s2PoolCount").textContent = `${candidates.filter((item) => ["S2趋势", "S2延伸"].includes(item.stage)).length}只`;
   };
   const populateMarketFilter = () => {
     if (!homeMarketFilter) return;
+    const currentValue = homeMarketFilter.value;
+    const candidates = activeCandidates();
     const markets = ["上交所", "深交所", "北交所"];
-    homeMarketFilter.innerHTML = `<option value="all">全部市场</option>${markets.map((market) => `<option value="${market}">${market} · ${data.candidates.filter((item) => filterValueFor(item).market === market).length}只</option>`).join("")}`;
+    homeMarketFilter.innerHTML = `<option value="all">全部市场</option>${markets.map((market) => `<option value="${market}">${market} · ${candidates.filter((item) => filterValueFor(item).market === market).length}只</option>`).join("")}`;
+    if ([...homeMarketFilter.options].some((item) => item.value === currentValue)) homeMarketFilter.value = currentValue;
   };
   const populateStarFilter = () => {
     if (!homeStarFilter) return;
+    const currentValue = homeStarFilter.value;
+    const candidates = activeCandidates();
     const ratingRows = [5, 4, 3, 2, 1]
       .map((stars) => {
-        const count = data.candidates.filter((item) => itemStars(item) === stars).length;
+        const count = candidates.filter((item) => itemStars(item) === stars).length;
         return { stars, count };
       });
     homeStarFilter.innerHTML = `<option value="all">全部星级</option>${ratingRows
       .map((item) => `<option value="${item.stars}">${item.stars}星 · ${item.count}只</option>`)
       .join("")}`;
+    if ([...homeStarFilter.options].some((item) => item.value === currentValue)) homeStarFilter.value = currentValue;
   };
   const filteredCandidates = () => {
     const categoryValue = homeCategoryFilter?.value || "all";
@@ -501,6 +542,7 @@
     const [kind, target] = categoryValue.split(":", 2);
     return data.candidates.filter((item) => {
       const fields = filterValueFor(item);
+      const archiveMatch = archiveView ? isArchived(item) : !isArchived(item);
       const categoryMatch = categoryValue === "all"
         || (kind === "sector" && fields.sectorGroup === target)
         || (kind === "board" && fields.board === target)
@@ -508,24 +550,35 @@
       const starMatch = starValue === "all" || itemStars(item) === Number(starValue);
       const stageMatch = stageValue === "all" || item.stage === stageValue;
       const marketMatch = marketValue === "all" || fields.market === marketValue;
-      const poolMatch = activePool === "all"
+      const poolMatch = archiveView || activePool === "all"
         || (activePool === "transition" && item.stage === "S1→S2过渡")
         || (activePool === "s2" && ["S2趋势", "S2延伸"].includes(item.stage));
-      return categoryMatch && starMatch && stageMatch && marketMatch && poolMatch;
+      return archiveMatch && categoryMatch && starMatch && stageMatch && marketMatch && poolMatch;
     });
   };
   const renderCandidates = () => {
     const visibleCandidates = filteredCandidates();
+    refreshArchiveAwareSummary();
+    const currentArchived = archivedCandidates().length;
+    const currentActive = data.candidates.length - currentArchived;
+    if ($("homeArchiveCount")) $("homeArchiveCount").textContent = currentArchived;
+    if (homeArchiveToggle) {
+      homeArchiveToggle.classList.toggle("active", archiveView);
+      homeArchiveToggle.setAttribute("aria-pressed", String(archiveView));
+    }
+    if ($("watchCount")) $("watchCount").textContent = String(currentActive).padStart(2, "0");
+    if ($("watchTrack")) $("watchTrack").style.width = `${Math.min(100, currentActive * 12)}%`;
     if ($("homeFilterCount")) {
-      $("homeFilterCount").textContent = `${visibleCandidates.length} / ${data.candidates.length}`;
+      $("homeFilterCount").textContent = `${visibleCandidates.length} / ${archiveView ? currentArchived : currentActive}`;
     }
     $("watchGrid").innerHTML = visibleCandidates.length ? visibleCandidates.map((item) => `
-    <article class="stock-card ${item.stateClass}">
+    <article class="stock-card ${item.stateClass} ${archiveView ? "archived-card" : ""}">
       <div class="stock-card-head">
         <div class="stock-id"><span class="rank">${String(item.priority).padStart(2, "0")}</span><div><div class="stock-title-line"><h3>${item.name}</h3><span class="board-chip board-${item.marketBoard?.className || "main"}">${item.marketBoard?.label || "普通A股"}</span></div><small>${item.code} · ${item.sector}</small><div class="card-sector-line"><span class="sector-chip sector-${sectorClass(item.sectorInfo?.sectorGroup)}">${item.sectorInfo?.sectorGroup || "其它主题"}</span>${(item.sectorInfo?.concepts || []).slice(0, 2).map((concept) => `<i>${concept}</i>`).join("")}</div></div></div>
         <div class="card-badges">
           <span class="rating-badge stars-${item.executionStars || 2}"><b>${starText(item.executionStars || 2)}</b><small>${item.executionLabel || "2星 观察"}</small></span>
           <span class="state-chip ${item.stateClass}">${item.state}</span>
+          <button class="card-archive-action ${archiveView ? "restore" : ""}" type="button" data-archive-action="${archiveView ? "restore" : "archive"}" data-code="${escapeXml(item.code)}" title="${archiveView ? "恢复到候选池" : "从候选池归档"}">${archiveView ? "恢复" : "归档"}</button>
         </div>
       </div>
       <div class="stock-price-row"><strong>${item.price}</strong><span class="change ${String(item.change).indexOf("−") === 0 || String(item.change).indexOf("-") === 0 ? "down" : "up"}">${item.change}</span><span class="stage-tag ${item.stage === "S1→S2过渡" ? "stage-transition" : item.stage === "S2趋势" ? "stage-s2" : item.stage === "S2延伸" ? "stage-extended" : "stage-review"}">${item.stage}</span></div>
@@ -559,7 +612,7 @@
       <div class="stock-action"><span class="action-mark">↳</span><p>${item.action}</p></div>
       <div class="stock-note">${item.note}</div>
     </article>
-    `).join("") : `<div class="empty-filter-state"><strong>当前筛选没有候选</strong><small>换一个分类或星级继续看，或回到全部。</small></div>`;
+    `).join("") : `<div class="empty-filter-state"><strong>${archiveView ? "归档箱暂无股票" : "当前筛选没有候选"}</strong><small>${archiveView ? "从候选卡片或表格点击归档后会出现在这里。" : "换一个分类或星级继续看，或回到全部。"}</small></div>`;
     renderDynamicCharts();
   };
 
@@ -567,6 +620,13 @@
   populateStarFilter();
   populateStageFilter();
   populateMarketFilter();
+  const refreshArchiveViews = () => {
+    populateHomeFilter();
+    populateStarFilter();
+    populateStageFilter();
+    populateMarketFilter();
+    renderCandidates();
+  };
   [homeCategoryFilter, homeStarFilter, homeMarketFilter].forEach((control) => control?.addEventListener("input", renderCandidates));
   homeStageFilter?.addEventListener("input", () => {
     activePool = "all";
@@ -574,11 +634,26 @@
     renderCandidates();
   });
   poolButtons.forEach((button) => button.addEventListener("click", () => {
+    if (archiveView) return;
     activePool = button.dataset.stagePool || "all";
     if (homeStageFilter) homeStageFilter.value = "all";
     poolButtons.forEach((item) => { const active = item === button; item.classList.toggle("active", active); item.setAttribute("aria-selected", String(active)); });
     renderCandidates();
   }));
+  homeArchiveToggle?.addEventListener("click", () => {
+    archiveView = !archiveView;
+    if (archiveView) {
+      poolBeforeArchive = activePool;
+      activePool = "all";
+      [homeCategoryFilter, homeStarFilter, homeStageFilter, homeMarketFilter].forEach((control) => { if (control) control.value = "all"; });
+      poolButtons.forEach((button) => { button.classList.remove("active"); button.setAttribute("aria-selected", "false"); });
+    } else {
+      activePool = poolBeforeArchive || "transition";
+      poolButtons.forEach((button) => { const active = button.dataset.stagePool === activePool; button.classList.toggle("active", active); button.setAttribute("aria-selected", String(active)); });
+    }
+    renderCandidates();
+  });
+  archiveStore?.subscribe(refreshArchiveViews);
   data.candidates.forEach((item) => {
     item.distance = distanceToPivot(item);
   });
@@ -596,6 +671,19 @@
     modal.setAttribute("aria-hidden", "true");
   };
   $("watchGrid").addEventListener("click", async (event) => {
+    const archiveButton = event.target.closest("[data-archive-action]");
+    if (archiveButton) {
+      const item = data.candidates.find((candidate) => historyKey(candidate.code) === historyKey(archiveButton.dataset.code));
+      if (!item) return;
+      if (archiveButton.dataset.archiveAction === "restore") {
+        archiveStore.restore(item.code);
+        archiveStore.notify(`${item.name} 已恢复到候选池`);
+      } else {
+        archiveStore.archive(item);
+        archiveStore.notify(`${item.name} 已归档`, "撤销", () => archiveStore.restore(item.code));
+      }
+      return;
+    }
     const button = event.target.closest(".dynamic-chart-thumb");
     if (!button) return;
     const item = data.candidates.find((candidate) => historyKey(candidate.code) === historyKey(button.dataset.code));

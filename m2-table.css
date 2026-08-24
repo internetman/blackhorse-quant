@@ -55,6 +55,7 @@
 .export-action { display: inline-grid; place-items: center; min-width: 42px; height: 30px; border: 1px solid var(--line-bright); border-radius: 0; background: #0b121a; color: var(--muted); font: 9px var(--mono); cursor: pointer; }
 .export-action:hover, .export-action:focus-visible { border-color: var(--green); color: var(--paper); outline: 0; box-shadow: 0 0 0 2px rgba(152,229,155,.08); }
 .export-action.primary { border-color: rgba(152,229,155,.5); color: var(--green); background: rgba(152,229,155,.06); }
+.table-controls .archive-view-toggle { flex: 0 0 auto; margin-bottom: 5px; }
 .table-card { border: 1px solid var(--line); background: rgba(15, 23, 32, .9); overflow: hidden; }
 .table-scroll { overflow: auto; max-height: calc(100vh - 360px); min-height: 430px; }
 .table-scroll table { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; color: #d5dee1; font: 10px var(--mono); }
@@ -68,6 +69,11 @@
 .table-scroll tbody tr:hover td { background: rgba(152,229,155,.055); }
 .table-scroll tbody tr:hover td.sticky-name { background: #172a2c; }
 .table-scroll td.name-cell { text-align: left; min-width: 214px; font-family: var(--display); }
+.manage-cell { min-width: 68px; text-align: center !important; }
+.table-archive-action { min-width: 46px; height: 28px; border: 1px solid rgba(139,154,168,.35); border-radius: 0; background: #0b121a; color: #91a0ad; font: 9px var(--mono); cursor: pointer; }
+.table-archive-action:hover, .table-archive-action:focus-visible { border-color: var(--yellow); color: var(--yellow); outline: 0; }
+.table-archive-action.restore { border-color: rgba(152,229,155,.4); color: var(--green); background: rgba(152,229,155,.05); }
+.table-archive-action.restore:hover, .table-archive-action.restore:focus-visible { border-color: var(--green); color: var(--paper); }
 .name-line { display: flex; align-items: center; gap: 7px; min-width: 0; }
 .name-cell strong { display: block; color: var(--paper); font-size: 12px; font-weight: 500; }
 .name-cell small { display: block; margin-top: 4px; color: var(--muted); font: 8px var(--mono); }
@@ -140,6 +146,7 @@
   .table-controls .table-search { grid-column: 1 / -1; }
   .table-count { grid-column: 1 / -1; padding: 5px 0 0; }
   .export-group { grid-column: 1 / -1; margin-left: 0; justify-content: flex-start; padding-bottom: 0; }
+  .table-controls .archive-view-toggle { align-self: stretch; margin-bottom: 0; }
   .export-group span { max-width: none; }
   .table-scroll { max-height: none; min-height: 460px; }
   .deduction-board { padding: 19px 17px 16px; }

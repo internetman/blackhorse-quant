@@ -6,8 +6,8 @@
     <meta name="theme-color" content="#0c1118" />
     <title>M2 双阶段股票池 · Mark Minervini 2</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c1118'/%3E%3Cpath d='M5 22 12 14l5 4 10-11' fill='none' stroke='%2398e59b' stroke-width='3'/%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="m2-styles.css?v=20260821-stages" />
-    <link rel="stylesheet" href="m2-table.css?v=20260821-stages" />
+    <link rel="stylesheet" href="m2-styles.css?v=20260824-manual-archive" />
+    <link rel="stylesheet" href="m2-table.css?v=20260824-manual-archive" />
   </head>
   <body>
     <div class="noise"></div>
@@ -94,6 +94,7 @@
           <label><span>板块分类</span><select id="sectorFilter"><option value="all">全部板块</option></select></label>
           <label><span>市场筛选</span><select id="tableMarketFilter"><option value="all">全部市场</option><option value="上交所">上交所</option><option value="深交所">深交所</option><option value="北交所">北交所</option></select></label>
           <label><span>排序</span><select id="tableSort"><option value="stars">星级从高到低</option><option value="pct">最新行情涨跌幅</option><option value="fromHigh">距离区间高点</option><option value="fromLow">从区间低点反弹</option><option value="amount">平均成交额</option><option value="marketCap">市值</option><option value="pe">PE</option><option value="price">现价</option></select></label>
+          <button id="tableArchiveToggle" class="archive-view-toggle" type="button" aria-pressed="false"><span>归档箱</span><b id="tableArchiveCount">0</b></button>
           <div class="table-count"><strong id="visibleCount">—</strong><span>行可见</span></div>
           <div class="export-group" aria-label="导出当前列表">
             <span id="exportStatus">导出当前视图</span>
@@ -110,6 +111,7 @@
                 <tr>
                   <th>#</th>
                   <th class="sticky-name">股票</th>
+                  <th>管理</th>
                   <th>执行星级<br /><small>5 星才可下单</small></th>
                   <th>M2 建议<br /><small>只作筛选参考</small></th>
                   <th>现价</th>
@@ -135,7 +137,7 @@
               <tbody id="tableBody"></tbody>
             </table>
           </div>
-          <div class="table-footnote"><span class="footnote-mark">!</span><p>本页是候选股票池，不是买点触发表。S2转弱、MA200近20日斜率低于0.20%或数据不足的股票不在此展示，但历史状态仍会保留，便于转强后重新入池。</p></div>
+          <div class="table-footnote"><span class="footnote-mark">!</span><p>本页是候选股票池，不是买点触发表。人工归档只隐藏候选，不删除行情与历史状态；可从归档箱恢复。</p></div>
         </section>
 
         <footer class="page-footer">M2 / 候选池负责横向筛选 · 卡片页负责候选足迹 · R02 负责板块环境 <a class="footer-link" href="/">返回 M2 首页 ↗</a></footer>
@@ -144,6 +146,7 @@
     <script src="m2-table-data.js?v=20260821-close"></script>
     <script src="m2-sector-map.js?v=20260821-close"></script>
     <script src="m2-valuation-map.js?v=20260821-close"></script>
-    <script src="m2-table-app.js?v=20260822-candidate-gate"></script>
+    <script src="m2-archive.js?v=20260824-manual-archive"></script>
+    <script src="m2-table-app.js?v=20260824-manual-archive"></script>
   </body>
 </html>

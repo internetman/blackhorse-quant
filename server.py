@@ -33,6 +33,7 @@ STATIC_FILES = {
     "/m2-data.js": (ROOT / "m2-data.js", "text/javascript; charset=utf-8"),
     "/m2-sector-map.js": (ROOT / "m2-sector-map.js", "text/javascript; charset=utf-8"),
     "/m2-valuation-map.js": (ROOT / "m2-valuation-map.js", "text/javascript; charset=utf-8"),
+    "/m2-archive.js": (ROOT / "m2-archive.js", "text/javascript; charset=utf-8"),
     "/m2-app.js": (ROOT / "m2-app.js", "text/javascript; charset=utf-8"),
     "/m2-table": (ROOT / "m2-table.html", "text/html; charset=utf-8"),
     "/m2-table.html": (ROOT / "m2-table.html", "text/html; charset=utf-8"),

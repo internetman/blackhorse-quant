@@ -1,6 +1,8 @@
 (function () {
   const data = window.M2_TABLE_DATA;
   if (!data) return;
+  const archiveStore = window.M2Archive;
+  let archiveView = false;
 
   const $ = (id) => document.getElementById(id);
   const pct = (value) => {
@@ -20,6 +22,9 @@
   const count = (value) => Number.isFinite(Number(value)) ? Number(value).toLocaleString("zh-CN") : "—";
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
   const bareCode = (value) => String(value || "").split(".")[0];
+  const isArchived = (row) => Boolean(archiveStore?.isArchived(row.code));
+  const activeRows = () => data.rows.filter((row) => !isArchived(row));
+  const archivedRows = () => data.rows.filter(isArchived);
   const marketBoard = (value) => {
     const code = bareCode(value);
     if (/^(4|8|92)/.test(code)) return { label: "北交所", className: "bse" };
@@ -162,28 +167,38 @@
   $("deductionAsOf").textContent = data.selectionAsOf;
   $("flowCurrentLabel").textContent = `02 / ${data.closeLabel || "收盘"}`;
   $("periodLabel").textContent = data.periodLabel || "近 20 日";
-  $("summaryTotal").textContent = data.rowCount;
-  $("summaryStacked").textContent = data.stageCounts?.["S1→S2过渡"] || 0;
-  $("summaryAbove200").textContent = data.stageCounts?.["S2趋势"] || 0;
-  $("summaryNearHigh").textContent = data.stageCounts?.["S2延伸"] || 0;
-  $("summaryUp").textContent = data.starCounts?.["5"] || 0;
+  const updateArchiveSummary = () => {
+    const rows = activeRows();
+    const archived = archivedRows().length;
+    $("summaryTotal").textContent = rows.length;
+    $("summaryStacked").textContent = rows.filter((row) => row.stage === "S1→S2过渡").length;
+    $("summaryAbove200").textContent = rows.filter((row) => row.stage === "S2趋势").length;
+    $("summaryNearHigh").textContent = rows.filter((row) => row.stage === "S2延伸").length;
+    $("summaryUp").textContent = rows.filter((row) => setupRating(row).stars >= 5).length;
+    $("tableArchiveCount").textContent = archived;
+    $("tableArchiveToggle").classList.toggle("active", archiveView);
+    $("tableArchiveToggle").setAttribute("aria-pressed", String(archiveView));
+  };
 
   const populateSectorFilter = () => {
     const select = $("sectorFilter");
     if (!select) return;
-    const groups = [...new Set(data.rows.map((row) => sectorInfo(row).sectorGroup || "其它主题"))].sort((a, b) => a.localeCompare(b, "zh-CN"));
+    const currentValue = select.value;
+    const groups = [...new Set(activeRows().map((row) => sectorInfo(row).sectorGroup || "其它主题"))].sort((a, b) => a.localeCompare(b, "zh-CN"));
     select.innerHTML = `<option value="all">全部板块</option>${groups.map((group) => `<option value="${group}">${group}</option>`).join("")}`;
+    if ([...select.options].some((item) => item.value === currentValue)) select.value = currentValue;
   };
   populateSectorFilter();
 
   const renderAnalysis = () => {
-    const nearHigh = data.rows.filter((row) => row.fromHighPct >= -10).length;
+    const rows = activeRows();
+    const nearHigh = rows.filter((row) => row.fromHighPct >= -10).length;
     $("flowTotal").textContent = data.priorCloseQualified || "—";
     $("flowStacked").textContent = data.importedCount || "—";
-    $("flowAbove200").textContent = data.currentQualifiedCount || "—";
-    $("flowNearHigh").textContent = data.newSinceClose || 0;
-    $("flowPriority").textContent = data.rowCount;
-    $("flowConfirmed").textContent = data.rows.filter((row) => !Number.isFinite(Number(row.rsRank))).length;
+    $("flowAbove200").textContent = rows.filter((row) => row.currentQualified).length || "—";
+    $("flowNearHigh").textContent = rows.filter((row) => !row.priorQualified && row.currentQualified).length;
+    $("flowPriority").textContent = rows.length;
+    $("flowConfirmed").textContent = rows.filter((row) => !Number.isFinite(Number(row.rsRank))).length;
 
     const adviceRows = [
       { label: "5星 可执行", key: "star5", color: "priority" },
@@ -194,7 +209,7 @@
       { label: "待复核观察", key: "review", color: "review" },
     ].map((item) => ({
       ...item,
-      value: data.rows.filter((row) => {
+      value: rows.filter((row) => {
         const rating = setupRating(row);
         if (item.key === "star5") return rating.stars >= 5;
         if (item.key === "star4") return rating.stars === 4;
@@ -207,13 +222,13 @@
       <div class="bar-row"><span>${item.label}</span><div class="bar-track"><i class="${item.color}" style="width:${Math.max(4, item.value / maxAdvice * 100)}%"></i></div><strong>${item.value}</strong></div>
     `).join("");
 
-    const highRows = data.rows.filter((row) => Number.isFinite(Number(row.fromHighPct))).sort((a, b) => b.fromHighPct - a.fromHighPct).slice(0, 7);
+    const highRows = rows.filter((row) => Number.isFinite(Number(row.fromHighPct))).sort((a, b) => b.fromHighPct - a.fromHighPct).slice(0, 7);
     $("highChart").innerHTML = highRows.map((row) => {
       const position = clamp(100 + Number(row.fromHighPct), 3, 100);
       return `<div class="bar-row"><span>${row.name}</span><div class="bar-track"><i class="near" style="width:${position}%"></i></div><strong>${pct(row.fromHighPct)}</strong></div>`;
     }).join("");
 
-    const maRows = data.rows.filter((row) => Number.isFinite(Number(row.priceToMa200Pct))).sort((a, b) => b.priceToMa200Pct - a.priceToMa200Pct).slice(0, 7);
+    const maRows = rows.filter((row) => Number.isFinite(Number(row.priceToMa200Pct))).sort((a, b) => b.priceToMa200Pct - a.priceToMa200Pct).slice(0, 7);
     const maxMa = Math.max(1, ...maRows.map((row) => Number(row.priceToMa200Pct)));
     $("maChart").innerHTML = maRows.map((row) => `
       <div class="bar-row"><span>${row.name}</span><div class="bar-track"><i class="ma" style="width:${clamp(Number(row.priceToMa200Pct) / maxMa * 100, 4, 100)}%"></i></div><strong>${pct(row.priceToMa200Pct)}</strong></div>
@@ -229,7 +244,7 @@
     const marketFilter = $("tableMarketFilter")?.value || "all";
     const sectorFilter = $("sectorFilter")?.value || "all";
     const sort = $("tableSort").value;
-    const rows = data.rows.filter((row) => {
+    const rows = data.rows.filter((row) => archiveView ? isArchived(row) : !isArchived(row)).filter((row) => {
       const board = marketBoard(row.code).label;
       const info = sectorInfo(row);
       const matchesSearch = !query || `${row.code} ${row.name} ${board} ${sectorSearchText(row)}`.toLowerCase().includes(query);
@@ -463,11 +478,13 @@
 
   const render = () => {
     const rows = getRows();
+    updateArchiveSummary();
     $("visibleCount").textContent = rows.length;
     $("tableBody").innerHTML = rows.map((row, index) => `
       <tr>
         <td>${String(index + 1).padStart(2, "0")}</td>
         <td class="sticky-name name-cell"><div class="name-line"><strong>${row.name}</strong><span class="board-chip board-${marketBoard(row.code).className}">${marketBoard(row.code).label}</span></div><small>${row.code} · ${row.exchange}</small>${renderSectorTags(row)}</td>
+        <td class="manage-cell"><button class="table-archive-action ${archiveView ? "restore" : ""}" type="button" data-archive-action="${archiveView ? "restore" : "archive"}" data-code="${row.code}" title="${archiveView ? "恢复到候选池" : "从候选池归档"}">${archiveView ? "恢复" : "归档"}</button></td>
         <td class="star-cell star-${setupRating(row).stars}" title="${setupRating(row).action}"><strong>${starText(setupRating(row).stars)}</strong><small>${setupRating(row).label} · ${setupRating(row).action}</small></td>
         <td class="advice-cell ${row.recommendationClass}" title="${row.recommendationReason}"><strong>${row.recommendation}</strong><small>${row.recommendationReason}</small></td>
         <td>${price(row.price)}</td>
@@ -493,6 +510,34 @@
   };
 
   ["tableSearch", "tableStageFilter", "tableMarketFilter", "tableFilter", "sectorFilter", "tableSort"].forEach((id) => $(id)?.addEventListener("input", render));
+  $("tableArchiveToggle")?.addEventListener("click", () => {
+    archiveView = !archiveView;
+    ["tableSearch", "tableStageFilter", "tableMarketFilter", "tableFilter", "sectorFilter"].forEach((id) => {
+      const control = $(id);
+      if (!control) return;
+      control.value = id === "tableSearch" ? "" : "all";
+    });
+    render();
+  });
+  $("tableBody")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-archive-action]");
+    if (!button) return;
+    const row = data.rows.find((item) => bareCode(item.code) === bareCode(button.dataset.code));
+    if (!row) return;
+    if (button.dataset.archiveAction === "restore") {
+      archiveStore.restore(row.code);
+      archiveStore.notify(`${row.name} 已恢复到候选池`);
+    } else {
+      archiveStore.archive(row);
+      archiveStore.notify(`${row.name} 已归档`, "撤销", () => archiveStore.restore(row.code));
+    }
+  });
+  archiveStore?.subscribe(() => {
+    populateSectorFilter();
+    renderAnalysis();
+    render();
+  });
+  updateArchiveSummary();
   render();
 
   const syncSnapshot = async () => {
