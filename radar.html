@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>R02 盘面板块雷达 · 黑马量化</title>
+  <link rel="stylesheet" href="/market-breadth.css?v=20260914">
   <style>
     :root {
       --bg: #f5f3ee;
@@ -572,10 +573,12 @@
       </div>
     </header>
 
+    <section id="market-breadth" aria-label="全市场收盘宽度" aria-live="polite">正在读取市场宽度...</section>
     <div id="app" class="loading">正在拉取盘面与板块数据...</div>
     <div id="warnings" class="warnings"></div>
   </main>
 
+  <script src="/market-breadth.js?v=20260914"></script>
   <script>
     const app = document.getElementById("app");
     const refreshBtn = document.getElementById("refreshBtn");
@@ -1015,6 +1018,7 @@
 
     function renderR02(breadth, r02) {
       const rows = (breadth.rows || []).slice(0, 10);
+      if (!rows.length) return renderDataNotice("行业宽度暂不可用", "等待有效收盘快照，空数据不代表0%。");
       return `
         <div class="r02-grid">
           <div class="r02-row head">
@@ -1026,10 +1030,10 @@
                 ${escapeHtml(row.industry)}
                 ${row.isCurrentR02 ? `<span class="tag main">R02</span>` : ""}
               </div>
-              <div class="${row.latest >= 70 ? "red" : row.latest < 40 ? "green" : ""}">${plain(row.latest)}</div>
+              <div class="${row.latest == null ? "" : row.latest >= 70 ? "red" : row.latest < 40 ? "green" : ""}">${plain(row.latest)}</div>
               <div class="${row.avg5 >= 70 ? "red" : ""}">${plain(row.avg5)}</div>
               <div>${row.days70}/${row.daysTotal}</div>
-              <div class="${row.slope5 >= 0 ? "red" : "green"}">${signed(row.slope5, "")}</div>
+              <div class="${row.slope5 == null ? "" : row.slope5 >= 0 ? "red" : "green"}">${signed(row.slope5, "")}</div>
             </div>
           `).join("")}
         </div>
@@ -1051,7 +1055,8 @@
       const top1 = visibleTop5[0];
       const topNames = visibleTop5.map((s) => s.name).join(" / ");
       const r02Date = data.r02Breadth?.dateEnd || "--";
-      const hotMatchesR02 = visibleTop5.filter((s) => [data.r02.primary, data.r02.secondary].includes(s.name));
+      const r02Current = String(data.r02.updated).slice(0, 10) === r02Date;
+      const hotMatchesR02 = r02Current ? visibleTop5.filter((s) => [data.r02.primary, data.r02.secondary].includes(s.name)) : [];
       const sectorSummary = sectorRankReady
         ? `今日板块领涨：<strong>${escapeHtml(topNames || "--")}</strong>${sectorRankCached ? `（${escapeHtml(sectorRankCacheText)}）` : ""}。${hotMatchesR02.length ? "领涨板块命中当前 R02 主线，值得继续做 R03/R04 复核。" : "领涨板块暂未直接命中当前 R02 主线，先按盘中强弱观察，不自动放宽交易权限。"}`
         : `板块排行：<strong>未就绪</strong>。${escapeHtml(sectorRankStatus.message || "等待实时行情源更新。")}`;
@@ -1072,9 +1077,9 @@
                 <span class="section-note">R02 更新 ${escapeHtml(data.r02.updated)} · 宽度至 ${escapeHtml(r02Date)}</span>
               </div>
               <div class="summary-box">
-                <div class="big-call">${escapeHtml(marketTone(dist))}</div>
+                <div class="big-call">${escapeHtml(dist.asOf || "--")} 收盘 · ${escapeHtml(marketTone(dist))}</div>
                 <p>${sectorSummary}</p>
-                <p>当前 R02 摘要：<span class="tag main">${escapeHtml(data.r02.primary)}</span> <span class="tag main">${escapeHtml(data.r02.secondary)}</span>。${escapeHtml(data.r02.note)}</p>
+                <p>${r02Current ? "已确认 R02" : "历史 R02（待重新确认）"}：${escapeHtml(data.r02.updated)} · ${escapeHtml(data.r02.primary)} / ${escapeHtml(data.r02.secondary)}。${r02Current ? escapeHtml(data.r02.note) : "请结合上方最新行业宽度复核主线。"}</p>
               </div>
             </section>
           </div>
@@ -1088,7 +1093,7 @@
               <div class="index-strip">${renderIndices(data.indices || [])}</div>
               <div class="market-rail">
                 <div class="rail-item">
-                  <div class="rail-label">上涨占比 · A股</div>
+                  <div class="rail-label">收盘上涨占比 · ${escapeHtml(dist.asOf || "--")}</div>
                   <div class="rail-value ${dist.upPct >= 50 ? "red" : "green"}">${plain(dist.upPct, "%")}</div>
                   <div class="rail-sub">样本 ${dist.n ? fmt0.format(dist.n) : "--"} 只</div>
                 </div>

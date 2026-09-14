@@ -100,8 +100,11 @@ M2 选股快照建议在 A 股收盘后 15:30–16:00 生成一次，次日盘�
 - 10 日趋势：东方财富 `push2his` / `push2delay` 板块日 K，`secid=90.BKxxxx`，前端按首日收盘归一化为相对涨跌幅。
 - 领涨 10 股：东方财富 `push2` / `push2delay` 板块成分股，`fs=b:BKxxxx`，按 `f3` 当日涨跌幅排序。
 - 盘面指数：东方财富 `push2` / `push2delay` 指数行情。
-- 全市场涨跌分布：大盘云图 `mkt_idx.cur_chng_pct`。
-- R02 宽度：大盘云图 `industry_ma20_analysis_range`。
+- 全市场收盘涨跌分布与 MA20/MA50 宽度：`market_breadth.py` 从东方财富沪深京 A 股名单和前复权日 K 独立计算，腾讯前复权日 K 作为备用，保存在 `market-breadth.json`。`providerCounts` 记录各来源样本数量。
+- 行业热力图为当前东方财富行业分类回溯，个股等权；含 ST 和北交所。剔除当日无成交、历史不足样本，每格保留分子与分母，不与旧大盘云图行业序列拼接。
+- 同日历史覆盖低于 95% 时计算失败并保留旧文件；网页标明收盘日期，首次 API 失败仍可独立读取宽度快照，浏览器也保留最近一次成功快照。
+- 生产仓库工作流 `Market breadth close snapshot` 在工作日北京时间 16:35 更新并提交快照，可手动运行；GitHub 调度可能延迟，节假日沿用最近收盘。失败可在生产仓库 Actions 查看，不会覆盖已有结果。
+- 手动更新：`python3 market_breadth.py`，随后执行现有部署脚本。生产宽度快照比本地新时，部署脚本优先保留较新的结果。
 - M2 候选股行情：东方财富 `push2` / `push2delay` `ulist.np`。
 - M2 候选股动态日K：东方财富 `push2his` / `push2delay` `stock/kline/get`，前复权日线。
 

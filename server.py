@@ -26,6 +26,9 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent
 STATIC_FILES = {
+    "/market-breadth.json": (ROOT / "market-breadth.json", "application/json; charset=utf-8"),
+    "/market-breadth.js": (ROOT / "market-breadth.js", "text/javascript; charset=utf-8"),
+    "/market-breadth.css": (ROOT / "market-breadth.css", "text/css; charset=utf-8"),
     "/": (ROOT / "index.html", "text/html; charset=utf-8"),
     "/radar.html": (ROOT / "radar.html", "text/html; charset=utf-8"),
     "/radar": (ROOT / "radar.html", "text/html; charset=utf-8"),
@@ -995,8 +998,8 @@ def summarize_map_param(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def get_market_distribution() -> dict[str, Any]:
-    url = "https://data.dapanyuntu.com/dpyt/getMapParamDataV2?param=mkt_idx.cur_chng_pct"
-    return summarize_map_param(fetch_json(url, DAPANYUNTU_REFERER))
+    breadth = get_r02_breadth()
+    return dict(breadth["market"][-1], asOf=breadth["asOf"], source=breadth["source"], barStatus="completed")
 
 
 def summarize_breadth(payload: dict[str, Any]) -> dict[str, Any]:
@@ -1040,14 +1043,10 @@ def summarize_breadth(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def get_r02_breadth() -> dict[str, Any]:
-    today = dt.date.today()
-    start = (today - dt.timedelta(days=60)).isoformat()
-    end = today.isoformat()
-    url = (
-        "https://sckd.dapanyuntu.com/api/api/industry_ma20_analysis_range"
-        f"?start_date={urllib.parse.quote(start)}&end_date={urllib.parse.quote(end)}"
-    )
-    return summarize_breadth(fetch_json(url, SCKD_REFERER))
+    payload = json.loads((ROOT / "market-breadth.json").read_text(encoding="utf-8"))
+    if payload.get("coveragePct", 0) < 95 or not payload.get("market"):
+        raise FetchError("市场宽度快照未通过覆盖率校验")
+    return payload
 
 
 def build_dashboard_payload(force: bool = False) -> dict[str, Any]:
@@ -1191,8 +1190,8 @@ def build_dashboard_payload(force: bool = False) -> dict[str, Any]:
             "sectorKline": "Eastmoney push2his/push2delay daily kline, secid=90.BKxxxx",
             "sectorLeaders": "Eastmoney push2/push2delay clist, fs=b:BKxxxx, sorted by f3",
             "indices": "Eastmoney push2/push2delay ulist",
-            "marketDistribution": "Dapanyuntu mkt_idx.cur_chng_pct",
-            "r02Breadth": "Dapanyuntu industry_ma20_analysis_range",
+            "marketDistribution": "东方财富/腾讯全市场收盘日K，等权涨跌分布",
+            "r02Breadth": "东方财富/腾讯前复权日K，自算行业MA20站上比例",
         },
         "r02": R02_CURRENT,
         "indices": indices,
