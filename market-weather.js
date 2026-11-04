@@ -2,7 +2,7 @@
 (function (global) {
   'use strict';
   function finite(x) { return typeof x === 'number' && Number.isFinite(x); }
-  function metric(row, key) { const m = row?.[key]; return m && finite(m.pct) && m.valid > 0 ? m.pct : null; }
+  function metric(row, key) { const m = row?.[key]; return m && finite(m.pct) && (m.valid > 0 || m.reported === true) ? m.pct : null; }
   function expectedCloseDate(now = new Date()) {
     const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23'
@@ -49,7 +49,10 @@
     };
     const steady = market.length >= 8 && [market.length-3,market.length-2,market.length-1].every(expansionAt);
     let code = 'mixed', label = '分化', action = '保持选择性，等待低风险买点；不因单日普涨放大仓位。', ceiling = '40%–50% 环境参考上限';
-    if (ma20 == null || ma50 == null || change20 == null) {
+    if (ma20 != null && ma50 == null) {
+      code='partial'; label=change20>0?'短线改善 · 中期未确认':'中期趋势未确认';
+      action='最新MA20与涨跌参与度已接通；公开源没有MA50，暂不能确认中期顺风或提高进攻仓位。'; ceiling='等待MA50与指数确认';
+    } else if (ma20 == null || ma50 == null || change20 == null) {
       code='unknown'; label='数据不足'; action='缺少足够同日宽度和历史，暂停加仓判断。'; ceiling='暂停判断';
     } else if (ma20 < 30 || ma50 < 30) {
       if (change20 > 0) {code='repair'; label='低位修复'; action='宽度仍低，改善尚不足以扩大仓位；等待参与面持续恢复。';}

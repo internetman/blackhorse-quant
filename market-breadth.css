@@ -16,6 +16,9 @@
 .weather-method { margin-top:16px; font-size:12px; line-height:1.7; color:var(--muted); }
 .weather-method summary { cursor:pointer; }
 .breadth-download { color:var(--ink); font-size:12px; }
+.participation-panel { margin:20px 0; padding:18px 0 0; border-top:2px solid var(--ink); }
+.participation-panel h3 { font-size:20px; margin:0; }
+.participation-panel .breadth-stats { margin-bottom:10px; }
 @media(max-width:900px) { .weather-gates { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:600px) { .weather-panel { padding:16px; } .weather-summary { grid-template-columns:1fr; gap:18px; } .weather-budget { padding:16px 0 0; border-left:0; border-top:1px solid var(--line); } .weather-summary h3 { font-size:30px; } }
 .breadth-head, .breadth-controls { display:flex; gap:16px; flex-wrap:wrap; align-items:center; justify-content:space-between; }

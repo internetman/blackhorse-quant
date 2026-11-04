@@ -1,1 +1,1 @@
-{"status":"failed","attemptedAt":"2026-11-04T14:36:24+08:00","error":"全市场历史行情缺失超过5%，保留上次成功快照；暂停加仓判断"}
+{"status":"success","attemptedAt":"2026-11-04T16:54:56+08:00","asOf":"2026-11-04","availableMetrics":["ma20"],"note":"MA20已更新；MA50未提供，禁止进攻仓位确认"}

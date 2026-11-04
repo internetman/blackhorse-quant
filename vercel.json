@@ -6,6 +6,9 @@
   "outputDirectory": ".",
   "cleanUrls": true,
   "functions": {
+    "api/public-market.py": {
+      "maxDuration": 30
+    },
     "api/dashboard.py": {
       "maxDuration": 30
     },
@@ -17,6 +20,10 @@
     }
   },
   "rewrites": [
+    {
+      "source": "/api/public-market",
+      "destination": "/api/public-market.py"
+    },
     {
       "source": "/api/dashboard",
       "destination": "/api/dashboard.py"

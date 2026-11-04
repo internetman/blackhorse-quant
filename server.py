@@ -1238,6 +1238,13 @@ class Handler(BaseHTTPRequestHandler):
             force = params.get("force", ["0"])[0] == "1"
             self.serve_json(build_dashboard_payload(force=force))
             return
+        if parsed.path == "/api/public-market":
+            try:
+                from refresh_public_breadth import preview
+                self.serve_json(preview())
+            except Exception as exc:
+                self.send_error(503, str(exc)[:150])
+            return
         if parsed.path == "/api/m2-watchlist":
             params = urllib.parse.parse_qs(parsed.query)
             dynamic = params.get("dynamic", ["0"])[0] == "1"
