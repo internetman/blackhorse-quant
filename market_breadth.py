@@ -7,6 +7,7 @@ import datetime as dt
 import json
 import math
 import statistics
+import subprocess
 import time
 import urllib.parse
 import urllib.request
@@ -22,8 +23,18 @@ def fetch(url, attempts=3, timeout=8):
     request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", "Referer": "https://quote.eastmoney.com/"})
     for attempt in range(attempts):
         try:
-            with urllib.request.urlopen(request, timeout=timeout) as response:
-                return json.load(response)
+            # curl honours the workstation's network route more reliably than
+            # urllib's CONNECT tunnel; never interpolate a URL into shell text.
+            try:
+                result = subprocess.run([
+                    "curl", "--fail", "--silent", "--show-error", "--location",
+                    "--max-time", str(timeout), "--user-agent", "Mozilla/5.0",
+                    "--referer", "https://quote.eastmoney.com/", url,
+                ], capture_output=True, text=True, timeout=timeout+2, check=True)
+                return json.loads(result.stdout)
+            except FileNotFoundError:
+                with urllib.request.urlopen(request, timeout=timeout) as response:
+                    return json.load(response)
         except Exception:
             if attempt == attempts-1:
                 raise
@@ -33,7 +44,13 @@ def fetch(url, attempts=3, timeout=8):
 def universe():
     def page(n):
         query = urllib.parse.urlencode(dict(pn=n, pz=100, po=1, np=1, fltt=2, invt=2, fid="f12", fs=UNIVERSE, fields="f2,f3,f12,f13,f14,f100,f124"))
-        return fetch("https://push2delay.eastmoney.com/api/qt/clist/get?" + query)["data"]
+        last_error = None
+        for host in ('push2delay.eastmoney.com', 'push2.eastmoney.com'):
+            try:
+                return fetch('https://'+host+'/api/qt/clist/get?'+query, attempts=1, timeout=6)['data']
+            except Exception as exc:
+                last_error = exc
+        raise ValueError(f'Universe page {n} failed on both providers: {type(last_error).__name__}')
     first = page(1)
     rows = first["diff"]
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
@@ -77,7 +94,7 @@ def bars(stock, cutoff, cache):
     if not result and not stock["code"].startswith(("4", "8", "9")):
         symbol = ("sh" if stock["secid"].startswith("1.") else "sz") + stock["code"]
         begin = (dt.date.fromisoformat(cutoff)-dt.timedelta(days=220)).isoformat()
-        url = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?" + urllib.parse.urlencode({"param": f"{symbol},day,{begin},{cutoff},150,qfq"})
+        url = "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get?" + urllib.parse.urlencode({"param": f"{symbol},day,{begin},{cutoff},150,qfq"})
         node = (fetch(url, attempts=2).get("data") or {}).get(symbol) or {}
         raw = node.get("qfqday") or node.get("day") or []
         previous = None
@@ -114,6 +131,8 @@ def summarize(samples):
 
 
 def calculate(stocks, histories, cutoff):
+    if not stocks or not histories:
+        raise ValueError("No valid all-market history; preserving previous snapshot")
     latest_counts = Counter(rows[-1]["date"] for rows in histories.values() if rows)
     latest = latest_counts.most_common(1)[0][0]
     if latest_counts[latest] / len(stocks) < 0.95:
@@ -158,16 +177,52 @@ def calculate(stocks, histories, cutoff):
             "dates": dates, "market": market, "rows": sectors}
 
 
+def benchmark_snapshot(cutoff, cache):
+    specs = [("1.000001", "上证指数"), ("1.000300", "沪深300"),
+             ("1.000852", "中证1000"), ("0.399006", "创业板指"), ("1.000688", "科创50")]
+    def one(spec):
+        secid, name = spec
+        try:
+            rows = bars(dict(secid=secid, code=secid.split('.')[1]), cutoff, cache)
+            closes = [x['close'] for x in rows]
+            if len(closes) < 70:
+                raise ValueError('指数历史不足70日')
+            avg = statistics.mean(closes[-50:])
+            prior = statistics.mean(closes[-70:-20])
+            return dict(secid=secid, name=name, asOf=rows[-1]['date'], close=closes[-1],
+                        ma50=round(avg, 4), ma50Slope20=round((avg/prior-1)*100, 4))
+        except Exception as exc:
+            return dict(secid=secid, name=name, asOf=None, close=None, ma50=None, ma50Slope20=None, error=str(exc)[:160])
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
+        return list(pool.map(one, specs))
+
+
+def atomic_json(path, value):
+    temp = path.with_suffix('.tmp')
+    temp.write_text(json.dumps(value, ensure_ascii=False, separators=(',', ':')))
+    temp.replace(path)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--workers", type=int, default=6)
     parser.add_argument("--output", type=Path, default=ROOT/"market-breadth.json")
+    parser.add_argument("--cutoff", help="可复现的收盘日期，不能晚于最近允许的完整收盘日")
     args = parser.parse_args()
     now = dt.datetime.now(ZONE)
-    cutoff = (now.date() if now.hour >= 16 else now.date()-dt.timedelta(days=1)).isoformat()
+    allowed = now.date() if now.hour >= 16 else now.date()-dt.timedelta(days=1)
+    cutoff = args.cutoff or allowed.isoformat()
+    if dt.date.fromisoformat(cutoff) > allowed:
+        raise ValueError('Refusing incomplete/future close date')
+    status_path = args.output.with_name(args.output.stem+'-status.json')
+    attempted = now.isoformat(timespec='seconds')
+    atomic_json(status_path, dict(status='running', attemptedAt=attempted, requestedCutoff=cutoff))
     cache = ROOT/"output"/"breadth-cache"
     cache.mkdir(parents=True, exist_ok=True)
     stocks = universe()
+    benchmarks = benchmark_snapshot(cutoff, cache)
+    calendar_dates = [x['asOf'] for x in benchmarks if x.get('asOf')]
+    expected = max(calendar_dates) if calendar_dates else cutoff
     print(f"universe={len(stocks)} cutoff={cutoff}", flush=True)
     histories, failures = {}, []
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as pool:
@@ -182,15 +237,33 @@ def main():
                     print(f"missing {stock['code']}: {str(exc)[:120]}", flush=True)
             if done % 300 == 0:
                 print(f"history={done}/{len(stocks)} failures={len(failures)}", flush=True)
+            if len(failures) > len(stocks)*0.05:
+                for job in jobs:
+                    job.cancel()
+                raise ValueError('全市场历史行情缺失超过5%，保留上次成功快照；暂停加仓判断')
     (cache/"failures.json").write_text(json.dumps(failures, ensure_ascii=False))
     result = calculate(stocks, histories, cutoff)
+    if result['asOf'] != expected:
+        raise ValueError(f"History date {result['asOf']} does not match expected close {expected}")
+    result['benchmarks'] = benchmarks
+    result['expectedCloseDate'] = expected
     if args.output.exists() and json.loads(args.output.read_text()).get("asOf", "") > result["asOf"]:
         raise ValueError("Refusing to regress snapshot date")
-    temp = args.output.with_suffix(".tmp")
-    temp.write_text(json.dumps(result, ensure_ascii=False, separators=(",", ":")))
-    temp.replace(args.output)
+    atomic_json(args.output, result)
+    atomic_json(status_path, dict(status='success', attemptedAt=attempted, completedAt=dt.datetime.now(ZONE).isoformat(timespec='seconds'), asOf=result['asOf'], coveragePct=result['coveragePct']))
     print(json.dumps({k: result[k] for k in ["asOf", "universeCount", "historyCount", "coveragePct"]}, ensure_ascii=False), flush=True)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as exc:
+        # The old successful snapshot must remain intact; expose the failed run.
+        parser_output = ROOT/'market-breadth.json'
+        import sys
+        if '--output' in sys.argv:
+            parser_output = Path(sys.argv[sys.argv.index('--output')+1])
+        status_path = parser_output.with_name(parser_output.stem+'-status.json')
+        previous = json.loads(status_path.read_text()) if status_path.exists() else {}
+        atomic_json(status_path, dict(status='failed', attemptedAt=previous.get('attemptedAt', dt.datetime.now(ZONE).isoformat(timespec='seconds')), error=str(exc)[:250]))
+        raise

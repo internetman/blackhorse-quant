@@ -1,4 +1,23 @@
 #market-breadth { margin: 24px 0; border-block: 1px solid var(--line); padding: 20px 0; min-width: 0; }
+.weather-panel { --weather-accent:#a16f23; margin-top:20px; padding:24px; border:1px solid var(--line); border-left:5px solid var(--weather-accent); background:#fffdf8; }
+.weather-weak,.weather-unavailable { --weather-accent:#a3353c; background:#fff8f6; }
+.weather-favorable { --weather-accent:#247258; background:#f5fbf7; }
+.weather-summary { display:grid; grid-template-columns:1fr minmax(210px,.45fr); gap:24px; align-items:center; }
+.weather-summary h3 { margin:8px 0 10px; font-size:36px; letter-spacing:-1px; color:var(--weather-accent); }
+.weather-summary p { margin:0; line-height:1.7; max-width:680px; }
+.weather-budget { padding-left:24px; border-left:1px solid var(--line); display:grid; gap:10px; }
+.weather-budget span,.weather-budget small { font-size:12px; color:var(--muted); }
+.weather-budget strong { font-size:23px; }
+.weather-gates { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:14px; margin-top:24px; padding-top:18px; border-top:1px solid var(--line); }
+.weather-gate b { display:block; font-size:13px; line-height:1.5; }
+.weather-gate small { display:block; margin-top:7px; font-size:11px; line-height:1.6; color:var(--muted); }
+.weather-evidence { display:flex; flex-wrap:wrap; gap:12px 24px; margin-top:20px; font-size:12px; }
+.weather-stale { font-size:12px; line-height:1.7; color:#96363e; margin-bottom:0; }
+.weather-method { margin-top:16px; font-size:12px; line-height:1.7; color:var(--muted); }
+.weather-method summary { cursor:pointer; }
+.breadth-download { color:var(--ink); font-size:12px; }
+@media(max-width:900px) { .weather-gates { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:600px) { .weather-panel { padding:16px; } .weather-summary { grid-template-columns:1fr; gap:18px; } .weather-budget { padding:16px 0 0; border-left:0; border-top:1px solid var(--line); } .weather-summary h3 { font-size:30px; } }
 .breadth-head, .breadth-controls { display:flex; gap:16px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
 .breadth-head h2 { margin:0; font-size:24px; }
 .breadth-note { color:var(--muted); font-size:13px; line-height:1.7; overflow-wrap:anywhere; }

@@ -26,6 +26,8 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent
 STATIC_FILES = {
+    "/market-weather.js": (ROOT / "market-weather.js", "text/javascript; charset=utf-8"),
+    "/market-breadth-status.json": (ROOT / "market-breadth-status.json", "application/json; charset=utf-8"),
     "/market-breadth.json": (ROOT / "market-breadth.json", "application/json; charset=utf-8"),
     "/market-breadth.js": (ROOT / "market-breadth.js", "text/javascript; charset=utf-8"),
     "/market-breadth.css": (ROOT / "market-breadth.css", "text/css; charset=utf-8"),
