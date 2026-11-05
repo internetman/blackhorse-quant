@@ -98,6 +98,11 @@ def refresh(root=ROOT, now=None, scheduled=False, attempts=2, retry_delay=30, fo
             current = True
         except (ValueError, KeyError, TypeError):
             pass
+    old_status = read_json(status) or {}
+    if current and old_status.get('status') == 'success' and old_status.get('asOf') == expected and old_status.get('lastCollectedAt') == previous.get('generatedAt'):
+        # Retry slots still verify production, but do not create three status
+        # commits/deployments per day after the first successful publication.
+        return dict(old_status, checkedAt=now.isoformat(), alreadyCurrent=True)
     if not current:
         # The collector writes only caches. The old successful snapshot remains
         # untouched until every check below has passed.
@@ -149,8 +154,10 @@ def main():
                 report['verification'] = verify_live(report['asOf'], code=args.include_code)
             print(json.dumps(report, ensure_ascii=False), flush=True)
         except Exception as exc:
+            stage = 'verification' if report and report.get('publication') else 'publication' if report else 'collection'
+            report = dict(report or {}, status='failed', failedStage=stage, error=str(exc)[:250])
             failure = read_json(ROOT/'market-breadth-status.json') or {}
-            if failure.get('status') != 'failed' and report is None:
+            if failure.get('status') != 'failed' and stage == 'collection':
                 previous = read_json(ROOT/'market-breadth.json') or {}
                 atomic_json(ROOT/'market-breadth-status.json', dict(status='failed',
                     attemptedAt=dt.datetime.now(ZONE).isoformat(timespec='seconds'),
