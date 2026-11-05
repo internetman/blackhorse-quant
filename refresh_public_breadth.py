@@ -27,6 +27,19 @@ def finite(value):
     return isinstance(value, (int, float)) and math.isfinite(value)
 
 
+def quote_timestamp(value):
+    stamp=dt.datetime.fromisoformat(value.replace('Z','+00:00'))
+    if stamp.tzinfo is None:
+        raise ValueError('Quote timestamp must include a timezone')
+    return stamp.astimezone(ZONE)
+
+
+def require_closed_quote(value, expected):
+    stamp=quote_timestamp(value)
+    if stamp.date().isoformat()!=expected or stamp.hour<15:
+        raise ValueError('Quote timestamp is not a completed 15:00 exchange close')
+
+
 def source_frame(payload):
     dates, names = payload['dates'], payload['industries']
     if len(dates) != len(set(dates)) or dates != sorted(dates):
@@ -55,6 +68,8 @@ def preview():
     if len(prices)<4000:
         raise ValueError('Beta quote universe is incomplete')
     p=summarize(prices)
+    quote_time=quote_timestamp(quotes['updatedAt'])
+    quote_status='completed' if quote_time.hour>=15 else 'intraday'
     market=[dict(date=date,**(p if date==latest and quotes['updatedAt'][:10]==latest else summarize([]))) for date in dates]
     rows=[]
     for industry in names:
@@ -70,7 +85,7 @@ def preview():
         generatedAt=dt.datetime.now(ZONE).isoformat(timespec='seconds'),
         source='大盘云图公开API（在线备用）：beta个股报价及sckd东财行业MA20聚合值',
         method='在线备用模式：行业MA20为上游聚合值，未提供每格分母；不做行业均值冒充全市场MA20。全市场MA20/MA50均留空，等待逐股收盘快照。beta涨跌分布独立按最新报价计算，时间与行业MA20分开显示。',
-        participation=dict(asOf=quotes['updatedAt'][:10],updatedAt=quotes['updatedAt'],source=BETA+'/api/heatmap/quotes?period=day',**p))
+        participation=dict(asOf=quotes['updatedAt'][:10],updatedAt=quotes['updatedAt'],barStatus=quote_status,source=BETA+'/api/heatmap/quotes?period=day',**p))
 
 
 def collect(days=6, workers=4, expected=None):
@@ -93,6 +108,8 @@ def collect(days=6, workers=4, expected=None):
     overview_all=next(x for x in overview['markets'] if x['market']=='all')
     if overview_all['updatedAt'][:10] != latest:
         raise ValueError('Overview date and MA20 date disagree')
+    require_closed_quote(quotes['updatedAt'], expected)
+    require_closed_quote(overview_all['updatedAt'], expected)
     raw_quotes=quotes['quotes']
     all_clean_quotes={key: value for key,value in raw_quotes.items()
                   if finite(value.get('price')) and value['price']>0 and finite(value.get('changePct'))}
@@ -196,7 +213,7 @@ def collect(days=6, workers=4, expected=None):
         providerCounts={'DapanyuntuSCKD':latest_count},benchmarks=[],
         source='大盘云图公开API：beta个股报价 + sckd东财行业收盘价/MA20；本地逐股汇总',
         method='沪深A股合计按逐股分子/分母计算，含ST、不含北交所，按当前沪深报价名单回溯，存在存续样本偏差；未独立验证复权因子。行业格按sckd实际行业样本，可能含少量北交所，不能与沪深合计直接相加。行业为东财86板块，不与旧128行业序列拼接。最近6交易日逐股重算，保留之前已校验的同口径历史点；更早行业格为上游聚合值，分子分母未知。beta涨跌参与度单独覆盖沪深京。MA50未提供，全部留空，不能据此确认中期顺风或放大仓位。',
-        participation=dict(asOf=latest,updatedAt=quotes['updatedAt'],source=BETA+'/api/heatmap/quotes?period=day',**participation),
+        participation=dict(asOf=latest,updatedAt=quotes['updatedAt'],barStatus='completed',source=BETA+'/api/heatmap/quotes?period=day',**participation),
         verification=dict(matched=len(matched),priceMismatchCount=len(mismatch),priceMismatchSamples=mismatch[:10],failedRequests=errors),
         sources=[dict(url=BETA+'/api/heatmap/quotes?period=day',updatedAt=quotes['updatedAt']),
                  dict(url=SCKD+'/industry_ma20_analysis_page?page=0',actualLastDate=latest)])

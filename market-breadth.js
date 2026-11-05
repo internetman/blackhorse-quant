@@ -10,7 +10,7 @@
   function participation() {
     const p=data.participation;
     if(!p)return '';
-    return `<section class="participation-panel" aria-label="最新市场涨跌参与度"><div class="breadth-head"><h3>最新市场参与度</h3><span class="breadth-note">${esc(p.asOf)} 收盘 · 报价时间 ${esc(p.updatedAt)} · beta大盘云图</span></div><div class="breadth-stats">${[
+    return `<section class="participation-panel" aria-label="最新市场涨跌参与度"><div class="breadth-head"><h3>最新市场参与度</h3><span class="breadth-note">${esc(p.asOf)} ${p.barStatus==='intraday'?'盘中报价':p.asOf===data.asOf && data.barStatus==='completed'?'收盘':'报价'} · 报价时间 ${esc(p.updatedAt)} · beta大盘云图</span></div><div class="breadth-stats">${[
       ['上涨占比',pct(p.upPct),`${p.up}涨 / ${p.down}跌 / ${p.flat}平`],
       ['个股涨跌幅中位数',pct(p.median),`${p.n}只有效报价，等权统计`],
       ['涨跌幅下四分位',pct(p.p25),'25%的股票涨跌幅不高于此值'],
