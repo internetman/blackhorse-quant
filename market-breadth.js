@@ -25,7 +25,7 @@
       <div class="weather-gates">${w.gates.map(g=>`<div class="weather-gate"><b>${g.passed===true?'通过':g.passed===false?'未通过':'缺数据'} · ${esc(g.label)}</b><small>${esc(g.detail)}</small></div>`).join('')}</div>
       <div class="weather-evidence"><span>行业扩散 ${pct(w.sectorPct)}（${w.sectorAbove}/${w.sectorValid} 个行业宽度≥50%）</span><span>个股涨跌幅中位数 ${pct(latest.median)}</span><span>MA50五日变化 ${point(w.change50)}</span></div>
       ${!w.fresh.usable?`<p class="weather-stale">历史快照当时的分类：${esc(w.observed.label)}，不代表今天。最新采集：${esc(attempt?.attemptedAt || '没有运行记录')} ${attempt?.error?`· ${esc(attempt.error)}`:''}</p>`:''}
-      <details class="weather-method"><summary>天气如何判定 / 仓位边界</summary><p>这是独立、未回测的观察分类：MA20或MA50站上比例低于30%为偏弱，低位五日改善标记修复；两项均≥50%、行业半数以上宽度≥50%、MA20五日不下降为扩散；扩散持续3日且MA20≥60%、MA50≥55%，至少3/5个指数站上上行的MA50，并有行业符合R02门槛，才标记顺风。</p><p>指数：上证、沪深300、中证1000、创业板、科创50。R02门槛：最新≥85且5日均≥80；或最新≥90且3日均≥80；或最新与5日均均≥70。缺失不算通过。</p><p>20%–30% / 40%–50% / 60%引用现行R05的防守、结构性行情、顺风环境参考上限；实际仓位仍取账户约束、个股买点及风险限制中的更严格值。红灯不新开仓，不用宽度替代止损。</p><p>盘中不提前写入收盘结论。工作日参考截止按北京时间16:00和周末计算，法定休市日未核实时保守提示待更新，不假装交易日历完整。</p></details>
+      <details class="weather-method"><summary>天气如何判定 / 仓位边界</summary><p>这是独立、未回测的观察分类：MA20或MA50站上比例低于30%为偏弱，低位五日改善标记修复；两项均≥50%、行业半数以上宽度≥50%、MA20五日不下降为扩散；扩散持续3日且MA20≥60%、MA50≥55%，至少3/5个指数站上上行的MA50，并有行业符合R02门槛，才标记顺风。</p><p>指数：上证、沪深300、中证1000、创业板、科创50。R02门槛：最新≥85且5日均≥80；或最新≥90且3日均≥80；或最新与5日均均≥70。缺失不算通过。</p><p>20%–30% / 40%–50% / 60%引用现行R05的防守、结构性行情、顺风环境参考上限；实际仓位仍取账户约束、个股买点及风险限制中的更严格值。红灯不新开仓，不用宽度替代止损。</p><p>盘中不提前写入收盘结论。应有收盘日按北京时间16:00和交易所年度休市安排计算；日历缺失或年份未核实时暂停判断，不按调休工作日冒充交易日。</p></details>
     </section>`;
   }
   function valid(d) { return d?.schemaVersion === 1 && (d.coveragePct >= 95 || d.dataMode==='public-aggregates' && d.participation?.n>=4000) && d.market?.length && d.rows?.length; }
@@ -88,7 +88,10 @@
   }
   async function load() {
     try {
-      try {const r=await fetch('/market-breadth-status.json',{cache:'no-store'});if(r.ok){const j=await r.json();if(j.attemptedAt)attempt=j;}}catch{}
+      await Promise.allSettled([
+        (async()=>{const r=await fetch('/market-trading-calendar.json',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('calendar');window.MarketWeather.setCalendar(await r.json());})(),
+        (async()=>{const r=await fetch('/market-breadth-status.json',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(r.ok){const j=await r.json();if(j.attemptedAt)attempt=j;}})()
+      ]);
       const reads=await Promise.allSettled(['/market-breadth.json','/api/public-market'].map(async url=>{
         const response=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(20000)});
         if(!response.ok)throw Error('fetch');

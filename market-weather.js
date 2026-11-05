@@ -2,6 +2,14 @@
 (function (global) {
   'use strict';
   function finite(x) { return typeof x === 'number' && Number.isFinite(x); }
+  let calendar = null;
+  function setCalendar(value) { calendar = value?.schemaVersion === 1 && value?.years ? value : null; }
+  function tradingDay(day) {
+    const entry = calendar?.years?.[day.slice(0,4)];
+    if (!entry) return null;
+    const date = new Date(day+'T00:00:00Z');
+    return ![0,6].includes(date.getUTCDay()) && !entry.closures.some(([a,b])=>a<=day && day<=b);
+  }
   function metric(row, key) { const m = row?.[key]; return m && finite(m.pct) && (m.valid > 0 || m.reported === true) ? m.pct : null; }
   function expectedCloseDate(now = new Date()) {
     const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
@@ -9,19 +17,24 @@
     }).formatToParts(now).map(p => [p.type, p.value]));
     const date = new Date(`${parts.year}-${parts.month}-${parts.day}T00:00:00Z`);
     if (Number(parts.hour) < 16) date.setUTCDate(date.getUTCDate() - 1);
-    while ([0, 6].includes(date.getUTCDay())) date.setUTCDate(date.getUTCDate() - 1);
-    return date.toISOString().slice(0, 10);
+    for(let n=0;n<35;n++) {
+      const day=date.toISOString().slice(0,10), open=tradingDay(day);
+      if(open===null)return null;
+      if(open)return day;
+      date.setUTCDate(date.getUTCDate()-1);
+    }
+    return null;
   }
   function freshness(data, now = new Date(), attempt = null) {
     const expected = expectedCloseDate(now);
     // A date in the payload cannot prove that its update ran today.
     const latest = data?.market?.at(-1);
     const complete = data?.barStatus === 'completed' && data?.coveragePct >= 95 && latest?.date === data?.asOf;
-    const stale = !data?.asOf || data.asOf < expected;
-    const future = data?.asOf > expected;
+    const stale = !expected || !data?.asOf || data.asOf < expected;
+    const future = expected && data?.asOf > expected;
     const failed = attempt?.status === 'failed' && attempt.attemptedAt > (data?.generatedAt || '');
     return {expected, complete, stale, failed, usable: complete && !stale && !future && !failed,
-      note: !complete ? '同日数据不完整，暂停加仓判断' : future ? '快照日期超出完整收盘范围，暂停判断' : stale ? `数据滞后，实际截至 ${data.asOf}；工作日参考截止 ${expected}` : failed ? '最近采集失败，暂停加仓判断' : '完整收盘快照；盘中涨幅不计入收盘信号'};
+      note: !expected ? '交易所日历缺失或年份未核实，暂停加仓判断' : !complete ? '同日数据不完整，暂停加仓判断' : future ? '快照日期超出完整收盘范围，暂停判断' : stale ? `数据滞后，实际截至 ${data.asOf}；应有收盘日 ${expected}` : failed ? '最近采集失败，暂停加仓判断' : '完整收盘快照；盘中涨幅不计入收盘信号'};
   }
   function evaluate(data, now = new Date(), attempt = null) {
     const market = data?.market || [], latest = market.at(-1), old = market.at(-6);
@@ -78,7 +91,7 @@
     ];
     return {code,label,action,ceiling,observed,fresh,ma20,ma50,change20,change50,sectorPct,sectorAbove:above50Sectors.length,sectorValid:validSectors.length,mainSectors:mainSectors.map(s=>s.industry),gates};
   }
-  const api={evaluate,freshness,expectedCloseDate};
+  const api={evaluate,freshness,expectedCloseDate,setCalendar};
   if(typeof module !== 'undefined' && module.exports)module.exports=api;
   global.MarketWeather=api;
 })(typeof window !== 'undefined' ? window : globalThis);

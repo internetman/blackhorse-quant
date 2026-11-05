@@ -73,7 +73,7 @@ def preview():
         participation=dict(asOf=quotes['updatedAt'][:10],updatedAt=quotes['updatedAt'],source=BETA+'/api/heatmap/quotes?period=day',**p))
 
 
-def collect(days=6, workers=4):
+def collect(days=6, workers=4, expected=None):
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
         fq=pool.submit(fetch, BETA+'/api/heatmap/quotes?period=day', attempts=2, timeout=15)
         fo=pool.submit(fetch, BETA+'/api/heatmap/overview?period=day', attempts=2, timeout=15)
@@ -81,6 +81,11 @@ def collect(days=6, workers=4):
         quotes, overview, breadth = fq.result(), fo.result(), fb.result()
     dates, names, latest, index = source_frame(breadth)
     now=dt.datetime.now(ZONE)
+    if expected is None:
+        from trading_calendar import expected_close
+        expected=expected_close(now)
+    if latest != expected:
+        raise ValueError(f'Source close {latest} is not expected exchange close {expected}')
     if latest > now.date().isoformat() or latest == now.date().isoformat() and now.hour < 16:
         raise ValueError('Source contains an incomplete close')
     if quotes['updatedAt'][:10] != latest:
@@ -190,7 +195,7 @@ def collect(days=6, workers=4):
         coveragePct=round(latest_count/universe_count*100,2),
         providerCounts={'DapanyuntuSCKD':latest_count},benchmarks=[],
         source='大盘云图公开API：beta个股报价 + sckd东财行业收盘价/MA20；本地逐股汇总',
-        method='沪深A股合计按逐股分子/分母计算，含ST、不含北交所，按当前沪深报价名单回溯，存在存续样本偏差；未独立验证复权因子。行业格按sckd实际行业样本，可能含少量北交所，不能与沪深合计直接相加。行业为东财86板块，不与旧128行业序列拼接。最近6交易日逐股重算，较早行业格为上游聚合值，分子分母未知；较早沪深合计格留空。beta涨跌参与度单独覆盖沪深京。MA50未提供，全部留空，不能据此确认中期顺风或放大仓位。',
+        method='沪深A股合计按逐股分子/分母计算，含ST、不含北交所，按当前沪深报价名单回溯，存在存续样本偏差；未独立验证复权因子。行业格按sckd实际行业样本，可能含少量北交所，不能与沪深合计直接相加。行业为东财86板块，不与旧128行业序列拼接。最近6交易日逐股重算，保留之前已校验的同口径历史点；更早行业格为上游聚合值，分子分母未知。beta涨跌参与度单独覆盖沪深京。MA50未提供，全部留空，不能据此确认中期顺风或放大仓位。',
         participation=dict(asOf=latest,updatedAt=quotes['updatedAt'],source=BETA+'/api/heatmap/quotes?period=day',**participation),
         verification=dict(matched=len(matched),priceMismatchCount=len(mismatch),priceMismatchSamples=mismatch[:10],failedRequests=errors),
         sources=[dict(url=BETA+'/api/heatmap/quotes?period=day',updatedAt=quotes['updatedAt']),
@@ -206,6 +211,11 @@ def main():
     attempted=dt.datetime.now(ZONE).isoformat(timespec='seconds')
     try:
         result=collect(args.days,args.workers)
+        from daily_breadth import validate_snapshot, merge_verified_history
+        from trading_calendar import expected_close
+        previous=json.loads((ROOT/'market-breadth.json').read_text()) if (ROOT/'market-breadth.json').exists() else None
+        validate_snapshot(result, expected_close(), previous)
+        result=merge_verified_history(result,previous)
         atomic_json(ROOT/'market-breadth.json',result)
         atomic_json(status,dict(status='success',attemptedAt=attempted,asOf=result['asOf'],availableMetrics=['ma20'],note='MA20已更新；MA50未提供，禁止进攻仓位确认'))
         print(json.dumps({k:result[k] for k in ['asOf','coveragePct','universeCount','latestHistoryCount','verification']},ensure_ascii=False),flush=True)
