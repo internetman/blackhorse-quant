@@ -53,7 +53,50 @@ def publish(source=ROOT, repository=REPOSITORY, include_code=False, status_only=
         return dict(status='pushed', commit=commit, files=sorted(changed))
 
 
-def verify_live(expected, site=SITE, code=False, attempts=12, delay=10):
+def publish_checkout(source=ROOT, repository=REPOSITORY, status_only=False):
+    """Use checkout's repo-local short-lived auth; never clone or export a token."""
+    from daily_breadth import validate_snapshot
+    repo = Path(source).resolve()
+    if Path(git(repo, 'rev-parse', '--show-toplevel')).resolve() != repo:
+        raise ValueError('Publication must run at the checked-out repository root')
+    # checkout uses both official HTTPS forms, with and without trailing .git.
+    identity = lambda value: value.rstrip('/').removesuffix('.git')
+    if identity(git(repo, 'remote', 'get-url', 'origin')) != identity(repository):
+        raise ValueError('Refusing publication to an unexpected repository')
+    git(repo, 'fetch', '--quiet', 'origin', 'main')
+    if git(repo, 'rev-parse', 'HEAD') != git(repo, 'rev-parse', 'FETCH_HEAD'):
+        raise ValueError('Production advanced during collection; retry from a fresh checkout')
+    before = json.loads(git(repo, 'show', 'HEAD:market-breadth.json'))
+    current = json.loads((repo/'market-breadth.json').read_text())
+    status = json.loads((repo/'market-breadth-status.json').read_text())
+    if (before.get('asOf', ''), before.get('generatedAt', '')) > (current.get('asOf', ''), current.get('generatedAt', '')):
+        raise ValueError('Refusing older snapshot or generation')
+    if not status_only:
+        if status.get('status') != 'success' or status.get('asOf') != current.get('asOf'):
+            raise ValueError('Publication requires matching successful collection status')
+        validate_snapshot(current, status['asOf'], before)
+    elif status.get('status') != 'failed':
+        raise ValueError('Failure-only publication requires a failed status')
+    changed = set(git(repo, 'diff', 'HEAD', '--name-only').splitlines())
+    untracked = set(git(repo, 'ls-files', '--others', '--exclude-standard').splitlines())
+    changed.update(p for p in untracked if not p.startswith('output/'))
+    if not changed <= set(DATA_FILES):
+        raise ValueError('Checkout contains changes outside the breadth allowlist')
+    files = changed & ({'market-breadth-status.json'} if status_only else set(DATA_FILES))
+    if not files:
+        return dict(status='unchanged', commit=git(repo, 'rev-parse', 'HEAD'), files=[])
+    git(repo, 'add', '--', *sorted(files))
+    if set(git(repo, 'diff', '--cached', '--name-only').splitlines()) != files:
+        raise ValueError('Unexpected staged paths; refusing commit')
+    git(repo, '-c', 'user.name=github-actions[bot]',
+        '-c', 'user.email=41898282+github-actions[bot]@users.noreply.github.com',
+        'commit', '-m', f'Update verified breadth {current["asOf"]}' if not status_only else 'Record breadth refresh failure')
+    commit = git(repo, 'rev-parse', 'HEAD')
+    git(repo, 'push', 'origin', 'HEAD:main')
+    return dict(status='pushed', commit=commit, files=sorted(files))
+
+
+def verify_live(expected, site=SITE, code=False, attempts=12, delay=10, snapshot=None):
     from daily_breadth import validate_snapshot
     error = None
     for attempt in range(attempts):
@@ -61,6 +104,8 @@ def verify_live(expected, site=SITE, code=False, attempts=12, delay=10):
             stamp = str(time.time_ns())
             data = fetch(f'{site}/market-breadth.json?verify={stamp}', attempts=1, timeout=10)
             validate_snapshot(data, expected)
+            if snapshot and (data.get('generatedAt') != snapshot.get('generatedAt') or data['market'][-1] != snapshot['market'][-1]):
+                raise ValueError('Live snapshot does not match the actual collected generation/counts')
             status = fetch(f'{site}/market-breadth-status.json?verify={stamp}', attempts=1, timeout=10)
             if status.get('asOf') != expected or status.get('status') != 'success':
                 raise ValueError('Live status does not confirm this completed close')

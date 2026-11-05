@@ -37,7 +37,21 @@ python3 daily_breadth.py --publish
 - 本机任务要求电脑开机、联网、桌面应用可运行、本地项目可访问；不保证离线电脑能更新。
 - 现有GitHub凭据只有repo范围，没有workflow范围；未创建GitHub Actions，也未新增凭据或扩大权限。
 
-## 数据与发布保护
+## 云端迁移准备（尚未切换）
+
+- 生产仓库：`internetman/blackhorse-quant`。工作流：`.github/workflows/daily-breadth.yml`。
+- Ubuntu 24.04 + Python标准库；使用本job的短期 `GITHUB_TOKEN`，仅 `contents: write`。无PAT、无Vercel token、无新付费服务。
+- 定时为UTC08:40/09:40/10:40（北京16:40/17:40/18:40），交易日历仍由脚本检查。GitHub调度可能延迟。
+- 初始定时门控 `BREADTH_CLOUD_ENABLED` 未设为 `true` 时不写入；本机 `automation-2` 保持ACTIVE。不能同时打开两套定时写入。
+- 手动默认 `publish=false,cold=true`，空缓存实际采集；未到16:00或非交易日只会跳过，跳过不能作为验收成功。
+- 首先在收盘后、避开本机计划运行的时段做云端空缓存shadow；再运行 `publish=true,cold=true`，核实新收盘日期、95%覆盖、提交SHA、Vercel部署和线上生成时间/计数。
+- 只有上述完整链路验证成功后才暂停本机任务，再将生产库变量 `BREADTH_CLOUD_ENABLED=true`。切换前再次确认没有正在运行的本机写入。
+- `--publish-checkout` 在原checkout里提交三份数据白名单，沿用checkout的局部鉴权；正常快进推送，生产分支在采集中变化则明确失败、等待新checkout重试。
+- 不带缓存恢复。每个新runner使用空来源缓存；当日已成功的补偿槽保持幂等，只复核线上，不重复采集。
+- 工作流摘要记录初始缓存文件数、实际耗时、采集状态、生成时间、覆盖率和运行URL；云端并发组串行，单次最长30分钟。
+- 源码库与生产库的云端适配应同步；该段为准备状态，不表示已完成云端实跑、发布或切换。
+
+## 数据与发布保护（适用于本机和云端）
 
 1. 计算最近应有完整收盘日，要求报价、行业MA20与该日期一致。
 2. 检查有效样本覆盖率、分子分母和比例，拒绝日期倒退及异常股票范围变化。

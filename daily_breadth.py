@@ -138,20 +138,23 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--scheduled', action='store_true')
     p.add_argument('--publish', action='store_true')
+    p.add_argument('--publish-checkout', action='store_true', help='Publish from the production Actions checkout using repo-local authentication')
     p.add_argument('--include-code', action='store_true', help='One-time installation; publish only the reviewed breadth files')
     p.add_argument('--force', action='store_true')
     p.add_argument('--attempts', type=int, choices=range(1, 4), default=2)
     p.add_argument('--retry-delay', type=int, choices=range(0, 61), default=30)
     args = p.parse_args()
+    if args.publish_checkout and (args.publish or args.include_code):
+        p.error('--publish-checkout cannot be combined with --publish or --include-code')
     report = None
     with run_lock(ROOT/'output'/'daily-breadth.lock'):
         try:
             report = refresh(scheduled=args.scheduled, attempts=args.attempts, retry_delay=args.retry_delay, force=args.force)
-            if args.publish and report['status'] != 'skipped':
-                from publish_breadth import publish, verify_live
-                publication = publish(ROOT, include_code=args.include_code)
+            if (args.publish or args.publish_checkout) and report['status'] != 'skipped':
+                from publish_breadth import publish, publish_checkout, verify_live
+                publication = publish_checkout(ROOT) if args.publish_checkout else publish(ROOT, include_code=args.include_code)
                 report['publication'] = publication
-                report['verification'] = verify_live(report['asOf'], code=args.include_code)
+                report['verification'] = verify_live(report['asOf'], code=args.include_code, snapshot=read_json(ROOT/'market-breadth.json'))
             print(json.dumps(report, ensure_ascii=False), flush=True)
         except Exception as exc:
             stage = 'verification' if report and report.get('publication') else 'publication' if report else 'collection'
@@ -163,10 +166,10 @@ def main():
                     attemptedAt=dt.datetime.now(ZONE).isoformat(timespec='seconds'),
                     asOf=previous.get('asOf'), error=str(exc)[:250]))
             # Expose a failed acquisition online without replacing price data.
-            if args.publish and (read_json(ROOT/'market-breadth-status.json') or {}).get('status') == 'failed':
+            if (args.publish or args.publish_checkout) and (read_json(ROOT/'market-breadth-status.json') or {}).get('status') == 'failed':
                 try:
-                    from publish_breadth import publish
-                    publish(ROOT, status_only=True)
+                    from publish_breadth import publish, publish_checkout
+                    publish_checkout(ROOT, status_only=True) if args.publish_checkout else publish(ROOT, status_only=True)
                 except Exception as publication_error:
                     print(f'Failure-status publication also failed: {type(publication_error).__name__}', file=sys.stderr)
             print(f'Breadth refresh failed: {exc}', file=sys.stderr)
