@@ -1,1 +1,1 @@
-{"status":"success","attemptedAt":"2026-11-09T16:47:49+08:00","asOf":"2026-11-09","expectedCloseDate":"2026-11-09","coveragePct":97.89,"availableMetrics":["ma20"],"lastCollectedAt":"2026-11-09T16:46:00+08:00","note":"Collected and verified close; MA50 remains missing unless supplied"}
+{"status":"success","attemptedAt":"2026-11-10T16:40:17+08:00","asOf":"2026-11-10","expectedCloseDate":"2026-11-10","coveragePct":97.91,"availableMetrics":["ma20"],"lastCollectedAt":"2026-11-10T16:39:28+08:00","note":"Collected and verified close; MA50 remains missing unless supplied"}
