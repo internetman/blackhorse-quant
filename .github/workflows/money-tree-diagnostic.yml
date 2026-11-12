@@ -1,0 +1,88 @@
+name: Money Tree read-only 50-session diagnostic
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/money-tree-diagnostic.yml']
+permissions: {}
+jobs:
+  coverage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Read public batches with low request rate and no production writes
+        run: |
+          timeout 1150 python3 -u - <<'PY'
+          import csv, io, json, time, urllib.request, urllib.error, hashlib
+          from datetime import date, timedelta
+          from collections import Counter
+          BASE = "https://money-tree.eyunzhu.com/"
+          REF = "f671644673420bba91f820337221276c1bf5414e"
+          RAW = "https://raw.githubusercontent.com/internetman/blackhorse-quant/" + REF + "/"
+          def load_json(path):
+              with urllib.request.urlopen(RAW + path, timeout=20) as r:
+                  return json.load(r)
+          j = load_json("market-breadth.json")
+          cal = load_json("market-trading-calendar.json")
+          cutoff = date.fromisoformat(j["asOf"])
+          closures = cal["years"][str(cutoff.year)]["closures"]
+          days = []
+          d = cutoff
+          while len(days) < 50:
+              if d.weekday() < 5 and not any(a <= d.isoformat() <= b for a,b in closures):
+                  days.append(d.strftime("%Y%m%d"))
+              d -= timedelta(days=1)
+          stocks = {s["code"]: s for s in j["dailyHistory"]["sourceStocks"]}
+          counts = Counter()
+          anchor = {}
+          prices = {}
+          latencies = []
+          digests = {}
+          failed = []
+          began = time.monotonic()
+          def get(path):
+              if time.monotonic() - began > 1100:
+                  raise RuntimeError("bounded diagnostic time budget exhausted")
+              time.sleep(2)
+              t = time.monotonic()
+              with urllib.request.urlopen(BASE+path, timeout=20) as r:
+                  data = r.read(5000000)
+              latencies.append(time.monotonic()-t)
+              rows = list(csv.DictReader(io.StringIO(data.decode("utf-8-sig"))))
+              return rows, hashlib.sha256(data).hexdigest()
+          print(json.dumps({"mode":"read-only full 50-session pair coverage; no production publication", "cutoff":str(cutoff), "first":days[-1], "last":days[0], "universe":j["universeCount"], "requests_max":104}), flush=True)
+          for n, day in enumerate(days):
+              try:
+                  pp, ph = get("daily_kline/date/"+day+".csv")
+                  ff, fh = get("adj_factor/date/"+day+".csv")
+                  p = {r["symbol"].split(".")[0]: r for r in pp}
+                  f = {r["symbol"].split(".")[0]: r for r in ff}
+                  if len(p)!=len(pp) or len(f)!=len(ff):
+                      raise ValueError("duplicate stock code")
+                  if any(r["trade_date"] != day for r in pp+ff):
+                      raise ValueError("wrong data date")
+                  if n == 0:
+                      digests = {"price":ph, "factor":fh}
+                      anchor = {c:float(r["adj_factor"]) for c,r in f.items()}
+                  for c in stocks:
+                      if c in p and c in f and c in anchor and float(p[c]["close"])>0 and float(f[c]["adj_factor"])>0 and anchor[c]>0:
+                          counts[c]+=1
+                          prices.setdefault(c,[]).append(float(p[c]["close"])*float(f[c]["adj_factor"])/anchor[c])
+                  print(json.dumps({"day":day,"daily_rows":len(pp),"factor_rows":len(ff),"completed":n+1}),flush=True)
+              except urllib.error.HTTPError as e:
+                  print(json.dumps({"day":day,"http":e.code,"stop":"no access/rate-limit bypass"}),flush=True)
+                  raise
+              except Exception as e:
+                  failed.append(day)
+                  print(json.dumps({"day":day,"error":type(e).__name__,"stop":"fail closed without repeating full collection"}),flush=True)
+                  raise
+          valid = [c for c in stocks if counts[c]==50]
+          coverage = 100*len(valid)/j["universeCount"]
+          pp, ph = get("daily_kline/date/"+days[0]+".csv")
+          ff, fh = get("adj_factor/date/"+days[0]+".csv")
+          stable = digests == {"price":ph, "factor":fh}
+          print(json.dumps({"cutoff":str(cutoff),"full_50_session_stocks":len(valid),"universe":j["universeCount"],"coverage_pct":coverage,"recent_snapshot_same_hash":stable,"max_request_seconds":max(latencies),"average_request_seconds":sum(latencies)/len(latencies),"elapsed_seconds":time.monotonic()-began,"incomplete":len(stocks)-len(valid),"NOTE":"strict complete 50 sessions; suspensions excluded; not proof of 70-bar production coverage, legal permission, indices, midday or sustained reliability"}),flush=True)
+          if coverage < 95 or not stable:
+              raise SystemExit("Diagnostic quality condition not met; production untouched")
+          
+          PY
