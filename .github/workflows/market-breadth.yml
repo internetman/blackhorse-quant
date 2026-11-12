@@ -1,0 +1,62 @@
+name: Cloud market breadth
+
+on:
+  workflow_dispatch:
+    inputs:
+      session:
+        description: Session to collect (auto uses current lunch window)
+        type: choice
+        options: [auto, close, midday]
+        default: auto
+      force:
+        description: Force real collection with empty cache for cold acceptance
+        type: boolean
+        default: false
+  schedule:
+    # Beijing 12:00 / 12:20, then 16:40 / 17:40 / 18:40.
+    - cron: '0,20 4 * * 1-5'
+    - cron: '40 8,9,10 * * 1-5'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/market-breadth.yml'
+      - 'cloud_breadth.py'
+      - 'daily_breadth.py'
+      - 'midday_breadth.py'
+      - 'complete_breadth.py'
+      - 'requirements-breadth.txt'
+
+permissions: {}
+concurrency:
+  group: heimaq-production-breadth
+  cancel-in-progress: false
+jobs:
+  refresh:
+    if: github.repository == 'internetman/blackhorse-quant' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout with repository-local short-lived job credential
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # Existing pinned checkout
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Install pinned dependency and test
+        run: |
+          python3 -m venv "$RUNNER_TEMP/breadth-venv"
+          source "$RUNNER_TEMP/breadth-venv/bin/activate"
+          echo "$RUNNER_TEMP/breadth-venv/bin" >> "$GITHUB_PATH"
+          python3 -m pip install --disable-pip-version-check -r requirements-breadth.txt
+          python3 -m unittest discover -p 'test*py' -q
+          node test-market-weather.cjs
+          node test-midday-view.cjs
+      - name: Collect, publish only session data, and verify website generation
+        env:
+          REQUESTED_SESSION: ${{ inputs.session || 'auto' }}
+          FORCE_COLLECTION: ${{ github.event_name == 'push' || inputs.force }}
+        run: |
+          args=(--session "$REQUESTED_SESSION")
+          if [ "$FORCE_COLLECTION" = true ]; then args+=(--force); fi
+          python3 cloud_breadth.py "${args[@]}"
