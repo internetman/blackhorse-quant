@@ -4,9 +4,26 @@
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const pct = value => value == null ? '—' : `${Number(value).toFixed(1)}%`;
   const color = value => value == null ? '#eee' : value < 20 ? '#16836a' : value < 40 ? '#a9d5c3' : value < 60 ? '#edf0f0' : value < 80 ? '#f0b3a5' : '#bd3b43';
-  let data, attempt = null, period = 'ma20', span = 30, search = '', sort = 'strength';
+  let data, attempt = null, midday = null, middayReadFailed = false, period = 'ma20', span = 30, search = '', sort = 'strength';
   const point = value => value == null ? '—' : `${value > 0 ? '+' : ''}${value.toFixed(1)} 个百分点`;
   const fraction = m => m.pct==null ? '未取得该项数据' : m.valid==null ? '上游聚合值，未提供分子分母' : `${m.above} / ${m.valid} 只`;
+  function validMidday(d) {
+    if(d?.schemaVersion!==1 || d.scopeVersion!=='qfq-shsz-midday-v1' || d.session!=='midday' || d.barStatus!=='intraday' || d.coveragePct<95 || d.universeCount<4000 || d.latestHistoryCount/d.universeCount<.95 || !/^\d{4}-\d{2}-\d{2}$/.test(d.asOf) || !(d.previousCloseDate<d.asOf) || d.membershipDate!==d.previousCloseDate || !Array.isArray(d.rows) || d.rows.length<50 || d.rows.some(r=>!r || typeof r.industry!=='string') || ![d.coveragePct,d.universeCount,d.latestHistoryCount].every(Number.isFinite))return false;
+    const stamp=value=>{if(typeof value!=='string' || !/(?:Z|[+-]\d{2}:\d{2})$/.test(value))return false;const t=new Date(value);if(!Number.isFinite(t.getTime()))return false;const b=new Date(t.getTime()+8*3600000).toISOString();return b.slice(0,10)===d.asOf && b.slice(11,16)>='11:30' && b.slice(11,16)<'13:00';};
+    return stamp(d.observedAt) && stamp(d.generatedAt) && ['ma20','ma50'].every(k=>{const m=d.market?.[k];return m && [m.valid,m.above,m.pct].every(Number.isFinite) && m.valid/d.universeCount>=.95 && m.above>=0 && m.above<=m.valid && Math.abs(m.pct-100*m.above/m.valid)<=.011;});
+  }
+  function middayPanel() {
+    if(!validMidday(midday))return '';
+    const today=new Date(Date.now()+8*3600000).toISOString().slice(0,10);
+    const label=midday.asOf===today ? data.asOf>=midday.asOf?'当日午盘回看':'今日午盘参考' : '历史午盘参考';
+    const m=midday.market;
+    return `<section class="participation-panel midday-panel" aria-label="午盘市场宽度参考"><div class="breadth-head"><h3>${label} · 非收盘确认</h3><span class="breadth-note">${esc(midday.asOf)} · 报价 ${esc(midday.observedAt)} · 计算完成 ${esc(midday.generatedAt)}</span></div>${middayReadFailed?'<p class="breadth-note">最新午盘文件读取失败，以下保留上次读取值，请核对日期。</p>':''}<div class="breadth-stats">${[
+      ['午盘动态 MA20',pct(m.ma20.pct),fraction(m.ma20)],
+      ['午盘动态 MA50',pct(m.ma50.pct),fraction(m.ma50)],
+      ['午盘上涨比例',pct(m.upPct),`${m.up}涨 / ${m.down}跌 / ${m.flat}平`],
+      ['同日有效覆盖',pct(midday.coveragePct),`${midday.latestHistoryCount} / ${midday.universeCount}只沪深股票`]
+    ].map(([label,value,note])=>`<div class="breadth-stat"><span class="breadth-note">${label}</span><strong>${value}</strong><span class="breadth-note">${note}</span></div>`).join('')}</div><p class="breadth-note">前19/49个完整收盘价 + 当日午休价；独立于下方收盘趋势与天气，不作为收盘确认。行业名单日期：${esc(midday.membershipDate)}。<a href="/market-breadth-midday.json" download>下载午盘原始数据</a></p><details class="breadth-note"><summary>午盘行业宽度与计算口径</summary>${midday.rows.map(r=>`<p>${esc(r.industry)} · MA20 ${pct(r.ma20?.pct)} · MA50 ${pct(r.ma50?.pct)}</p>`).join('')}<p>${esc(midday.method)}</p></details></section>`;
+  }
   function participation() {
     const p=data.participation;
     if(!p)return '';
@@ -24,7 +41,7 @@
       <div class="weather-summary"><div><span class="breadth-note">市场天气 · 收盘确认</span><h3>${esc(w.label)}</h3><p>${esc(w.action)}</p></div><div class="weather-budget"><span>现行 R05 环境档</span><strong>${esc(w.ceiling)}</strong><small>上限不是目标仓位，不触发自动交易</small></div></div>
       <div class="weather-gates">${w.gates.map(g=>`<div class="weather-gate"><b>${g.passed===true?'通过':g.passed===false?'未通过':'缺数据'} · ${esc(g.label)}</b><small>${esc(g.detail)}</small></div>`).join('')}</div>
       <div class="weather-evidence"><span>行业扩散 ${pct(w.sectorPct)}（${w.sectorAbove}/${w.sectorValid} 个行业宽度≥50%）</span><span>个股涨跌幅中位数 ${pct(latest.median)}</span><span>MA50五日变化 ${point(w.change50)}</span></div>
-      ${!w.fresh.usable?`<p class="weather-stale">历史快照当时的分类：${esc(w.observed.label)}，不代表今天。最新采集：${esc(attempt?.attemptedAt || '没有运行记录')} ${attempt?.error?`· ${esc(attempt.error)}`:''}</p>`:''}
+      <details class="weather-method"><summary>5个指数的MA50确认明细</summary>${(data.benchmarks || []).length ? data.benchmarks.map(i=>`<p>${esc(i.name)} · ${esc(i.asOf || '缺日期')} · 收盘 ${esc(i.close ?? '—')} · MA50 ${esc(i.ma50 ?? '—')} · MA50近20日 ${pct(i.ma50Slope20)} · ${esc(i.provider || '来源未标记')}</p>`).join('') : '<p>指数日K未完整取得，不能视为通过。</p>'}</details>${!w.fresh.usable?`<p class="weather-stale">历史快照当时的分类：${esc(w.observed.label)}，不代表今天。最新采集：${esc(attempt?.attemptedAt || '没有运行记录')} ${attempt?.error?`· ${esc(attempt.error)}`:''}</p>`:''}
       <details class="weather-method"><summary>天气如何判定 / 仓位边界</summary><p>这是独立、未回测的观察分类：MA20或MA50站上比例低于30%为偏弱，低位五日改善标记修复；两项均≥50%、行业半数以上宽度≥50%、MA20五日不下降为扩散；扩散持续3日且MA20≥60%、MA50≥55%，至少3/5个指数站上上行的MA50，并有行业符合R02门槛，才标记顺风。</p><p>指数：上证、沪深300、中证1000、创业板、科创50。R02门槛：最新≥85且5日均≥80；或最新≥90且3日均≥80；或最新与5日均均≥70。缺失不算通过。</p><p>20%–30% / 40%–50% / 60%引用现行R05的防守、结构性行情、顺风环境参考上限；实际仓位仍取账户约束、个股买点及风险限制中的更严格值。红灯不新开仓，不用宽度替代止损。</p><p>盘中不提前写入收盘结论。应有收盘日按北京时间16:00和交易所年度休市安排计算；日历缺失或年份未核实时暂停判断，不按调休工作日冒充交易日。</p></details>
     </section>`;
   }
@@ -52,14 +69,14 @@
     const fresh=window.MarketWeather.freshness(data,new Date(),attempt);
     const partial=data.availableMetrics && !data.availableMetrics.includes('ma50');
     if(partial)period='ma20';
-    root.innerHTML = `<div class="breadth-head"><h2>市场天气与市场宽度</h2><div><span class="breadth-note">${esc(data.asOf)} 收盘 · ${cached?'沿用上次快照':'已保存快照'} · ${fresh.usable?(partial?'MA20数据有效；MA50缺失':'数据有效'):'数据待更新'}</span> <a class="breadth-download" href="/market-breadth.json" download>下载原始数据</a></div></div>${participation()}${weather()}<div class="breadth-stats">${[
+    root.innerHTML = `<div class="breadth-head"><h2>市场天气与市场宽度</h2><div><span class="breadth-note">${esc(data.asOf)} 收盘 · ${cached?'沿用上次快照':'已保存快照'} · ${fresh.usable?(partial?'MA20数据有效；MA50缺失':'数据有效'):'数据待更新'}</span> <a class="breadth-download" href="/market-breadth.json" download>下载原始数据</a></div></div>${middayPanel()}${participation()}${weather()}<div class="breadth-stats">${[
       [`${data.universeLabel || '全市场'} MA20站上比例`,pct(latest.ma20.pct),fraction(latest.ma20)],
-      ['MA50 站上比例',pct(latest.ma50.pct),partial?'公开源未提供，不使用旧值':fraction(latest.ma50)],
+      ['MA50 站上比例',pct(latest.ma50.pct),partial?'当前MA50未完整取得，不使用旧值':fraction(latest.ma50)],
       ['MA20 较5交易日前',delta==null?'—':`${delta>0?'+':''}${delta.toFixed(1)} 点`,'百分点变化'],
       ['收盘上涨比例',pct(latest.upPct),`${latest.up}涨 / ${latest.down}跌 / ${latest.flat}平`]
     ].map(([label,value,note])=>`<div class="breadth-stat"><span class="breadth-note">${label}</span><strong>${value}</strong><span class="breadth-note">${note}</span></div>`).join('')}</div><div class="breadth-legend"><span><i style="background:#bd3b43"></i>MA20</span><span><i style="background:#246b91"></i>MA50</span><span>全市场等权站上比例</span></div>${trend()}<div class="breadth-controls"><label>均线<select id="breadth-period"><option value="ma20">MA20</option><option value="ma50">MA50</option></select></label><label>区间<select id="breadth-span"><option value="30">30个交易日</option><option value="20">20个交易日</option><option value="10">10个交易日</option></select></label><label>行业<input id="breadth-search" type="search" placeholder="搜索行业"></label><label>排序<select id="breadth-sort"><option value="strength">最新宽度从高到低</option><option value="name">行业名称</option></select></label></div><div class="breadth-legend">${['0–20%','20–40%','40–60%','60–80%','80–100%'].map((s,i)=>`<span><i style="background:${color(i*20+1)}"></i>${s}</span>`).join('')}<span>灰色空格：数据不足</span></div><div class="breadth-scroll" tabindex="0" aria-label="行业市场宽度热力图"></div><p class="breadth-note">沪深京 ${data.universeCount} 只 · 同日历史覆盖 ${data.latestHistoryCount} 只（${data.coveragePct}%） · ${data.rows.length} 个行业 · ${esc(data.source)}</p><details class="breadth-note"><summary>计算口径与数据范围</summary><p>${esc(data.method)}</p><p>收盘后更新；未取得当天收盘数据时显示最近可用交易日。宽度为参与程度，不能独立确定买点。采集时间：${esc(data.generatedAt)}</p></details><dialog class="breadth-detail"><button aria-label="关闭详情">×</button><div></div></dialog>`;
     for (const [id,value] of [['period',period],['span',span],['search',search],['sort',sort]]) root.querySelector('#breadth-'+id).value=value;
-    if(partial){const option=root.querySelector('#breadth-period option[value="ma50"]');option.disabled=true;option.textContent='MA50（数据未提供）';}
+    if(partial){const option=root.querySelector('#breadth-period option[value="ma50"]');option.disabled=true;option.textContent='MA50（数据未完整取得）';}
     if(data.dataMode==='public-aggregates'){
       root.querySelector('.breadth-head .breadth-note').textContent=`${data.asOf} 行业MA20 · 在线备用模式 · 全市场均线待逐股校验`;
       const notes=[...root.querySelectorAll('p.breadth-note')];
@@ -80,15 +97,16 @@
       dialog.showModal();
     };
     root.querySelector('.breadth-legend span:last-child').textContent=`${data.universeLabel || '全市场'}等权站上比例${data.excludedMarkets?.length?'（北交所未覆盖）':''}`;
-    if(partial)root.querySelector('.breadth-legend span:nth-child(2)').innerHTML='<i style="background:#246b91"></i>MA50（未提供）';
+    if(partial)root.querySelector('.breadth-legend span:nth-child(2)').innerHTML='<i style="background:#246b91"></i>MA50（未完整取得）';
     root.querySelector('.breadth-trend').setAttribute('aria-label',`最近${span}个交易日${data.universeLabel || '全市场'}均线站上比例趋势`);
     const scopeNote=[...root.querySelectorAll('p.breadth-note')].find(p=>p.textContent.includes('同日历史覆盖'));
-    if(scopeNote && data.universeLabel)scopeNote.textContent=scopeNote.textContent.replace(/^沪深京/,data.universeLabel)+' · 北交所不在MA20主指标范围';
+    if(scopeNote && data.universeLabel)scopeNote.textContent=scopeNote.textContent.replace(/^沪深京/,data.universeLabel)+' · 北交所不在均线宽度范围';
     table();
   }
   async function load() {
     try {
       await Promise.allSettled([
+        (async()=>{try{const r=await fetch('/market-breadth-midday.json',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('midday');const j=await r.json();if(!validMidday(j))throw Error('midday validation');midday=j;middayReadFailed=false;}catch{middayReadFailed=true;}})(),
         (async()=>{const r=await fetch('/market-trading-calendar.json',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('calendar');window.MarketWeather.setCalendar(await r.json());})(),
         (async()=>{const r=await fetch('/market-breadth-status.json',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(r.ok){const j=await r.json();if(j.attemptedAt)attempt=j;}})()
       ]);

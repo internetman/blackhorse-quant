@@ -52,7 +52,8 @@
     });
     const indices = data?.benchmarks || [];
     const indexPass = indices.filter(i => i.asOf === data.asOf && finite(i.close) && finite(i.ma50) && i.close > i.ma50 && i.ma50Slope20 > 0);
-    const indicesComplete = indices.length === 5 && indices.every(i => i.asOf === data.asOf && finite(i.ma50Slope20));
+    const indexIds = ['1.000001','1.000300','1.000852','0.399006','1.000688'];
+    const indicesComplete = indices.length === 5 && indexIds.every(id => indices.some(i => i.secid === id)) && indices.every(i => i.asOf === data.asOf && finite(i.close) && i.close>0 && finite(i.ma50) && i.ma50>0 && finite(i.ma50Slope20));
     const expansionAt = pos => {
       if (pos < 5) return false;
       const r = market[pos], p = market[pos-5], a = metric(r,'ma20'), b = metric(r,'ma50');
@@ -64,7 +65,7 @@
     let code = 'mixed', label = '分化', action = '保持选择性，等待低风险买点；不因单日普涨放大仓位。', ceiling = '40%–50% 环境参考上限';
     if (ma20 != null && ma50 == null) {
       code='partial'; label=change20>0?'短线改善 · 中期未确认':'中期趋势未确认';
-      action='最新MA20与涨跌参与度已接通；公开源没有MA50，暂不能确认中期顺风或提高进攻仓位。'; ceiling='等待MA50与指数确认';
+      action='最新MA20与涨跌参与度已接通；当前接入数据尚无完整MA50，暂不能确认中期顺风或提高进攻仓位。'; ceiling='等待MA50与指数确认';
     } else if (ma20 == null || ma50 == null || change20 == null) {
       code='unknown'; label='数据不足'; action='缺少足够同日宽度和历史，暂停加仓判断。'; ceiling='暂停判断';
     } else if (ma20 < 30 || ma50 < 30) {

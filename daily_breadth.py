@@ -47,12 +47,29 @@ def validate_snapshot(data, expected, previous=None):
         raise ValueError('MA20 is required')
     if 'ma50' not in data['availableMetrics'] and latest['ma50']['pct'] is not None:
         raise ValueError('Missing MA50 must remain null')
+    if data.get('scopeVersion') == 'qfq-shsz-v1':
+        from complete_breadth import BENCHMARKS
+        if data.get('availableMetrics') != ['ma20', 'ma50']:
+            raise ValueError('Adjusted full snapshot requires MA20 and MA50')
+        indices = data.get('benchmarks', [])
+        if len(indices) != 5 or {r.get('secid') for r in indices} != {s for s, _ in BENCHMARKS}:
+            raise ValueError('Five distinct benchmark identities required')
+        for r in indices:
+            if r.get('asOf') != expected or r.get('historyCount', 0) < 70:
+                raise ValueError('Benchmark date/history is incomplete')
+            if any(not isinstance(r.get(k), (int, float)) or not math.isfinite(r[k]) for k in ('close', 'ma50', 'ma50Slope20')) or r['close'] <= 0 or r['ma50'] <= 0:
+                raise ValueError('Invalid benchmark values')
+        history = data.get('dailyHistory', {})
+        if history.get('adjustment') != 'qfq' or history.get('cutoff') != expected:
+            raise ValueError('Adjusted-history provenance missing or stale')
     return data
 
 
 def merge_verified_history(data, previous):
     """Keep earlier actual counts; never mix the former 128-sector scope."""
     if not previous or previous.get('universeLabel') != data.get('universeLabel') or previous.get('availableMetrics') != data.get('availableMetrics'):
+        return data
+    if previous.get('scopeVersion') != data.get('scopeVersion'):
         return data
     old = {x['date']: x for x in previous.get('market', [])}
     data['market'] = [old.get(r['date'], r) if r['ma20'].get('valid', 0) == 0 and old.get(r['date'], {}).get('ma20', {}).get('valid', 0) > 0 else r for r in data['market']]
@@ -83,7 +100,7 @@ def run_lock(path):
 
 
 def refresh(root=ROOT, now=None, scheduled=False, attempts=2, retry_delay=30, force=False):
-    from refresh_public_breadth import collect
+    from complete_breadth import collect, VERSION
     now = (now or dt.datetime.now(ZONE)).astimezone(ZONE)
     calendar = load_calendar(root/'market-trading-calendar.json', now.year, allow_fetch=True)
     if scheduled and (not is_trading_day(now.date(), calendar) or now.hour < 16):
@@ -95,7 +112,7 @@ def refresh(root=ROOT, now=None, scheduled=False, attempts=2, retry_delay=30, fo
     if previous and not force:
         try:
             validate_snapshot(previous, expected)
-            current = True
+            current = previous.get('scopeVersion') == VERSION and previous.get('availableMetrics') == ['ma20', 'ma50']
         except (ValueError, KeyError, TypeError):
             pass
     old_status = read_json(status) or {}
@@ -129,7 +146,7 @@ def refresh(root=ROOT, now=None, scheduled=False, attempts=2, retry_delay=30, fo
     result = dict(status='success', attemptedAt=dt.datetime.now(ZONE).isoformat(timespec='seconds'),
                   asOf=expected, expectedCloseDate=expected, coveragePct=previous['coveragePct'],
                   availableMetrics=previous['availableMetrics'], lastCollectedAt=previous['generatedAt'],
-                  note='Existing verified close' if current else 'Collected and verified close; MA50 remains missing unless supplied')
+                  note='Existing verified close' if current else 'Verified same-date adjusted MA20/MA50 breadth and five benchmark histories')
     atomic_json(status, result)
     return result
 
@@ -139,12 +156,17 @@ def main():
     p.add_argument('--scheduled', action='store_true')
     p.add_argument('--publish', action='store_true')
     p.add_argument('--publish-checkout', action='store_true', help='Publish from the production Actions checkout using repo-local authentication')
+    p.add_argument('--approve-scope-upgrade', action='store_true', help='Only after explicit approval for this initial MA50 production release')
+    p.add_argument('--install-cloud', action='store_true', help='Explicitly authorized one-time installation of the scoped cloud scheduler')
+    p.add_argument('--expected-remote-commit', help='Abort release if production advanced after review')
     p.add_argument('--include-code', action='store_true', help='One-time installation; publish only the reviewed breadth files')
     p.add_argument('--force', action='store_true')
     p.add_argument('--attempts', type=int, choices=range(1, 4), default=2)
     p.add_argument('--retry-delay', type=int, choices=range(0, 61), default=30)
     args = p.parse_args()
-    if args.publish_checkout and (args.publish or args.include_code):
+    if args.install_cloud and (not args.include_code or not args.publish):
+        p.error('--install-cloud requires --publish --include-code')
+    if args.publish_checkout and (args.publish or args.include_code or args.install_cloud):
         p.error('--publish-checkout cannot be combined with --publish or --include-code')
     report = None
     with run_lock(ROOT/'output'/'daily-breadth.lock'):
@@ -152,7 +174,7 @@ def main():
             report = refresh(scheduled=args.scheduled, attempts=args.attempts, retry_delay=args.retry_delay, force=args.force)
             if (args.publish or args.publish_checkout) and report['status'] != 'skipped':
                 from publish_breadth import publish, publish_checkout, verify_live
-                publication = publish_checkout(ROOT) if args.publish_checkout else publish(ROOT, include_code=args.include_code)
+                publication = publish_checkout(ROOT) if args.publish_checkout else publish(ROOT, include_code=args.include_code, approve_scope_upgrade=args.approve_scope_upgrade, install_cloud=args.install_cloud, expected_remote_commit=args.expected_remote_commit)
                 report['publication'] = publication
                 report['verification'] = verify_live(report['asOf'], code=args.include_code, snapshot=read_json(ROOT/'market-breadth.json'))
             print(json.dumps(report, ensure_ascii=False), flush=True)
