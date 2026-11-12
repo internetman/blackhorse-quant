@@ -23,6 +23,19 @@ from market_breadth import ROOT, ZONE, atomic_json, fetch, summarize
 
 VERSION = 'qfq-shsz-v1'
 _HTTP = threading.local()
+_RATE_LOCK = threading.Lock()
+_NEXT_REQUEST = {}
+
+def pace_request(url):
+    # Shared per-host pacing; never rotate identities or bypass upstream limits.
+    host = urllib.parse.urlsplit(url).netloc
+    with _RATE_LOCK:
+        now = time.monotonic()
+        slot = max(now, _NEXT_REQUEST.get(host, now))
+        _NEXT_REQUEST[host] = slot + 0.3
+    if slot > now:
+        time.sleep(slot - now)
+
 
 def fetch_history(url):
     # One connection pool per worker. Normal TLS verification/proxy routing remain enabled.
@@ -33,14 +46,35 @@ def fetch_history(url):
     last = None
     for attempt in range(2):
         try:
+            pace_request(url)
             response = _HTTP.session.get(url, timeout=(8, 8))
             response.raise_for_status()
             return response.json()
         except (requests.RequestException, ValueError) as exc:
             last = exc
+            status = getattr(getattr(exc, 'response', None), 'status_code', None)
+            if status in (401, 403):
+                break
             if attempt == 0:
-                time.sleep(.5)
-    raise ValueError(f'Daily history request failed: {type(last).__name__}')
+                delay = 2.0
+                if status in (429, 503):
+                    value = exc.response.headers.get('Retry-After', '')
+                    try:
+                        delay = max(delay, float(value))
+                    except ValueError:
+                        try:
+                            from email.utils import parsedate_to_datetime
+                            delay = max(delay, parsedate_to_datetime(value).timestamp() - time.time())
+                        except (TypeError, ValueError, OverflowError):
+                            delay = 30.0
+                    host = urllib.parse.urlsplit(url).netloc
+                    with _RATE_LOCK:
+                        _NEXT_REQUEST[host] = max(_NEXT_REQUEST.get(host, 0), time.monotonic() + delay)
+                    if delay > 300:
+                        break  # Do not retry sooner than the server cooldown.
+                time.sleep(delay)
+    status = getattr(getattr(last, 'response', None), 'status_code', None)
+    raise ValueError(f'Daily history request failed: {type(last).__name__}; HTTP={status}')
 
 def save_history(path, data):
     # Unique temporary files also make concurrent read-only verification runs safe.
@@ -292,6 +326,47 @@ def build_snapshot(base, stocks, histories, benchmarks, failures):
     return result
 
 
+def collect_histories(stocks, cutoff, cache, workers=4, repair_rounds=2):
+    """Bounded recovery of missing samples, preserving validated successes.
+
+    Repair only failed securities with a cooldown and fewer concurrent requests.
+    This does not alter universe, cutoff, parsing or the 95% publication gate.
+    """
+    histories, errors = {}, {}
+    pending = list(stocks)
+    started = time.monotonic()
+    for round_no in range(repair_rounds + 1):
+        if round_no:
+            if time.monotonic() - started > 45 * 60:
+                break  # Leave time for validation/publication within the job budget.
+            time.sleep(30 * round_no)
+        concurrency = workers if round_no == 0 else min(2, workers)
+        def one(stock):
+            try:
+                return stock, get_history(stock, cutoff, cache), None
+            except Exception as exc:
+                return stock, None, str(exc)[:250]
+        failed = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
+            for count, (stock, item, error) in enumerate(pool.map(one, pending), 1):
+                if error is not None:
+                    failed.append(stock)
+                    errors[stock['code']] = error
+                else:
+                    histories[stock['code']] = item
+                    errors.pop(stock['code'], None)
+                if count % 250 == 0:
+                    print(f'Adjusted round {round_no+1}: {count}/{len(pending)}; recovered={len(histories)}; failures={len(failed)}', flush=True)
+        counts = Counter(errors[s['code']] for s in failed)
+        print('Adjusted round diagnostic: ' + json.dumps(dict(round=round_no+1,
+              validHistories=len(histories), remaining=len(failed),
+              errors=counts.most_common(8)), ensure_ascii=False), flush=True)
+        if not failed:
+            break
+        pending = failed
+    return histories, [dict(code=s['code'], error=errors[s['code']]) for s in pending if s['code'] in errors]
+
+
 def collect(days=6, workers=4, expected=None):
     import requests  # Fail before collection if deployment missed the explicit dependency.
     from refresh_public_breadth import collect as collect_ma20
@@ -322,18 +397,7 @@ def collect(days=6, workers=4, expected=None):
         benchmarks.append(dict(secid=secid,name=name,asOf=rows[-1]['date'],close=closes[-1],ma50=round(avg,6),
                                ma50Slope20=round((avg/prior-1)*100,6),provider=provider,historyCount=len(rows),sha256=digest))
     print(f'Collecting adjusted histories: {len(stocks)} stocks; {len(benchmarks)}/5 indices verified', flush=True)
-    # Bound active upstream requests; cache every successful complete response.
-    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-        def one(stock):
-            try:
-                return stock, get_history(stock, cutoff, cache)
-            except Exception as exc:
-                return stock, str(exc)[:250]
-        for count, (stock, item) in enumerate(pool.map(one, stocks), 1):
-            if isinstance(item, str): failures.append(dict(code=stock['code'],error=item))
-            else: histories[stock['code']] = item
-            if count % 250 == 0:
-                print(f'Adjusted history {count}/{len(stocks)}; failures={len(failures)}', flush=True)
+    histories, failures = collect_histories(stocks, cutoff, cache, workers=workers)
     result = build_snapshot(base,stocks,histories,benchmarks,failures)
     from daily_breadth import validate_snapshot
     return validate_snapshot(result, cutoff)

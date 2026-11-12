@@ -155,7 +155,7 @@ def run(root=ROOT, now=None, event='workflow_dispatch', cron='', requested='auto
         if session == 'midday':
             report = midday.refresh(root=root, now=now, scheduled=True, force=force)
         else:
-            report = daily.refresh(root=root, now=now, scheduled=event == 'schedule', attempts=2, retry_delay=15, force=force)
+            report = daily.refresh(root=root, now=now, scheduled=event == 'schedule', attempts=1, retry_delay=15, force=force)
         for name, before in protected.items():
             after = (root/name).read_bytes() if (root/name).exists() else None
             if after != before:
