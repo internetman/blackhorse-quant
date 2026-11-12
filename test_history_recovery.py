@@ -27,7 +27,14 @@ class RecoveryTests(unittest.TestCase):
         self.assertEqual(failures,[dict(code='a',error='no valid bars')])
 
     def test_no_repair_after_time_budget(self):
-        with tempfile.TemporaryDirectory() as d, patch('complete_breadth.get_history', side_effect=ValueError('missing')) as get, patch('complete_breadth.time.monotonic',side_effect=[0,2800]):
+        with tempfile.TemporaryDirectory() as d, patch('complete_breadth.get_history', side_effect=ValueError('missing')) as get, patch('complete_breadth.time.monotonic',side_effect=[0,0,2800]):
             histories, failures=collect_histories([dict(code='a')],'2026-11-11',Path(d),workers=1)
         self.assertEqual(get.call_count,1)
         self.assertEqual(len(failures),1)
+
+    def test_long_outage_stops_without_enqueuing_entire_market(self):
+        stocks=[dict(code=str(i)) for i in range(200)]
+        with tempfile.TemporaryDirectory() as d, patch('complete_breadth.get_history', side_effect=ValueError('HTTP=503')) as get:
+            with self.assertRaisesRegex(RuntimeError, '50 consecutive'):
+                collect_histories(stocks,'2026-11-11',Path(d),workers=1)
+        self.assertEqual(get.call_count,50)

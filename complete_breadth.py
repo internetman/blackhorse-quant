@@ -16,7 +16,7 @@ import time
 import os
 import tempfile
 import urllib.parse
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, deque
 from pathlib import Path
 
 from market_breadth import ROOT, ZONE, atomic_json, fetch, summarize
@@ -326,6 +326,25 @@ def build_snapshot(base, stocks, histories, benchmarks, failures):
     return result
 
 
+def bounded_results(pool, function, items, limit):
+    """Do not enqueue the whole market; stop leaves at most limit requests."""
+    iterator = iter(items)
+    futures = deque()
+    for _ in range(limit):
+        item = next(iterator, None)
+        if item is not None:
+            futures.append(pool.submit(function, item))
+    try:
+        while futures:
+            yield futures.popleft().result()
+            item = next(iterator, None)
+            if item is not None:
+                futures.append(pool.submit(function, item))
+    finally:
+        for future in futures:
+            future.cancel()
+
+
 def collect_histories(stocks, cutoff, cache, workers=4, repair_rounds=2):
     """Bounded recovery of missing samples, preserving validated successes.
 
@@ -347,14 +366,24 @@ def collect_histories(stocks, cutoff, cache, workers=4, repair_rounds=2):
             except Exception as exc:
                 return stock, None, str(exc)[:250]
         failed = []
+        consecutive_failures = 0
         with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
-            for count, (stock, item, error) in enumerate(pool.map(one, pending), 1):
+            for count, (stock, item, error) in enumerate(bounded_results(pool, one, pending, concurrency), 1):
                 if error is not None:
                     failed.append(stock)
                     errors[stock['code']] = error
+                    consecutive_failures += 1
+                    if len(failed) <= 5:
+                        print(f"History failure {stock['code']}: {error}", flush=True)
                 else:
+                    consecutive_failures = 0
                     histories[stock['code']] = item
                     errors.pop(stock['code'], None)
+                if consecutive_failures >= 50:
+                    raise RuntimeError('Source unavailable: 50 consecutive history failures; ' +
+                                       json.dumps(Counter(errors.values()).most_common(5)))
+                if time.monotonic() - started > 45 * 60:
+                    raise RuntimeError('History collection exceeded 45-minute budget; refusing partial publication')
                 if count % 250 == 0:
                     print(f'Adjusted round {round_no+1}: {count}/{len(pending)}; recovered={len(histories)}; failures={len(failed)}', flush=True)
         counts = Counter(errors[s['code']] for s in failed)
