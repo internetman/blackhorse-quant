@@ -1,0 +1,61 @@
+name: BaoStock read-only source diagnostic
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/baostock-diagnostic.yml']
+permissions: {}
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Install official pinned client in disposable environment
+        run: |
+          python3 -m venv "$RUNNER_TEMP/baostock-probe"
+          "$RUNNER_TEMP/baostock-probe/bin/pip" install --disable-pip-version-check --retries 1 --timeout 20 baostock==0.9.4
+      - name: Small read-only sample with hard time limit
+        run: |
+          timeout 150 "$RUNNER_TEMP/baostock-probe/bin/python" -u - <<'PY'
+          import json, socket, time
+          import baostock as bs
+          socket.setdefaulttimeout(12)
+          cutoff = "2026-11-11"
+          start = "2026-06-01"
+          print(json.dumps({"source":"BaoStock official client 0.9.4","cutoff":cutoff,"mode":"read-only smoke, not coverage acceptance"}), flush=True)
+          login = bs.login()
+          print("LOGIN", login.error_code, login.error_msg, flush=True)
+          if login.error_code != "0":
+              raise SystemExit("Official BaoStock connection failed; no production changes")
+          failures = []
+          samples = [("sh.600000","2"),("sz.000001","2"),("sh.688981","2"),
+                     ("sh.000001","3"),("sz.399001","3"),("sz.399006","3"),
+                     ("sh.000300","3"),("sh.000688","3")]
+          try:
+              for code, adjustment in samples:
+                  rs = bs.query_history_k_data_plus(code, "date,code,close,volume,adjustflag",
+                      start_date=start, end_date=cutoff, frequency="d", adjustflag=adjustment)
+                  rows = []
+                  while rs.error_code == "0" and rs.next():
+                      rows.append(rs.get_row_data())
+                  dates = [r[0] for r in rows]
+                  valid = (rs.error_code == "0" and len(rows) >= 70 and
+                           dates == sorted(set(dates)) and dates[-1] == cutoff and
+                           all(float(r[2]) > 0 and float(r[3]) >= 0 and r[4] == adjustment for r in rows))
+                  report = {"code":code,"adjustment":adjustment,"error":rs.error_code,
+                            "message":rs.error_msg,"rows":len(rows),"last":rows[-1] if rows else None,
+                            "checks_pass":valid}
+                  if valid:
+                      report["ma20"] = sum(float(r[2]) for r in rows[-20:])/20
+                      report["ma50"] = sum(float(r[2]) for r in rows[-50:])/50
+                  else:
+                      failures.append(code)
+                  print(json.dumps(report, ensure_ascii=False), flush=True)
+                  time.sleep(0.5)
+          finally:
+              bs.logout()
+          if failures:
+              raise SystemExit("Samples failing freshness/length/adjustment checks: " + ",".join(failures))
+          print("SMOKE_PASS_ONLY: full universe coverage and same-basis comparison still required", flush=True)
+          
+          PY
