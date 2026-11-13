@@ -1,0 +1,48 @@
+name: FFD bounded data-source acceptance
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: heimaq-ffd-acceptance
+  cancel-in-progress: false
+jobs:
+  acceptance:
+    if: github.repository == 'internetman/blackhorse-quant'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Test the adapter without data access
+        run: |
+          python3 -m pip install --disable-pip-version-check -r requirements-breadth.txt
+          python3 -m unittest test_ffd_history -v
+      - name: Verify cloud connection and entitlement without consuming data quota
+        env:
+          FFD_API_KEY: ${{ secrets.FFD_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request
+          key = os.environ.get('FFD_API_KEY', '')
+          if not key:
+              raise SystemExit('FFD_API_KEY secret missing; no data request issued')
+          base = 'https://ffd.findesk.cn/api'
+          def read(path, authenticated=False):
+              headers = {'Authorization': 'Bearer '+key} if authenticated else {}
+              with urllib.request.urlopen(urllib.request.Request(base+path, headers=headers), timeout=30) as r:
+                  return json.load(r)
+          health = read('/health')
+          entitlement = read('/v1/entitlement', True)
+          summary = entitlement.get('summary') or {}
+          if not summary.get('has_usable_data_api_quota'):
+              raise SystemExit('No verified usable quota; no data query issued')
+          print(json.dumps({'cloud_https': 'verified', 'health_response': 'received',
+                            'entitlement_verified': True, 'plan': entitlement.get('plan_tier'),
+                            'data_query_issued': False, 'data_points_consumed': 0}))
+          PY
+      - name: Explicit scope of this workflow
+        if: always()
+        run: |
+          echo 'FFD cloud connection and offline tests only. Data probes require reconciled persistent receipts. No production breadth snapshot, website, schedule, or trading action was changed.' >> "$GITHUB_STEP_SUMMARY"
