@@ -1052,6 +1052,31 @@ def get_r02_breadth() -> dict[str, Any]:
     return payload
 
 
+def dashboard_module_status(payload: dict[str, Any]) -> dict[str, Any]:
+    """Separate receipt time from financial dates; missing times stay unknown."""
+    receipt = payload.get("generatedAt")
+    breadth = payload.get("r02Breadth") or {}
+    rank = payload.get("sectorRankStatus") or {}
+    return {
+        "indices": {"source": payload["source"]["indices"], "sourceTime": None,
+                    "receivedAt": receipt, "count": len(payload.get("indices", [])),
+                    "timeStatus": "unverified_source_time", "session": "not_verified"},
+        "sectorRank": {"sourceTime": None, "receivedAt": receipt,
+                       "cached": bool(rank.get("cached")), "cachedAt": rank.get("cachedAt"),
+                       "timeStatus": "unverified_source_time", "rankingMethod": "daily_pct_not_trend"},
+        "closeBreadth": {"asOf": breadth.get("asOf"), "session": "completed_close",
+                         "coveragePct": breadth.get("coveragePct"), "source": breadth.get("source")},
+        "r02Decision": {"recordDate": payload["r02"].get("updated"), "automaticRecalculation": False},
+        "sectorTrends": [{"code": row.get("code"),
+                          "firstDate": (row.get("trend10") or [{}])[0].get("date"),
+                          "lastDate": (row.get("trend10") or [{}])[-1].get("date"),
+                          "cached": bool(row.get("trend10Cached")),
+                          "cachedAt": row.get("trend10CachedAt"), "completedCloseVerified": False}
+                         for row in payload.get("top5", [])],
+        "attribution": {"type": "price_volume_observation", "newsVerified": False},
+    }
+
+
 def build_dashboard_payload(force: bool = False) -> dict[str, Any]:
     now = time.time()
     if not force and _cache["payload"] and now - _cache["ts"] < CACHE_TTL_SECONDS:
@@ -1205,6 +1230,7 @@ def build_dashboard_payload(force: bool = False) -> dict[str, Any]:
         "top5": top_sectors,
         "warnings": warnings,
     }
+    payload["moduleStatus"] = dashboard_module_status(payload)
     _cache["ts"] = now
     _cache["payload"] = payload
     return payload

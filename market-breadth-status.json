@@ -1,1 +1,1 @@
-{"status":"failed","attemptedAt":"2026-11-12T18:57:50+08:00","requestedCutoff":"2026-11-12","asOf":"2026-11-11","error":"Same-date MA20/MA50 coverage below 95%: 4363/5223, 4363/5223","attempt":2}
+{"status":"success","attemptedAt":"2026-11-13T12:07:50+08:00","asOf":"2026-11-12","expectedCloseDate":"2026-11-12","coveragePct":95.0,"availableMetrics":["ma20","ma50"],"lastCollectedAt":"2026-11-13T12:07:39+08:00","note":"Verified same-cutoff FFD full-series gap-fill; experimental provenance disclosed; no raw paid data published"}

@@ -13,6 +13,7 @@ from pathlib import Path
 
 from market_breadth import ROOT, ZONE, atomic_json
 from trading_calendar import load_calendar, is_trading_day, expected_close
+from ffd_promotion import ADJUSTED_SCOPES, FFD_SCOPE, validate_ffd_provenance, require_publishable
 
 
 def read_json(path):
@@ -47,7 +48,7 @@ def validate_snapshot(data, expected, previous=None):
         raise ValueError('MA20 is required')
     if 'ma50' not in data['availableMetrics'] and latest['ma50']['pct'] is not None:
         raise ValueError('Missing MA50 must remain null')
-    if data.get('scopeVersion') == 'qfq-shsz-v1':
+    if data.get('scopeVersion') in ADJUSTED_SCOPES:
         from complete_breadth import BENCHMARKS
         if data.get('availableMetrics') != ['ma20', 'ma50']:
             raise ValueError('Adjusted full snapshot requires MA20 and MA50')
@@ -62,6 +63,8 @@ def validate_snapshot(data, expected, previous=None):
         history = data.get('dailyHistory', {})
         if history.get('adjustment') != 'qfq' or history.get('cutoff') != expected:
             raise ValueError('Adjusted-history provenance missing or stale')
+    if data.get('scopeVersion') == FFD_SCOPE:
+        validate_ffd_provenance(data)
     return data
 
 
@@ -112,7 +115,8 @@ def refresh(root=ROOT, now=None, scheduled=False, attempts=2, retry_delay=30, fo
     if previous and not force:
         try:
             validate_snapshot(previous, expected)
-            current = previous.get('scopeVersion') == VERSION and previous.get('availableMetrics') == ['ma20', 'ma50']
+            require_publishable(previous)
+            current = previous.get('scopeVersion') in ADJUSTED_SCOPES and previous.get('availableMetrics') == ['ma20', 'ma50']
         except (ValueError, KeyError, TypeError):
             pass
     old_status = read_json(status) or {}
@@ -130,6 +134,7 @@ def refresh(root=ROOT, now=None, scheduled=False, attempts=2, retry_delay=30, fo
                 validate_snapshot(result, expected, previous)
                 result = merge_verified_history(result, previous)
                 validate_snapshot(result, expected, previous)
+                require_publishable(result)
                 archive = root/'output'/'breadth-history'
                 archive.mkdir(parents=True, exist_ok=True)
                 atomic_json(archive/f'{expected}.json', result)

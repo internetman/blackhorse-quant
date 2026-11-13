@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from server import build_dashboard_payload
+from dashboard_delivery import build_delivery
 
 
 class handler(BaseHTTPRequestHandler):
@@ -18,10 +18,17 @@ class handler(BaseHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         params = urllib.parse.parse_qs(parsed.query)
         force = params.get("force", ["0"])[0] == "1"
-        payload = build_dashboard_payload(force=force)
+        try:
+            payload = build_delivery(force=force)
+            status = 200
+        except Exception:
+            # Do not expose local paths, source bodies, or stack traces.
+            payload = {'status': 'unavailable', 'error': 'dashboard_observation_unavailable',
+                       'message': '观察快照或宽度数据暂不可用；未生成新的市场结论。'}
+            status = 503
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
 
-        self.send_response(200)
+        self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", str(len(body)))

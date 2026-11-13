@@ -5,6 +5,7 @@ import datetime as dt
 import json
 import os
 import time
+from ffd_promotion import allow_verified_original_source_rollback
 from pathlib import Path
 
 import daily_breadth as daily
@@ -61,7 +62,8 @@ def validate_pair(root, session, now, calendar):
     data, status = (daily.read_json(root / name) for name in FILES[session][:2])
     if session == 'close':
         daily.validate_snapshot(data, expected_close(now, calendar))
-        if data.get('scopeVersion') != 'qfq-shsz-v1':
+        daily.require_publishable(data)
+        if data.get('scopeVersion') not in daily.ADJUSTED_SCOPES:
             raise ValueError('Cloud close requires complete adjusted MA20/MA50 scope')
         generation = status.get('lastCollectedAt')
     else:
@@ -83,6 +85,8 @@ def publish_session(root, session, now, calendar):
     old_text = git(root, 'ls-tree', '--name-only', 'HEAD', '--', FILES[session][0])
     if old_text:
         old = json.loads(git(root, 'show', 'HEAD:' + FILES[session][0]))
+        if old.get('scopeVersion') != data.get('scopeVersion') and session == 'close' and not allow_verified_original_source_rollback(old, data):
+            raise ValueError('Scope migration requires an explicitly approved release')
         if (old.get('asOf', ''), old.get('generatedAt', '')) > (data['asOf'], data['generatedAt']):
             raise ValueError('Refusing date or generation regression')
     changed = changed_paths(root)

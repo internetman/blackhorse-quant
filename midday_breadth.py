@@ -17,7 +17,7 @@ from pathlib import Path
 
 from market_breadth import ROOT, ZONE, atomic_json, summarize
 from complete_breadth import VERSION, fetch_history, parse_tencent, stock_universe
-from daily_breadth import read_json, run_lock, validate_snapshot
+from daily_breadth import read_json, run_lock, validate_snapshot, ADJUSTED_SCOPES, require_publishable
 from refresh_public_breadth import BETA, quote_timestamp
 from trading_calendar import expected_close, is_trading_day, load_calendar
 
@@ -180,7 +180,8 @@ def collect(root=ROOT, now=None, workers=4):
     base = read_json(root/'market-breadth.json')
     prior = expected_close(started, calendar)
     validate_snapshot(base, prior)
-    if base.get('scopeVersion') != VERSION:
+    require_publishable(base)
+    if base.get('scopeVersion') not in ADJUSTED_SCOPES:
         raise ValueError('Verified adjusted previous-close universe is required; no implicit MA50 upgrade')
     stocks = stock_universe(base, root/'output'/'public-breadth-cache')
     import requests

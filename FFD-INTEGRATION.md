@@ -30,9 +30,11 @@ network calls within a process are serialized. There is no automatic HTTP retry.
 Unknown transport outcomes halt that client and retain its reservation; inspect
 the original request in FFD before retrying in a new run.
 
-The client rejects missing/unknown/partial coverage, wrong code/adjustment/date,
+The client rejects explicit partial or contradictory coverage, wrong code/adjustment/date,
 nonfinite/negative values, missing columns, stale/duplicate/unordered dates.
-TLS verification remains enabled using the normal requests trust store. No
+Native REST responses without MCP-added coverage annotations require exact independent
+trading-calendar completeness. TLS verification remains enabled with the standard
+verified urllib trust store. No
 system security settings are changed.
 
 ## Scope and remaining acceptance
@@ -75,13 +77,21 @@ or authorize retrying that failed request.
 The GitHub `FFD bounded data-source acceptance` workflow performs offline tests
 and zero-data-quota HTTPS health/entitlement checks using the repository secret.
 It does **not** query historical prices on fresh runners, because persistent
-cross-run receipts and reconciliation must be established first. A first local
-90-day sample request ended with an unknown transport/HTTP result before the
-receipt upgrade. Its parameters are locally blocked pending reconciliation;
-no automatic retry or full-market query is authorized by this workflow.
+cross-run receipts and reconciliation must be established first. The original pre-receipt request was reconciled against all visible provider call
+records before a controlled retry. One delivered response was rejected by the old
+REST/MCP annotation assumption (118 points); the corrected parser then verified a
+59-trading-day sample through 2026-11-12 (118 points). Responses are now persisted
+before parsing so validation failures do not require repurchase. This zero-data
+workflow itself still does not authorize or perform full-market history requests.
 
-Published production breadth remains on its existing source and scope. The
-new source is installed for controlled acceptance, not yet promoted to production.
+The 2026-11-12 completed-close candidate has now passed the original 95% and
+five-index gates: 4962/5223 stocks (Tencent 3752, Eastmoney 611, FFD 599).
+It is promoted under the explicitly disclosed experimental FFD scope, not silently
+renamed as the original source. The original validated free-source scope remains
+an allowed automatic rollback. Scheduled paid FFD collection is NOT enabled: it
+still requires a durable private request ledger and a shared daily quota budget.
+A dated, free-source dashboard observation is published separately; quote source
+times and missing sector histories remain explicitly unverified/missing.
 The factor-events coverage-only probe for 600000.SH through 2026-11-12 reports
 completeThrough=2026-10-23 and incomplete interval coverage. Do not infer an
 absence of later corporate actions or rebase cached prices using this gap.

@@ -10,13 +10,14 @@ import time
 from pathlib import Path
 
 from market_breadth import ROOT, ZONE, fetch
+from ffd_promotion import ADJUSTED_SCOPES, FFD_SCOPE, require_publishable, allow_verified_original_source_rollback
 
 REPOSITORY = 'https://github.com/internetman/blackhorse-quant.git'
 SITE = 'https://www.heimaq.com'
 DATA_FILES = ('market-breadth.json', 'market-breadth-status.json', 'market-trading-calendar.json')
 MIDDAY_DATA_FILES = ('market-breadth-midday.json', 'market-breadth-midday-status.json')
 CLOUD_WORKFLOW = '.github/workflows/market-breadth.yml'
-CODE_FILES = ('midday_breadth.py', 'MIDDAY-BREADTH.md', 'test_midday_breadth.py', 'test-midday-view.cjs',
+CODE_FILES = ('ffd_promotion.py', 'midday_breadth.py', 'MIDDAY-BREADTH.md', 'test_midday_breadth.py', 'test-midday-view.cjs',
               'cloud_breadth.py', 'test_cloud_breadth.py', 'complete_breadth.py', 'requirements-breadth.txt', 'MA50-BREADTH.md',
               'daily_breadth.py', 'publish_breadth.py', 'market-weather.js', 'market-breadth.js',
               'test_complete_breadth.py', 'test_daily_breadth.py', 'test_market_breadth.py',
@@ -46,7 +47,15 @@ def publish(source=ROOT, repository=REPOSITORY, include_code=False, status_only=
             raise ValueError('Production head changed since release review')
         before = json.loads((repo/'market-breadth.json').read_text()) if (repo/'market-breadth.json').exists() else {}
         current = json.loads((source/'market-breadth.json').read_text())
-        if current.get('scopeVersion') == 'qfq-shsz-v1' and before.get('scopeVersion') != current.get('scopeVersion') and not approve_scope_upgrade:
+        if not status_only:
+            require_publishable(current)
+            if current.get('scopeVersion') == FFD_SCOPE:
+                from daily_breadth import validate_snapshot
+                validate_snapshot(current, current['asOf'], before)
+                status = json.loads((source/'market-breadth-status.json').read_text())
+                if status.get('status') != 'success' or status.get('asOf') != current['asOf'] or status.get('lastCollectedAt') != current.get('generatedAt'):
+                    raise ValueError('FFD release requires matching successful status generation')
+        if before.get('scopeVersion') != current.get('scopeVersion') and not approve_scope_upgrade and not allow_verified_original_source_rollback(before, current):
             raise ValueError('Initial MA50 scope upgrade publication requires explicit release approval; scheduled publication is blocked')
         if before.get('asOf', '') > current.get('asOf', ''):
             raise ValueError('Production already has a newer close; refusing to publish older local data/status')
@@ -101,6 +110,9 @@ def publish_checkout(source=ROOT, repository=REPOSITORY, status_only=False):
     if (before.get('asOf', ''), before.get('generatedAt', '')) > (current.get('asOf', ''), current.get('generatedAt', '')):
         raise ValueError('Refusing older snapshot or generation')
     if not status_only:
+        require_publishable(current)
+        if before.get('scopeVersion') != current.get('scopeVersion') and not allow_verified_original_source_rollback(before, current):
+            raise ValueError('Scope migration requires an explicitly approved release')
         if status.get('status') != 'success' or status.get('asOf') != current.get('asOf'):
             raise ValueError('Publication requires matching successful collection status')
         validate_snapshot(current, status['asOf'], before)
