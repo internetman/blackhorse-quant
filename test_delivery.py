@@ -9,8 +9,10 @@ import dashboard_delivery as d
 class DeliveryTests(unittest.TestCase):
  def setUp(self):
   self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name)
-  for name in ['dashboard-observed.json','market-breadth.json']:
-   (self.root/name).write_bytes((d.ROOT/name).read_bytes())
+  fixture=dict(schemaVersion=1,observation=dict(runId='fixture-run',finishedAt='2026-11-13T04:00:17.560982+00:00',quoteTimeVerified=False,sectorClassificationCount=496),payload=dict(generatedAt='2026-11-13T04:00:17.560982+00:00',source={'indices':'fixture'},r02={'updated':'2026-06-29'},indices=[{'code':'000001'}],sectors=[],top5=[],warnings=[]))
+  breadth=dict(asOf='2026-11-11',coveragePct=95,source='fixture',market=[{'date':'2026-11-11'}],rows=[])
+  (self.root/'dashboard-observed.json').write_text(json.dumps(fixture))
+  (self.root/'market-breadth.json').write_text(json.dumps(breadth))
   self.now=dt.datetime.fromisoformat('2026-11-13T04:10:00+00:00')
  def tearDown(self):self.temp.cleanup()
  def test_cached_observation_never_redates_quote(self):
@@ -40,7 +42,7 @@ class DeliveryTests(unittest.TestCase):
   x=d.build_delivery(root=self.root,now=self.now+dt.timedelta(days=1),live_builder=live)
   self.assertEqual(len(called),1)
   self.assertEqual(x['observation']['mode'],'live_fetch_attempt')
-  self.assertTrue(any('496' in text for text in x['warnings']))
+  self.assertTrue(any('分类' in text for text in x['warnings']))
   self.assertTrue(any('未核新闻' in text for text in x['warnings']))
  def test_fresh_does_not_call_live(self):
   def forbidden(**kw):self.fail('fresh cache must not call network')

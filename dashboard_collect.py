@@ -15,6 +15,7 @@ import uuid
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import server
+from dashboard_last_good import merge_modules
 from trading_calendar import load_calendar, is_trading_day
 from market_breadth import atomic_json
 
@@ -97,13 +98,16 @@ def collect(session, *, root=ROOT, now=None, force=False, builder=None):
         finished=dt.datetime.now(dt.timezone.utc).isoformat()
         breadth=json.loads((root/'market-breadth.json').read_text())
         top=data.get('top5') or []
-        missing=sum(not row.get('trend10') for row in top)
+        missing=sum(not row.get('trend10') for row in top) if top else None
         observation=dict(runId=runid,asOf=day,session=session,startedAt=started,finishedAt=finished,
                          quoteTimeVerified=False,ffdCalls=0,missingSectorHistoryCount=missing,
                          sectorClassificationCount=totals[-1] if totals and len(set(totals))==1 else None,
                          breadthClassificationCount=len(breadth.get('rows') or []),
                          indexCount=len(data.get('indices') or []),rankedSectorCount=len(data.get('sectors') or []),
                          leaderCount=sum(len(row.get('leaders10') or []) for row in top))
+        observation["freshCounts"] = {key: observation[key] for key in ("indexCount", "rankedSectorCount", "leaderCount")}
+        new_module_available=bool(data.get("indices") or data.get("sectors"))
+        data,observation=merge_modules(data,observation,existing)
         # Preserve financial fields, not duplicated close data or raw transport errors.
         payload={key:value for key,value in data.items() if key not in ('marketDistribution','r02Breadth','moduleStatus','observation')}
         payload['warnings']=observation_warnings(observation)
@@ -111,7 +115,7 @@ def collect(session, *, root=ROOT, now=None, force=False, builder=None):
         json.dumps(doc, allow_nan=False)  # Reject non-finite source values before publication.
         atomic_json(archive/'candidate.json',doc)
         # Empty/failed live data never replace the prior useful observation.
-        acceptable=observation['indexCount']>0 or observation['rankedSectorCount']>0
+        acceptable=new_module_available
         status=dict(status='partial' if acceptable else 'failed',asOf=day,session=session,runId=runid,
                     finishedAt=finished,ffdCalls=0,observation=observation)
         if acceptable:

@@ -1057,11 +1057,12 @@ def dashboard_module_status(payload: dict[str, Any]) -> dict[str, Any]:
     receipt = payload.get("generatedAt")
     breadth = payload.get("r02Breadth") or {}
     rank = payload.get("sectorRankStatus") or {}
+    evidence = (payload.get("observation") or {}).get("modules") or {}
     return {
         "indices": {"source": payload["source"]["indices"], "sourceTime": None,
-                    "receivedAt": receipt, "count": len(payload.get("indices", [])),
+                    "receivedAt": evidence.get("indices", {}).get("finishedAt", receipt), "count": len(payload.get("indices", [])),
                     "timeStatus": "unverified_source_time", "session": "not_verified"},
-        "sectorRank": {"sourceTime": None, "receivedAt": receipt,
+        "sectorRank": {"sourceTime": None, "receivedAt": evidence.get("sectorRank", {}).get("finishedAt", rank.get("cachedAt") or receipt),
                        "cached": bool(rank.get("cached")), "cachedAt": rank.get("cachedAt"),
                        "timeStatus": "unverified_source_time", "rankingMethod": "daily_pct_not_trend"},
         "closeBreadth": {"asOf": breadth.get("asOf"), "session": "completed_close",

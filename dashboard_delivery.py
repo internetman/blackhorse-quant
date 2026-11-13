@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import server
+from dashboard_last_good import merge_modules
 from dashboard_collect import observation_warnings
 
 ROOT = Path(__file__).resolve().parent
@@ -58,9 +59,10 @@ def build_delivery(force=False, *, root=ROOT, now=None, timeout=20, live_builder
         now_text = dt.datetime.now(dt.timezone.utc).isoformat()
         live['observation'] = dict(mode='live_fetch_attempt',runId='live-'+now_text,finishedAt=now_text,
                                    session='source_time_unverified',quoteTimeVerified=False,stale=False)
+        live, live['observation'] = merge_modules(live, live['observation'],dict(payload=saved,observation=saved['observation']))
         live['moduleStatus'] = server.dashboard_module_status(live)
         live.setdefault('warnings',[]).extend(observation_warnings(dict(
-            missingSectorHistoryCount=sum(not row.get('trend10') for row in live.get('top5',[])),
+            missingSectorHistoryCount=sum(not row.get('trend10') for row in live.get('top5',[])) if live.get('top5') else None,
             breadthClassificationCount=len(live.get('r02Breadth',{}).get('rows',[])),
             sectorClassificationCount=None)))
         return live

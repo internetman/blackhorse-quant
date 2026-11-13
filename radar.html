@@ -986,7 +986,7 @@
                 ${sparkline(trend, color)}
                 ${renderAttribution(sector, trend)}
                 <div class="leaders-panel">
-                  <div class="leaders-title">板块内领涨 10 股</div>
+                  <div class="leaders-title">板块内领涨 10 股</div><p class="section-note">${sector.observedModules?.leaders?.cached ? `沿用旧领涨股观察 ${escapeHtml(sector.observedModules.leaders.finishedAt || "时间未知")} · ${escapeHtml(sector.observedModules.leaders.runId || "runId未知")}，时效滞后` : "本轮获取；源行情时间未核验"}</p>
                   ${renderLeaders(sector.leaders10)}
                 </div>
               </div>
@@ -1054,6 +1054,7 @@
       const sectorRankStatus = data.sectorRankStatus || { ready: true, message: "板块排行已更新。" };
       const sectorRankReady = sectorRankStatus.ready !== false;
       const sectorRankCached = !!sectorRankStatus.cached;
+      const moduleEvidence = Object.entries(observation.modules || {}).map(([name, m])=>`${name}: ${m.cached ? "沿用旧观察/时效滞后" : "本轮抓取"} ${m.finishedAt || "时间未知"} · ${m.runId || "runId未知"}`).join("；");
       const sectorRankCacheText = sectorRankCached
         ? `沿用上次排行 ${shortDateTime(sectorRankStatus.cachedAt)}${sectorRankStatus.cacheAgeSeconds != null ? `（${compactAge(sectorRankStatus.cacheAgeSeconds)}）` : ""}`
         : "";
@@ -1065,7 +1066,7 @@
       const r02Current = String(data.r02.updated).slice(0, 10) === r02Date;
       const hotMatchesR02 = r02Current ? visibleTop5.filter((s) => [data.r02.primary, data.r02.secondary].includes(s.name)) : [];
       const sectorSummary = sectorRankReady
-        ? `本次观察涨幅排名：<strong>${escapeHtml(topNames || "--")}</strong>${sectorRankCached ? `（${escapeHtml(sectorRankCacheText)}）` : ""}。${hotMatchesR02.length ? "领涨板块命中当前 R02 主线，值得继续做 R03/R04 复核。" : "R02 主线未获同日重新确认；当前排名仅为涨幅排行，并非趋势选板块，不自动放宽交易权限。"}`
+        ? `板块涨幅观察：<strong>${escapeHtml(topNames || "--")}</strong>${sectorRankCached ? `（${escapeHtml(sectorRankCacheText)}）` : ""}。${hotMatchesR02.length ? "领涨板块命中当前 R02 主线，值得继续做 R03/R04 复核。" : "R02 主线未获同日重新确认；当前排名仅为涨幅排行，并非趋势选板块，不自动放宽交易权限。"}`
         : `板块排行：<strong>未就绪</strong>。${escapeHtml(sectorRankStatus.message || "等待实时行情源更新。")}`;
       const sectorNoticeDetail = sectorRankStatus.reason === "source_error"
         ? "东方财富实时板块接口暂时失败；页面保留指数、全市场温度和 R02 宽度模块，等待下一次刷新。"
@@ -1076,7 +1077,7 @@
 
       app.className = "";
       app.innerHTML = `
-        <p class="section-note">${escapeHtml(observationLabel)}</p>
+        <p class="section-note">${escapeHtml(observationLabel)}</p><p class="section-note">${escapeHtml(moduleEvidence)}</p>
         <div class="layout">
           <div class="stack">
             <section class="section">
