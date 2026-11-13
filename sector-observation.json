@@ -1,0 +1,4451 @@
+{
+  "schemaVersion": 1,
+  "scopeVersion": "ffd-frozen-industry-midday-observation-v1",
+  "asOf": "2026-11-13",
+  "session": "midday_source_observation",
+  "generatedAt": "2026-11-13T12:43:20.849826+08:00",
+  "candidateOnly": false,
+  "publishable": true,
+  "membershipDate": "2026-11-12",
+  "universeCount": 5223,
+  "sourceStockCount": 5114,
+  "industryCount": 86,
+  "stocksWithoutVerifiedMembership": 109,
+  "source": "FFD snapshot native latest/changeRatio/volume/sourceTime",
+  "nativeTimeLabelValidated": true,
+  "quoteTimeVerified": false,
+  "exact1130Snapshot": false,
+  "changeRatioUnit": "percent_native_scale_1",
+  "volumeUnit": "累计手",
+  "market": {
+    "valid": 5108,
+    "expected": 5223,
+    "missing": 115,
+    "coveragePct": 97.7982,
+    "sufficientCoverage": true,
+    "zeroVolumeCount": 3,
+    "sourceTimeMin": "2026-11-13T12:05:29+08:00",
+    "sourceTimeMax": "2026-11-13T12:38:56+08:00",
+    "meanChangePct": -0.16340127357029002,
+    "medianChangePct": -0.09713455423778009,
+    "upCount": 2265,
+    "downCount": 2621,
+    "flatCount": 222,
+    "upPct": 44.342208300704776,
+    "downPct": 51.31166797180893,
+    "flatPct": 4.346123727486296,
+    "top3": [
+      {
+        "code": "300528",
+        "name": "幸福蓝海",
+        "changeRatio": 20.01334222815209,
+        "latest": 17.99,
+        "sourceTime": "2026-11-13T12:37:33+08:00"
+      },
+      {
+        "code": "301218",
+        "name": "华是科技",
+        "changeRatio": 20.00000000000001,
+        "latest": 103.92,
+        "sourceTime": "2026-11-13T12:38:06+08:00"
+      },
+      {
+        "code": "300237",
+        "name": "美晨科技",
+        "changeRatio": 19.85294117647057,
+        "latest": 3.26,
+        "sourceTime": "2026-11-13T12:38:03+08:00"
+      }
+    ]
+  },
+  "top15": [
+    {
+      "industry": "文化传媒",
+      "valid": 98,
+      "expected": 98,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:03+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:52+08:00",
+      "meanChangePct": 1.8703569572040954,
+      "medianChangePct": 1.159320570967922,
+      "upCount": 74,
+      "downCount": 23,
+      "flatCount": 1,
+      "upPct": 75.51020408163265,
+      "downPct": 23.46938775510204,
+      "flatPct": 1.0204081632653061,
+      "top3": [
+        {
+          "code": "300528",
+          "name": "幸福蓝海",
+          "changeRatio": 20.01334222815209,
+          "latest": 17.99,
+          "sourceTime": "2026-11-13T12:37:33+08:00"
+        },
+        {
+          "code": "000802",
+          "name": "北京文化",
+          "changeRatio": 10.126582278481,
+          "latest": 4.35,
+          "sourceTime": "2026-11-13T12:36:18+08:00"
+        },
+        {
+          "code": "000665",
+          "name": "湖北广电",
+          "changeRatio": 10.096153846153843,
+          "latest": 4.58,
+          "sourceTime": "2026-11-13T12:36:27+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "银行",
+      "valid": 42,
+      "expected": 42,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:44+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:43+08:00",
+      "meanChangePct": 1.454518642708378,
+      "medianChangePct": 1.309091947157611,
+      "upCount": 42,
+      "downCount": 0,
+      "flatCount": 0,
+      "upPct": 100.0,
+      "downPct": 0.0,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "601665",
+          "name": "齐鲁银行",
+          "changeRatio": 3.318250377073903,
+          "latest": 6.85,
+          "sourceTime": "2026-11-13T12:38:15+08:00"
+        },
+        {
+          "code": "002948",
+          "name": "青岛银行",
+          "changeRatio": 3.015873015873022,
+          "latest": 6.49,
+          "sourceTime": "2026-11-13T12:38:18+08:00"
+        },
+        {
+          "code": "601169",
+          "name": "北京银行",
+          "changeRatio": 2.495840266222968,
+          "latest": 6.16,
+          "sourceTime": "2026-11-13T12:38:18+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "游戏",
+      "valid": 25,
+      "expected": 25,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:37:24+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:43+08:00",
+      "meanChangePct": 1.190955664135732,
+      "medianChangePct": 0.4914004914004809,
+      "upCount": 14,
+      "downCount": 11,
+      "flatCount": 0,
+      "upPct": 56.0,
+      "downPct": 44.0,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "600715",
+          "name": "文投控股",
+          "changeRatio": 10.032362459546928,
+          "latest": 3.4,
+          "sourceTime": "2026-11-13T12:38:34+08:00"
+        },
+        {
+          "code": "002425",
+          "name": "ST凯文",
+          "changeRatio": 9.999999999999996,
+          "latest": 3.96,
+          "sourceTime": "2026-11-13T12:37:36+08:00"
+        },
+        {
+          "code": "300031",
+          "name": "宝通科技",
+          "changeRatio": 4.431678292983169,
+          "latest": 25.45,
+          "sourceTime": "2026-11-13T12:37:27+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "通信服务",
+      "valid": 36,
+      "expected": 37,
+      "missing": 1,
+      "coveragePct": 97.2973,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:43+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:48+08:00",
+      "meanChangePct": 1.0849909247126621,
+      "medianChangePct": 0.6784310476558731,
+      "upCount": 25,
+      "downCount": 9,
+      "flatCount": 2,
+      "upPct": 69.44444444444444,
+      "downPct": 25.0,
+      "flatPct": 5.555555555555555,
+      "top3": [
+        {
+          "code": "002148",
+          "name": "北纬科技",
+          "changeRatio": 9.958506224066387,
+          "latest": 7.95,
+          "sourceTime": "2026-11-13T12:37:21+08:00"
+        },
+        {
+          "code": "603206",
+          "name": "嘉环科技",
+          "changeRatio": 4.58302028549962,
+          "latest": 13.92,
+          "sourceTime": "2026-11-13T12:38:19+08:00"
+        },
+        {
+          "code": "300081",
+          "name": "恒信东方",
+          "changeRatio": 4.242424242424246,
+          "latest": 3.44,
+          "sourceTime": "2026-11-13T12:37:45+08:00"
+        }
+      ],
+      "missingCodes": [
+        "301139"
+      ]
+    },
+    {
+      "industry": "能源金属",
+      "valid": 13,
+      "expected": 13,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:00+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:32+08:00",
+      "meanChangePct": 1.075172313923116,
+      "medianChangePct": 0.812567713976157,
+      "upCount": 12,
+      "downCount": 0,
+      "flatCount": 1,
+      "upPct": 92.3076923076923,
+      "downPct": 0.0,
+      "flatPct": 7.6923076923076925,
+      "top3": [
+        {
+          "code": "002667",
+          "name": "威领股份",
+          "changeRatio": 4.658823529411758,
+          "latest": 22.24,
+          "sourceTime": "2026-11-13T12:38:09+08:00"
+        },
+        {
+          "code": "002192",
+          "name": "融捷股份",
+          "changeRatio": 2.5730038799264814,
+          "latest": 50.23,
+          "sourceTime": "2026-11-13T12:38:06+08:00"
+        },
+        {
+          "code": "002240",
+          "name": "盛新锂能",
+          "changeRatio": 1.9938650306748498,
+          "latest": 19.95,
+          "sourceTime": "2026-11-13T12:38:06+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "石油行业",
+      "valid": 20,
+      "expected": 20,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:57+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:41+08:00",
+      "meanChangePct": 0.8747359019482822,
+      "medianChangePct": 0.6199988672864324,
+      "upCount": 13,
+      "downCount": 7,
+      "flatCount": 0,
+      "upPct": 65.0,
+      "downPct": 35.0,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "603353",
+          "name": "和顺石油",
+          "changeRatio": 10.006784260515602,
+          "latest": 32.43,
+          "sourceTime": "2026-11-13T12:38:36+08:00"
+        },
+        {
+          "code": "000819",
+          "name": "岳阳兴长",
+          "changeRatio": 4.635193133047203,
+          "latest": 12.19,
+          "sourceTime": "2026-11-13T12:36:15+08:00"
+        },
+        {
+          "code": "603798",
+          "name": "康普顿",
+          "changeRatio": 2.750000000000001,
+          "latest": 12.33,
+          "sourceTime": "2026-11-13T12:38:25+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "电力行业",
+      "valid": 79,
+      "expected": 79,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:54+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:51+08:00",
+      "meanChangePct": 0.8720274852632552,
+      "medianChangePct": 0.7104795737122565,
+      "upCount": 59,
+      "downCount": 18,
+      "flatCount": 2,
+      "upPct": 74.68354430379746,
+      "downPct": 22.78481012658228,
+      "flatPct": 2.5316455696202533,
+      "top3": [
+        {
+          "code": "001258",
+          "name": "立新能源",
+          "changeRatio": 8.258928571428553,
+          "latest": 9.7,
+          "sourceTime": "2026-11-13T12:36:48+08:00"
+        },
+        {
+          "code": "002039",
+          "name": "黔源电力",
+          "changeRatio": 4.520697167756001,
+          "latest": 19.19,
+          "sourceTime": "2026-11-13T12:37:45+08:00"
+        },
+        {
+          "code": "600863",
+          "name": "内蒙华电",
+          "changeRatio": 3.795066413662243,
+          "latest": 5.47,
+          "sourceTime": "2026-11-13T12:38:21+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "酿酒行业",
+      "valid": 36,
+      "expected": 36,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:57+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:51+08:00",
+      "meanChangePct": 0.8305860817387626,
+      "medianChangePct": 0.7065913113512059,
+      "upCount": 27,
+      "downCount": 9,
+      "flatCount": 0,
+      "upPct": 75.0,
+      "downPct": 25.0,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "000596",
+          "name": "古井贡酒",
+          "changeRatio": 5.103969754253314,
+          "latest": 111.2,
+          "sourceTime": "2026-11-13T12:36:18+08:00"
+        },
+        {
+          "code": "600238",
+          "name": "*ST椰岛",
+          "changeRatio": 5.102040816326536,
+          "latest": 4.12,
+          "sourceTime": "2026-11-13T12:38:19+08:00"
+        },
+        {
+          "code": "000860",
+          "name": "顺鑫农业",
+          "changeRatio": 4.141501294219158,
+          "latest": 12.07,
+          "sourceTime": "2026-11-13T12:36:48+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "农牧饲渔",
+      "valid": 82,
+      "expected": 82,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:57+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:51+08:00",
+      "meanChangePct": 0.6498834071168025,
+      "medianChangePct": 0.4596991779217807,
+      "upCount": 51,
+      "downCount": 27,
+      "flatCount": 4,
+      "upPct": 62.19512195121951,
+      "downPct": 32.926829268292686,
+      "flatPct": 4.878048780487805,
+      "top3": [
+        {
+          "code": "600467",
+          "name": "好当家",
+          "changeRatio": 10.080645161290324,
+          "latest": 2.73,
+          "sourceTime": "2026-11-13T12:38:20+08:00"
+        },
+        {
+          "code": "002548",
+          "name": "金新农",
+          "changeRatio": 10.05747126436782,
+          "latest": 3.83,
+          "sourceTime": "2026-11-13T12:38:12+08:00"
+        },
+        {
+          "code": "002124",
+          "name": "天邦食品",
+          "changeRatio": 9.999999999999998,
+          "latest": 2.31,
+          "sourceTime": "2026-11-13T12:38:15+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "汽车整车",
+      "valid": 24,
+      "expected": 24,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:03+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:40+08:00",
+      "meanChangePct": 0.642316691452027,
+      "medianChangePct": 0.41347731000547705,
+      "upCount": 16,
+      "downCount": 8,
+      "flatCount": 0,
+      "upPct": 66.66666666666667,
+      "downPct": 33.333333333333336,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "601777",
+          "name": "千里科技",
+          "changeRatio": 4.9490538573507985,
+          "latest": 7.21,
+          "sourceTime": "2026-11-13T12:38:24+08:00"
+        },
+        {
+          "code": "600418",
+          "name": "江淮汽车",
+          "changeRatio": 4.6743697478991635,
+          "latest": 19.93,
+          "sourceTime": "2026-11-13T12:38:38+08:00"
+        },
+        {
+          "code": "000550",
+          "name": "江铃汽车",
+          "changeRatio": 2.5157232704402537,
+          "latest": 16.3,
+          "sourceTime": "2026-11-13T12:36:48+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "软件开发",
+      "valid": 171,
+      "expected": 171,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:31+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:55+08:00",
+      "meanChangePct": 0.6247862061176737,
+      "medianChangePct": 0.42194092827003316,
+      "upCount": 116,
+      "downCount": 53,
+      "flatCount": 2,
+      "upPct": 67.83625730994152,
+      "downPct": 30.994152046783626,
+      "flatPct": 1.1695906432748537,
+      "top3": [
+        {
+          "code": "301218",
+          "name": "华是科技",
+          "changeRatio": 20.00000000000001,
+          "latest": 103.92,
+          "sourceTime": "2026-11-13T12:38:06+08:00"
+        },
+        {
+          "code": "688343",
+          "name": "云天励飞-U",
+          "changeRatio": 8.709090909090907,
+          "latest": 59.79,
+          "sourceTime": "2026-11-13T12:38:48+08:00"
+        },
+        {
+          "code": "301236",
+          "name": "软通动力",
+          "changeRatio": 7.852265673494728,
+          "latest": 34.75,
+          "sourceTime": "2026-11-13T12:38:27+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "教育",
+      "valid": 14,
+      "expected": 14,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:39+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:50+08:00",
+      "meanChangePct": 0.5928957768921409,
+      "medianChangePct": 1.0184711271210058,
+      "upCount": 9,
+      "downCount": 4,
+      "flatCount": 1,
+      "upPct": 64.28571428571429,
+      "downPct": 28.571428571428573,
+      "flatPct": 7.142857142857143,
+      "top3": [
+        {
+          "code": "600730",
+          "name": "中国高科",
+          "changeRatio": 4.390934844192642,
+          "latest": 7.37,
+          "sourceTime": "2026-11-13T12:38:40+08:00"
+        },
+        {
+          "code": "300688",
+          "name": "创业黑马",
+          "changeRatio": 2.5357607282184573,
+          "latest": 31.54,
+          "sourceTime": "2026-11-13T12:37:54+08:00"
+        },
+        {
+          "code": "605098",
+          "name": "行动教育",
+          "changeRatio": 2.225130890052365,
+          "latest": 54.67,
+          "sourceTime": "2026-11-13T12:38:50+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "煤炭行业",
+      "valid": 34,
+      "expected": 34,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:00+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:44+08:00",
+      "meanChangePct": 0.5901489436014676,
+      "medianChangePct": 0.6012180209557199,
+      "upCount": 22,
+      "downCount": 9,
+      "flatCount": 3,
+      "upPct": 64.70588235294117,
+      "downPct": 26.470588235294116,
+      "flatPct": 8.823529411764707,
+      "top3": [
+        {
+          "code": "601101",
+          "name": "昊华能源",
+          "changeRatio": 2.9049295774647894,
+          "latest": 11.69,
+          "sourceTime": "2026-11-13T12:38:35+08:00"
+        },
+        {
+          "code": "601918",
+          "name": "新集能源",
+          "changeRatio": 2.839116719242898,
+          "latest": 9.78,
+          "sourceTime": "2026-11-13T12:38:36+08:00"
+        },
+        {
+          "code": "601225",
+          "name": "陕西煤业",
+          "changeRatio": 2.3574144486692052,
+          "latest": 26.92,
+          "sourceTime": "2026-11-13T12:38:24+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "互联网服务",
+      "valid": 143,
+      "expected": 143,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:32+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:54+08:00",
+      "meanChangePct": 0.5832889918874252,
+      "medianChangePct": 0.439146800501895,
+      "upCount": 92,
+      "downCount": 46,
+      "flatCount": 5,
+      "upPct": 64.33566433566433,
+      "downPct": 32.16783216783217,
+      "flatPct": 3.4965034965034967,
+      "top3": [
+        {
+          "code": "300324",
+          "name": "旋极信息",
+          "changeRatio": 19.69696969696971,
+          "latest": 3.95,
+          "sourceTime": "2026-11-13T12:38:03+08:00"
+        },
+        {
+          "code": "600410",
+          "name": "华胜天成",
+          "changeRatio": 10.000000000000005,
+          "latest": 14.3,
+          "sourceTime": "2026-11-13T12:38:36+08:00"
+        },
+        {
+          "code": "688636",
+          "name": "智明达",
+          "changeRatio": 9.82,
+          "latest": 21.25,
+          "sourceTime": "2026-11-13T12:05:56+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "多元金融",
+      "valid": 21,
+      "expected": 21,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:03+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:37+08:00",
+      "meanChangePct": 0.5408047931750454,
+      "medianChangePct": 0.1599999999999966,
+      "upCount": 13,
+      "downCount": 8,
+      "flatCount": 0,
+      "upPct": 61.904761904761905,
+      "downPct": 38.095238095238095,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "002647",
+          "name": "*ST仁东",
+          "changeRatio": 6.493506493506482,
+          "latest": 8.2,
+          "sourceTime": "2026-11-13T12:37:33+08:00"
+        },
+        {
+          "code": "000415",
+          "name": "渤海租赁",
+          "changeRatio": 3.050108932461886,
+          "latest": 4.73,
+          "sourceTime": "2026-11-13T12:36:27+08:00"
+        },
+        {
+          "code": "600901",
+          "name": "江苏金租",
+          "changeRatio": 2.5099075297225824,
+          "latest": 7.76,
+          "sourceTime": "2026-11-13T12:38:37+08:00"
+        }
+      ],
+      "missingCodes": []
+    }
+  ],
+  "industries": [
+    {
+      "industry": "专业服务",
+      "valid": 33,
+      "expected": 33,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:58+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:54+08:00",
+      "meanChangePct": -0.28011782514083583,
+      "medianChangePct": 0.1760563380281809,
+      "upCount": 18,
+      "downCount": 15,
+      "flatCount": 0,
+      "upPct": 54.54545454545455,
+      "downPct": 45.45454545454545,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "300012",
+          "name": "华测检测",
+          "changeRatio": 2.0752269779507153,
+          "latest": 15.74,
+          "sourceTime": "2026-11-13T12:37:54+08:00"
+        },
+        {
+          "code": "300797",
+          "name": "钢研纳克",
+          "changeRatio": 1.862828111769677,
+          "latest": 12.03,
+          "sourceTime": "2026-11-13T12:38:00+08:00"
+        },
+        {
+          "code": "002967",
+          "name": "广电计量",
+          "changeRatio": 1.8486424032351259,
+          "latest": 17.63,
+          "sourceTime": "2026-11-13T12:37:27+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "专用设备",
+      "valid": 242,
+      "expected": 242,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 1,
+      "sourceTimeMin": "2026-11-13T12:05:30+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:55+08:00",
+      "meanChangePct": -0.4035950747717705,
+      "medianChangePct": -0.1993901473150599,
+      "upCount": 95,
+      "downCount": 134,
+      "flatCount": 13,
+      "upPct": 39.256198347107436,
+      "downPct": 55.37190082644628,
+      "flatPct": 5.371900826446281,
+      "top3": [
+        {
+          "code": "300097",
+          "name": "ST智云",
+          "changeRatio": 10.285006195786865,
+          "latest": 8.9,
+          "sourceTime": "2026-11-13T12:38:24+08:00"
+        },
+        {
+          "code": "605288",
+          "name": "XD凯迪股",
+          "changeRatio": 10.000000000000007,
+          "latest": 77.11,
+          "sourceTime": "2026-11-13T12:38:40+08:00"
+        },
+        {
+          "code": "603666",
+          "name": "亿嘉和",
+          "changeRatio": 8.602867622540854,
+          "latest": 32.57,
+          "sourceTime": "2026-11-13T12:38:33+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "中药",
+      "valid": 66,
+      "expected": 66,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:57+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:47+08:00",
+      "meanChangePct": -0.5760662137197489,
+      "medianChangePct": -0.41200381746845005,
+      "upCount": 21,
+      "downCount": 44,
+      "flatCount": 1,
+      "upPct": 31.818181818181817,
+      "downPct": 66.66666666666667,
+      "flatPct": 1.5151515151515151,
+      "top3": [
+        {
+          "code": "600993",
+          "name": "马应龙",
+          "changeRatio": 2.669404517453793,
+          "latest": 25.0,
+          "sourceTime": "2026-11-13T12:38:23+08:00"
+        },
+        {
+          "code": "600285",
+          "name": "羚锐制药",
+          "changeRatio": 2.0982142857142967,
+          "latest": 22.87,
+          "sourceTime": "2026-11-13T12:38:35+08:00"
+        },
+        {
+          "code": "000423",
+          "name": "东阿阿胶",
+          "changeRatio": 1.9234662887224192,
+          "latest": 50.34,
+          "sourceTime": "2026-11-13T12:36:39+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "互联网服务",
+      "valid": 143,
+      "expected": 143,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:32+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:54+08:00",
+      "meanChangePct": 0.5832889918874252,
+      "medianChangePct": 0.439146800501895,
+      "upCount": 92,
+      "downCount": 46,
+      "flatCount": 5,
+      "upPct": 64.33566433566433,
+      "downPct": 32.16783216783217,
+      "flatPct": 3.4965034965034967,
+      "top3": [
+        {
+          "code": "300324",
+          "name": "旋极信息",
+          "changeRatio": 19.69696969696971,
+          "latest": 3.95,
+          "sourceTime": "2026-11-13T12:38:03+08:00"
+        },
+        {
+          "code": "600410",
+          "name": "华胜天成",
+          "changeRatio": 10.000000000000005,
+          "latest": 14.3,
+          "sourceTime": "2026-11-13T12:38:36+08:00"
+        },
+        {
+          "code": "688636",
+          "name": "智明达",
+          "changeRatio": 9.82,
+          "latest": 21.25,
+          "sourceTime": "2026-11-13T12:05:56+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "交运设备",
+      "valid": 44,
+      "expected": 44,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:47+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:55+08:00",
+      "meanChangePct": 0.43548456175195494,
+      "medianChangePct": 0.317118004762228,
+      "upCount": 30,
+      "downCount": 14,
+      "flatCount": 0,
+      "upPct": 68.18181818181819,
+      "downPct": 31.818181818181817,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "688367",
+          "name": "工大高科",
+          "changeRatio": 5.834512022630829,
+          "latest": 29.93,
+          "sourceTime": "2026-11-13T12:38:48+08:00"
+        },
+        {
+          "code": "300960",
+          "name": "通业科技",
+          "changeRatio": 3.488372093023244,
+          "latest": 20.47,
+          "sourceTime": "2026-11-13T12:37:42+08:00"
+        },
+        {
+          "code": "603529",
+          "name": "爱玛科技",
+          "changeRatio": 2.6241799437675666,
+          "latest": 21.9,
+          "sourceTime": "2026-11-13T12:38:34+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "仪器仪表",
+      "valid": 58,
+      "expected": 58,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:31+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:52+08:00",
+      "meanChangePct": -0.40290976962808983,
+      "medianChangePct": 0.0,
+      "upCount": 26,
+      "downCount": 25,
+      "flatCount": 7,
+      "upPct": 44.827586206896555,
+      "downPct": 43.10344827586207,
+      "flatPct": 12.068965517241379,
+      "top3": [
+        {
+          "code": "002819",
+          "name": "东方中科",
+          "changeRatio": 9.984794728839324,
+          "latest": 21.7,
+          "sourceTime": "2026-11-13T12:37:57+08:00"
+        },
+        {
+          "code": "300862",
+          "name": "蓝盾光电",
+          "changeRatio": 3.9021368844843543,
+          "latest": 33.55,
+          "sourceTime": "2026-11-13T12:37:45+08:00"
+        },
+        {
+          "code": "002338",
+          "name": "奥普光电",
+          "changeRatio": 3.8259958071278852,
+          "latest": 39.62,
+          "sourceTime": "2026-11-13T12:37:27+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "保险",
+      "valid": 5,
+      "expected": 5,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:38:18+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:42+08:00",
+      "meanChangePct": 0.5245399674864946,
+      "medianChangePct": 0.5633802816901414,
+      "upCount": 5,
+      "downCount": 0,
+      "flatCount": 0,
+      "upPct": 100.0,
+      "downPct": 0.0,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "601601",
+          "name": "中国太保",
+          "changeRatio": 1.0012919896640784,
+          "latest": 31.27,
+          "sourceTime": "2026-11-13T12:38:42+08:00"
+        },
+        {
+          "code": "601336",
+          "name": "新华保险",
+          "changeRatio": 0.7434944237918265,
+          "latest": 51.49,
+          "sourceTime": "2026-11-13T12:38:32+08:00"
+        },
+        {
+          "code": "601319",
+          "name": "中国人保",
+          "changeRatio": 0.5633802816901414,
+          "latest": 7.14,
+          "sourceTime": "2026-11-13T12:38:28+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "光伏设备",
+      "valid": 73,
+      "expected": 73,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:39+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:53+08:00",
+      "meanChangePct": -1.7231857009739122,
+      "medianChangePct": -1.4440433212996509,
+      "upCount": 6,
+      "downCount": 67,
+      "flatCount": 0,
+      "upPct": 8.219178082191782,
+      "downPct": 91.78082191780823,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "603396",
+          "name": "金辰股份",
+          "changeRatio": 9.996885705387733,
+          "latest": 35.32,
+          "sourceTime": "2026-11-13T12:38:50+08:00"
+        },
+        {
+          "code": "600537",
+          "name": "亿晶光电",
+          "changeRatio": 7.1038251366120155,
+          "latest": 1.96,
+          "sourceTime": "2026-11-13T12:38:14+08:00"
+        },
+        {
+          "code": "002897",
+          "name": "意华股份",
+          "changeRatio": 3.7078651685393225,
+          "latest": 46.15,
+          "sourceTime": "2026-11-13T12:37:39+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "光学光电子",
+      "valid": 100,
+      "expected": 100,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:54+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:50+08:00",
+      "meanChangePct": 0.00852965854474715,
+      "medianChangePct": -0.23450558634644672,
+      "upCount": 42,
+      "downCount": 53,
+      "flatCount": 5,
+      "upPct": 42.0,
+      "downPct": 53.0,
+      "flatPct": 5.0,
+      "top3": [
+        {
+          "code": "301421",
+          "name": "波长光电",
+          "changeRatio": 10.162667096150752,
+          "latest": 68.4,
+          "sourceTime": "2026-11-13T12:37:39+08:00"
+        },
+        {
+          "code": "600651",
+          "name": "飞乐音响",
+          "changeRatio": 9.978768577494687,
+          "latest": 5.18,
+          "sourceTime": "2026-11-13T12:38:15+08:00"
+        },
+        {
+          "code": "688010",
+          "name": "福光股份",
+          "changeRatio": 8.625218914185634,
+          "latest": 24.81,
+          "sourceTime": "2026-11-13T12:38:31+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "公用事业",
+      "valid": 23,
+      "expected": 23,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:09+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:48+08:00",
+      "meanChangePct": 0.03725600675881304,
+      "medianChangePct": 0.0,
+      "upCount": 11,
+      "downCount": 10,
+      "flatCount": 2,
+      "upPct": 47.82608695652174,
+      "downPct": 43.47826086956522,
+      "flatPct": 8.695652173913043,
+      "top3": [
+        {
+          "code": "000598",
+          "name": "兴蓉环境",
+          "changeRatio": 1.933701657458559,
+          "latest": 7.38,
+          "sourceTime": "2026-11-13T12:36:36+08:00"
+        },
+        {
+          "code": "600461",
+          "name": "洪城环境",
+          "changeRatio": 1.5719467956469262,
+          "latest": 8.4,
+          "sourceTime": "2026-11-13T12:38:18+08:00"
+        },
+        {
+          "code": "600008",
+          "name": "首创环保",
+          "changeRatio": 1.449275362318842,
+          "latest": 2.8,
+          "sourceTime": "2026-11-13T12:38:16+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "农牧饲渔",
+      "valid": 82,
+      "expected": 82,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:57+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:51+08:00",
+      "meanChangePct": 0.6498834071168025,
+      "medianChangePct": 0.4596991779217807,
+      "upCount": 51,
+      "downCount": 27,
+      "flatCount": 4,
+      "upPct": 62.19512195121951,
+      "downPct": 32.926829268292686,
+      "flatPct": 4.878048780487805,
+      "top3": [
+        {
+          "code": "600467",
+          "name": "好当家",
+          "changeRatio": 10.080645161290324,
+          "latest": 2.73,
+          "sourceTime": "2026-11-13T12:38:20+08:00"
+        },
+        {
+          "code": "002548",
+          "name": "金新农",
+          "changeRatio": 10.05747126436782,
+          "latest": 3.83,
+          "sourceTime": "2026-11-13T12:38:12+08:00"
+        },
+        {
+          "code": "002124",
+          "name": "天邦食品",
+          "changeRatio": 9.999999999999998,
+          "latest": 2.31,
+          "sourceTime": "2026-11-13T12:38:15+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "农药兽药",
+      "valid": 44,
+      "expected": 44,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:54+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:55+08:00",
+      "meanChangePct": 0.30593752339591335,
+      "medianChangePct": 0.34107697497759937,
+      "upCount": 24,
+      "downCount": 15,
+      "flatCount": 5,
+      "upPct": 54.54545454545455,
+      "downPct": 34.09090909090909,
+      "flatPct": 11.363636363636363,
+      "top3": [
+        {
+          "code": "300804",
+          "name": "广康生化",
+          "changeRatio": 4.3953252032520425,
+          "latest": 41.09,
+          "sourceTime": "2026-11-13T12:38:09+08:00"
+        },
+        {
+          "code": "600538",
+          "name": "国发股份",
+          "changeRatio": 3.318584070796468,
+          "latest": 4.67,
+          "sourceTime": "2026-11-13T12:38:11+08:00"
+        },
+        {
+          "code": "300871",
+          "name": "回盛生物",
+          "changeRatio": 2.5229357798165,
+          "latest": 17.88,
+          "sourceTime": "2026-11-13T12:38:00+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "包装材料",
+      "valid": 26,
+      "expected": 26,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:24+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:43+08:00",
+      "meanChangePct": 0.34010972001022616,
+      "medianChangePct": -0.12576724856802785,
+      "upCount": 11,
+      "downCount": 14,
+      "flatCount": 1,
+      "upPct": 42.30769230769231,
+      "downPct": 53.84615384615385,
+      "flatPct": 3.8461538461538463,
+      "top3": [
+        {
+          "code": "603687",
+          "name": "大胜达",
+          "changeRatio": 10.014619883040943,
+          "latest": 15.05,
+          "sourceTime": "2026-11-13T12:38:36+08:00"
+        },
+        {
+          "code": "002014",
+          "name": "永新股份",
+          "changeRatio": 2.258905299739355,
+          "latest": 11.77,
+          "sourceTime": "2026-11-13T12:37:21+08:00"
+        },
+        {
+          "code": "002969",
+          "name": "嘉美包装",
+          "changeRatio": 1.9860973187686124,
+          "latest": 10.27,
+          "sourceTime": "2026-11-13T12:38:21+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "化学制品",
+      "valid": 156,
+      "expected": 156,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:29+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:53+08:00",
+      "meanChangePct": -0.3503553353483534,
+      "medianChangePct": -0.23392100856889092,
+      "upCount": 57,
+      "downCount": 89,
+      "flatCount": 10,
+      "upPct": 36.53846153846154,
+      "downPct": 57.05128205128205,
+      "flatPct": 6.410256410256411,
+      "top3": [
+        {
+          "code": "301077",
+          "name": "星华新材",
+          "changeRatio": 9.236145781327997,
+          "latest": 21.88,
+          "sourceTime": "2026-11-13T12:37:39+08:00"
+        },
+        {
+          "code": "002037",
+          "name": "保利联合",
+          "changeRatio": 3.9106145251396685,
+          "latest": 7.44,
+          "sourceTime": "2026-11-13T12:37:42+08:00"
+        },
+        {
+          "code": "301555",
+          "name": "惠柏新材",
+          "changeRatio": 2.3272727272727294,
+          "latest": 28.14,
+          "sourceTime": "2026-11-13T12:37:48+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "化学制药",
+      "valid": 135,
+      "expected": 135,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:33+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:54+08:00",
+      "meanChangePct": -0.8008371733990531,
+      "medianChangePct": -0.6504621704895628,
+      "upCount": 31,
+      "downCount": 102,
+      "flatCount": 2,
+      "upPct": 22.962962962962962,
+      "downPct": 75.55555555555556,
+      "flatPct": 1.4814814814814814,
+      "top3": [
+        {
+          "code": "000766",
+          "name": "通化金马",
+          "changeRatio": 10.0,
+          "latest": 16.5,
+          "sourceTime": "2026-11-13T12:36:03+08:00"
+        },
+        {
+          "code": "301281",
+          "name": "科源制药",
+          "changeRatio": 2.0901536136993157,
+          "latest": 40.54,
+          "sourceTime": "2026-11-13T12:38:24+08:00"
+        },
+        {
+          "code": "300199",
+          "name": "翰宇药业",
+          "changeRatio": 1.691973969631239,
+          "latest": 23.44,
+          "sourceTime": "2026-11-13T12:38:15+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "化学原料",
+      "valid": 76,
+      "expected": 77,
+      "missing": 1,
+      "coveragePct": 98.7013,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:55+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:49+08:00",
+      "meanChangePct": 0.23926063065870354,
+      "medianChangePct": 0.0,
+      "upCount": 32,
+      "downCount": 37,
+      "flatCount": 7,
+      "upPct": 42.10526315789474,
+      "downPct": 48.68421052631579,
+      "flatPct": 9.210526315789474,
+      "top3": [
+        {
+          "code": "002748",
+          "name": "世龙实业",
+          "changeRatio": 10.035523978685621,
+          "latest": 12.39,
+          "sourceTime": "2026-11-13T12:37:51+08:00"
+        },
+        {
+          "code": "001358",
+          "name": "兴欣新材",
+          "changeRatio": 9.991742361684567,
+          "latest": 26.64,
+          "sourceTime": "2026-11-13T12:36:06+08:00"
+        },
+        {
+          "code": "301395",
+          "name": "仁信新材",
+          "changeRatio": 6.973400431344361,
+          "latest": 14.88,
+          "sourceTime": "2026-11-13T12:38:33+08:00"
+        }
+      ],
+      "missingCodes": [
+        "000635"
+      ]
+    },
+    {
+      "industry": "化纤行业",
+      "valid": 28,
+      "expected": 28,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:51+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:41+08:00",
+      "meanChangePct": -0.6146523159751442,
+      "medianChangePct": -0.12784200618575564,
+      "upCount": 11,
+      "downCount": 15,
+      "flatCount": 2,
+      "upPct": 39.285714285714285,
+      "downPct": 53.57142857142857,
+      "flatPct": 7.142857142857143,
+      "top3": [
+        {
+          "code": "000677",
+          "name": "恒天海龙",
+          "changeRatio": 1.666666666666668,
+          "latest": 1.83,
+          "sourceTime": "2026-11-13T12:36:30+08:00"
+        },
+        {
+          "code": "002998",
+          "name": "优彩资源",
+          "changeRatio": 1.1611030478955018,
+          "latest": 6.97,
+          "sourceTime": "2026-11-13T12:38:03+08:00"
+        },
+        {
+          "code": "301057",
+          "name": "汇隆新材",
+          "changeRatio": 0.7932310946589031,
+          "latest": 19.06,
+          "sourceTime": "2026-11-13T12:38:09+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "化肥行业",
+      "valid": 26,
+      "expected": 26,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:57+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:48+08:00",
+      "meanChangePct": 0.19773631146754425,
+      "medianChangePct": 0.28010236740930466,
+      "upCount": 16,
+      "downCount": 8,
+      "flatCount": 2,
+      "upPct": 61.53846153846154,
+      "downPct": 30.76923076923077,
+      "flatPct": 7.6923076923076925,
+      "top3": [
+        {
+          "code": "002170",
+          "name": "芭田股份",
+          "changeRatio": 1.718907987866531,
+          "latest": 10.06,
+          "sourceTime": "2026-11-13T12:38:09+08:00"
+        },
+        {
+          "code": "000792",
+          "name": "盐湖股份",
+          "changeRatio": 1.5653775322283605,
+          "latest": 22.06,
+          "sourceTime": "2026-11-13T12:36:42+08:00"
+        },
+        {
+          "code": "600096",
+          "name": "云天化",
+          "changeRatio": 0.999615532487497,
+          "latest": 26.27,
+          "sourceTime": "2026-11-13T12:38:10+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "医疗器械",
+      "valid": 118,
+      "expected": 118,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:35+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:55+08:00",
+      "meanChangePct": -0.3908626032473285,
+      "medianChangePct": -0.04959798493910813,
+      "upCount": 56,
+      "downCount": 60,
+      "flatCount": 2,
+      "upPct": 47.45762711864407,
+      "downPct": 50.847457627118644,
+      "flatPct": 1.694915254237288,
+      "top3": [
+        {
+          "code": "688029",
+          "name": "南微医学",
+          "changeRatio": 3.6313186150319763,
+          "latest": 85.9,
+          "sourceTime": "2026-11-13T12:38:31+08:00"
+        },
+        {
+          "code": "300832",
+          "name": "新产业",
+          "changeRatio": 3.3852403520649963,
+          "latest": 61.08,
+          "sourceTime": "2026-11-13T12:38:27+08:00"
+        },
+        {
+          "code": "688617",
+          "name": "惠泰医疗",
+          "changeRatio": 3.2,
+          "latest": 287.24,
+          "sourceTime": "2026-11-13T12:05:53+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "医疗服务",
+      "valid": 43,
+      "expected": 43,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:59+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:49+08:00",
+      "meanChangePct": -2.242705092990595,
+      "medianChangePct": -1.5857034986156444,
+      "upCount": 6,
+      "downCount": 37,
+      "flatCount": 0,
+      "upPct": 13.953488372093023,
+      "downPct": 86.04651162790698,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "688238",
+          "name": "和元生物",
+          "changeRatio": 6.8413391557496315,
+          "latest": 7.34,
+          "sourceTime": "2026-11-13T12:38:41+08:00"
+        },
+        {
+          "code": "300015",
+          "name": "爱尔眼科",
+          "changeRatio": 2.6589595375722594,
+          "latest": 8.88,
+          "sourceTime": "2026-11-13T12:37:45+08:00"
+        },
+        {
+          "code": "600763",
+          "name": "通策医疗",
+          "changeRatio": 0.9034443817052521,
+          "latest": 35.74,
+          "sourceTime": "2026-11-13T12:38:21+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "医药商业",
+      "valid": 30,
+      "expected": 30,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:57+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:47+08:00",
+      "meanChangePct": -0.8080139535789882,
+      "medianChangePct": -0.5449586270303286,
+      "upCount": 9,
+      "downCount": 21,
+      "flatCount": 0,
+      "upPct": 30.0,
+      "downPct": 70.0,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "603939",
+          "name": "益丰药房",
+          "changeRatio": 2.6156941649899337,
+          "latest": 25.5,
+          "sourceTime": "2026-11-13T12:38:28+08:00"
+        },
+        {
+          "code": "600829",
+          "name": "人民同泰",
+          "changeRatio": 2.4539877300613524,
+          "latest": 10.02,
+          "sourceTime": "2026-11-13T12:38:13+08:00"
+        },
+        {
+          "code": "301263",
+          "name": "泰恩康",
+          "changeRatio": 1.3633980073413634,
+          "latest": 19.33,
+          "sourceTime": "2026-11-13T12:38:24+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "半导体",
+      "valid": 161,
+      "expected": 161,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 1,
+      "sourceTimeMin": "2026-11-13T12:05:30+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:55+08:00",
+      "meanChangePct": -0.42564585397699517,
+      "medianChangePct": -0.3654822335025375,
+      "upCount": 59,
+      "downCount": 100,
+      "flatCount": 2,
+      "upPct": 36.64596273291925,
+      "downPct": 62.11180124223603,
+      "flatPct": 1.2422360248447204,
+      "top3": [
+        {
+          "code": "688720",
+          "name": "艾森股份",
+          "changeRatio": 9.34,
+          "latest": 51.39,
+          "sourceTime": "2026-11-13T12:05:47+08:00"
+        },
+        {
+          "code": "688702",
+          "name": "盛科通信-U",
+          "changeRatio": 5.55,
+          "latest": 237.57,
+          "sourceTime": "2026-11-13T12:05:46+08:00"
+        },
+        {
+          "code": "688372",
+          "name": "伟测科技",
+          "changeRatio": 5.527638190954763,
+          "latest": 86.1,
+          "sourceTime": "2026-11-13T12:38:54+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "商业百货",
+      "valid": 58,
+      "expected": 59,
+      "missing": 1,
+      "coveragePct": 98.3051,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:54+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:41+08:00",
+      "meanChangePct": -0.9928594223319731,
+      "medianChangePct": -1.0856435789411671,
+      "upCount": 10,
+      "downCount": 45,
+      "flatCount": 3,
+      "upPct": 17.24137931034483,
+      "downPct": 77.58620689655173,
+      "flatPct": 5.172413793103448,
+      "top3": [
+        {
+          "code": "002187",
+          "name": "广百股份",
+          "changeRatio": 9.936908517350156,
+          "latest": 6.97,
+          "sourceTime": "2026-11-13T12:37:36+08:00"
+        },
+        {
+          "code": "600857",
+          "name": "宁波中百",
+          "changeRatio": 6.866666666666673,
+          "latest": 16.03,
+          "sourceTime": "2026-11-13T12:38:19+08:00"
+        },
+        {
+          "code": "600415",
+          "name": "小商品城",
+          "changeRatio": 2.682313495389776,
+          "latest": 12.25,
+          "sourceTime": "2026-11-13T12:38:38+08:00"
+        }
+      ],
+      "missingCodes": [
+        "600185"
+      ]
+    },
+    {
+      "industry": "塑料制品",
+      "valid": 80,
+      "expected": 80,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:38+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:51+08:00",
+      "meanChangePct": -0.5037867396515125,
+      "medianChangePct": -0.21466154795934358,
+      "upCount": 31,
+      "downCount": 45,
+      "flatCount": 4,
+      "upPct": 38.75,
+      "downPct": 56.25,
+      "flatPct": 5.0,
+      "top3": [
+        {
+          "code": "603928",
+          "name": "兴业股份",
+          "changeRatio": 10.027598896044173,
+          "latest": 11.96,
+          "sourceTime": "2026-11-13T12:38:25+08:00"
+        },
+        {
+          "code": "300539",
+          "name": "横河精密",
+          "changeRatio": 8.831596269884802,
+          "latest": 19.84,
+          "sourceTime": "2026-11-13T12:37:33+08:00"
+        },
+        {
+          "code": "300538",
+          "name": "同益股份",
+          "changeRatio": 3.5743973399833875,
+          "latest": 12.46,
+          "sourceTime": "2026-11-13T12:37:27+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "多元金融",
+      "valid": 21,
+      "expected": 21,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:03+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:37+08:00",
+      "meanChangePct": 0.5408047931750454,
+      "medianChangePct": 0.1599999999999966,
+      "upCount": 13,
+      "downCount": 8,
+      "flatCount": 0,
+      "upPct": 61.904761904761905,
+      "downPct": 38.095238095238095,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "002647",
+          "name": "*ST仁东",
+          "changeRatio": 6.493506493506482,
+          "latest": 8.2,
+          "sourceTime": "2026-11-13T12:37:33+08:00"
+        },
+        {
+          "code": "000415",
+          "name": "渤海租赁",
+          "changeRatio": 3.050108932461886,
+          "latest": 4.73,
+          "sourceTime": "2026-11-13T12:36:27+08:00"
+        },
+        {
+          "code": "600901",
+          "name": "江苏金租",
+          "changeRatio": 2.5099075297225824,
+          "latest": 7.76,
+          "sourceTime": "2026-11-13T12:38:37+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "家用轻工",
+      "valid": 39,
+      "expected": 39,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:57+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:49+08:00",
+      "meanChangePct": 0.1537613231586784,
+      "medianChangePct": 0.0,
+      "upCount": 17,
+      "downCount": 18,
+      "flatCount": 4,
+      "upPct": 43.58974358974359,
+      "downPct": 46.15384615384615,
+      "flatPct": 10.256410256410257,
+      "top3": [
+        {
+          "code": "301335",
+          "name": "天元宠物",
+          "changeRatio": 5.907780979827091,
+          "latest": 22.05,
+          "sourceTime": "2026-11-13T12:37:51+08:00"
+        },
+        {
+          "code": "605155",
+          "name": "西大门",
+          "changeRatio": 5.672105672105675,
+          "latest": 13.6,
+          "sourceTime": "2026-11-13T12:38:27+08:00"
+        },
+        {
+          "code": "001222",
+          "name": "源飞宠物",
+          "changeRatio": 2.014925373134325,
+          "latest": 13.67,
+          "sourceTime": "2026-11-13T12:36:03+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "家电行业",
+      "valid": 83,
+      "expected": 83,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:33+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:50+08:00",
+      "meanChangePct": -0.06905141503773742,
+      "medianChangePct": 0.23255813953487878,
+      "upCount": 45,
+      "downCount": 36,
+      "flatCount": 2,
+      "upPct": 54.21686746987952,
+      "downPct": 43.373493975903614,
+      "flatPct": 2.4096385542168677,
+      "top3": [
+        {
+          "code": "603219",
+          "name": "富佳股份",
+          "changeRatio": 9.983766233766236,
+          "latest": 13.55,
+          "sourceTime": "2026-11-13T12:38:30+08:00"
+        },
+        {
+          "code": "688696",
+          "name": "极米科技",
+          "changeRatio": 3.75,
+          "latest": 100.87,
+          "sourceTime": "2026-11-13T12:05:41+08:00"
+        },
+        {
+          "code": "000801",
+          "name": "四川九洲",
+          "changeRatio": 2.3391812865497097,
+          "latest": 10.5,
+          "sourceTime": "2026-11-13T12:36:00+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "小金属",
+      "valid": 37,
+      "expected": 37,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:12+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:54+08:00",
+      "meanChangePct": -1.0735137405744142,
+      "medianChangePct": -0.45859872611464897,
+      "upCount": 12,
+      "downCount": 23,
+      "flatCount": 2,
+      "upPct": 32.432432432432435,
+      "downPct": 62.16216216216216,
+      "flatPct": 5.405405405405405,
+      "top3": [
+        {
+          "code": "301141",
+          "name": "中科磁业",
+          "changeRatio": 1.3593882752761168,
+          "latest": 35.79,
+          "sourceTime": "2026-11-13T12:38:00+08:00"
+        },
+        {
+          "code": "300748",
+          "name": "金力永磁",
+          "changeRatio": 0.4920049200492046,
+          "latest": 24.51,
+          "sourceTime": "2026-11-13T12:37:42+08:00"
+        },
+        {
+          "code": "603399",
+          "name": "永杉锂业",
+          "changeRatio": 0.4721435316336234,
+          "latest": 10.64,
+          "sourceTime": "2026-11-13T12:38:49+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "工程咨询服务",
+      "valid": 40,
+      "expected": 40,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:00+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:49+08:00",
+      "meanChangePct": 0.14247662012158216,
+      "medianChangePct": -0.09092498210998542,
+      "upCount": 16,
+      "downCount": 21,
+      "flatCount": 3,
+      "upPct": 40.0,
+      "downPct": 52.5,
+      "flatPct": 7.5,
+      "top3": [
+        {
+          "code": "300949",
+          "name": "奥雅股份",
+          "changeRatio": 4.572778016316021,
+          "latest": 48.71,
+          "sourceTime": "2026-11-13T12:38:06+08:00"
+        },
+        {
+          "code": "301027",
+          "name": "华蓝集团",
+          "changeRatio": 4.365904365904372,
+          "latest": 15.06,
+          "sourceTime": "2026-11-13T12:37:48+08:00"
+        },
+        {
+          "code": "600629",
+          "name": "华建集团",
+          "changeRatio": 3.83838383838384,
+          "latest": 15.42,
+          "sourceTime": "2026-11-13T12:38:39+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "工程建设",
+      "valid": 66,
+      "expected": 66,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:57+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:53+08:00",
+      "meanChangePct": -0.4920769498752893,
+      "medianChangePct": -0.323815182440927,
+      "upCount": 18,
+      "downCount": 40,
+      "flatCount": 8,
+      "upPct": 27.272727272727273,
+      "downPct": 60.60606060606061,
+      "flatPct": 12.121212121212121,
+      "top3": [
+        {
+          "code": "600853",
+          "name": "龙建股份",
+          "changeRatio": 6.175771971496432,
+          "latest": 4.47,
+          "sourceTime": "2026-11-13T12:38:21+08:00"
+        },
+        {
+          "code": "603955",
+          "name": "大千生态",
+          "changeRatio": 5.997001499250374,
+          "latest": 35.35,
+          "sourceTime": "2026-11-13T12:38:30+08:00"
+        },
+        {
+          "code": "603637",
+          "name": "镇海股份",
+          "changeRatio": 4.947283049472826,
+          "latest": 12.94,
+          "sourceTime": "2026-11-13T12:38:29+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "工程机械",
+      "valid": 26,
+      "expected": 26,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:57+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:50+08:00",
+      "meanChangePct": -0.08252318216166236,
+      "medianChangePct": 0.07088145870025733,
+      "upCount": 14,
+      "downCount": 8,
+      "flatCount": 4,
+      "upPct": 53.84615384615385,
+      "downPct": 30.76923076923077,
+      "flatPct": 15.384615384615385,
+      "top3": [
+        {
+          "code": "603298",
+          "name": "杭叉集团",
+          "changeRatio": 1.6842105263157836,
+          "latest": 24.15,
+          "sourceTime": "2026-11-13T12:38:25+08:00"
+        },
+        {
+          "code": "601100",
+          "name": "恒立液压",
+          "changeRatio": 1.5231268899092836,
+          "latest": 90.65,
+          "sourceTime": "2026-11-13T12:38:36+08:00"
+        },
+        {
+          "code": "603638",
+          "name": "艾迪精密",
+          "changeRatio": 1.414027149321267,
+          "latest": 17.93,
+          "sourceTime": "2026-11-13T12:38:26+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "房地产开发",
+      "valid": 81,
+      "expected": 81,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:54+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:40+08:00",
+      "meanChangePct": -1.203256195065346,
+      "medianChangePct": -1.0075566750629732,
+      "upCount": 12,
+      "downCount": 68,
+      "flatCount": 1,
+      "upPct": 14.814814814814815,
+      "downPct": 83.95061728395062,
+      "flatPct": 1.2345679012345678,
+      "top3": [
+        {
+          "code": "600895",
+          "name": "张江高科",
+          "changeRatio": 5.009861932938854,
+          "latest": 26.62,
+          "sourceTime": "2026-11-13T12:38:32+08:00"
+        },
+        {
+          "code": "600246",
+          "name": "万通发展",
+          "changeRatio": 1.93548387096775,
+          "latest": 11.06,
+          "sourceTime": "2026-11-13T12:38:27+08:00"
+        },
+        {
+          "code": "000863",
+          "name": "三湘印象",
+          "changeRatio": 1.6949152542372952,
+          "latest": 4.2,
+          "sourceTime": "2026-11-13T12:36:42+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "房地产服务",
+      "valid": 18,
+      "expected": 18,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:54+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:44+08:00",
+      "meanChangePct": -1.5061017157093954,
+      "medianChangePct": -1.1610512129380037,
+      "upCount": 5,
+      "downCount": 12,
+      "flatCount": 1,
+      "upPct": 27.77777777777778,
+      "downPct": 66.66666666666667,
+      "flatPct": 5.555555555555555,
+      "top3": [
+        {
+          "code": "600605",
+          "name": "汇通能源",
+          "changeRatio": 2.2694524495677197,
+          "latest": 28.39,
+          "sourceTime": "2026-11-13T12:38:32+08:00"
+        },
+        {
+          "code": "600239",
+          "name": "云南城投",
+          "changeRatio": 0.7462686567164185,
+          "latest": 1.35,
+          "sourceTime": "2026-11-13T12:38:23+08:00"
+        },
+        {
+          "code": "001914",
+          "name": "招商积余",
+          "changeRatio": 0.2389486260454164,
+          "latest": 8.39,
+          "sourceTime": "2026-11-13T12:37:45+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "教育",
+      "valid": 14,
+      "expected": 14,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:39+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:50+08:00",
+      "meanChangePct": 0.5928957768921409,
+      "medianChangePct": 1.0184711271210058,
+      "upCount": 9,
+      "downCount": 4,
+      "flatCount": 1,
+      "upPct": 64.28571428571429,
+      "downPct": 28.571428571428573,
+      "flatPct": 7.142857142857143,
+      "top3": [
+        {
+          "code": "600730",
+          "name": "中国高科",
+          "changeRatio": 4.390934844192642,
+          "latest": 7.37,
+          "sourceTime": "2026-11-13T12:38:40+08:00"
+        },
+        {
+          "code": "300688",
+          "name": "创业黑马",
+          "changeRatio": 2.5357607282184573,
+          "latest": 31.54,
+          "sourceTime": "2026-11-13T12:37:54+08:00"
+        },
+        {
+          "code": "605098",
+          "name": "行动教育",
+          "changeRatio": 2.225130890052365,
+          "latest": 54.67,
+          "sourceTime": "2026-11-13T12:38:50+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "文化传媒",
+      "valid": 98,
+      "expected": 98,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:03+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:52+08:00",
+      "meanChangePct": 1.8703569572040954,
+      "medianChangePct": 1.159320570967922,
+      "upCount": 74,
+      "downCount": 23,
+      "flatCount": 1,
+      "upPct": 75.51020408163265,
+      "downPct": 23.46938775510204,
+      "flatPct": 1.0204081632653061,
+      "top3": [
+        {
+          "code": "300528",
+          "name": "幸福蓝海",
+          "changeRatio": 20.01334222815209,
+          "latest": 17.99,
+          "sourceTime": "2026-11-13T12:37:33+08:00"
+        },
+        {
+          "code": "000802",
+          "name": "北京文化",
+          "changeRatio": 10.126582278481,
+          "latest": 4.35,
+          "sourceTime": "2026-11-13T12:36:18+08:00"
+        },
+        {
+          "code": "000665",
+          "name": "湖北广电",
+          "changeRatio": 10.096153846153843,
+          "latest": 4.58,
+          "sourceTime": "2026-11-13T12:36:27+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "旅游酒店",
+      "valid": 34,
+      "expected": 34,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:00+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:37+08:00",
+      "meanChangePct": -0.09155244816644446,
+      "medianChangePct": -0.1841961558034007,
+      "upCount": 14,
+      "downCount": 19,
+      "flatCount": 1,
+      "upPct": 41.1764705882353,
+      "downPct": 55.88235294117647,
+      "flatPct": 2.9411764705882355,
+      "top3": [
+        {
+          "code": "002306",
+          "name": "*ST云网",
+          "changeRatio": 3.1055900621117902,
+          "latest": 1.66,
+          "sourceTime": "2026-11-13T12:37:36+08:00"
+        },
+        {
+          "code": "600258",
+          "name": "首旅酒店",
+          "changeRatio": 2.6086956521739135,
+          "latest": 12.98,
+          "sourceTime": "2026-11-13T12:38:27+08:00"
+        },
+        {
+          "code": "600754",
+          "name": "锦江酒店",
+          "changeRatio": 2.1929824561403475,
+          "latest": 20.97,
+          "sourceTime": "2026-11-13T12:38:18+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "有色金属",
+      "valid": 75,
+      "expected": 75,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:35+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:46+08:00",
+      "meanChangePct": -0.5641229644864597,
+      "medianChangePct": -0.37950664136621587,
+      "upCount": 18,
+      "downCount": 51,
+      "flatCount": 6,
+      "upPct": 24.0,
+      "downPct": 68.0,
+      "flatPct": 8.0,
+      "top3": [
+        {
+          "code": "003038",
+          "name": "鑫铂股份",
+          "changeRatio": 2.9182879377431976,
+          "latest": 10.58,
+          "sourceTime": "2026-11-13T12:38:18+08:00"
+        },
+        {
+          "code": "688122",
+          "name": "西部超导",
+          "changeRatio": 1.676109537299341,
+          "latest": 43.07,
+          "sourceTime": "2026-11-13T12:38:30+08:00"
+        },
+        {
+          "code": "002295",
+          "name": "精艺股份",
+          "changeRatio": 1.6560509554140228,
+          "latest": 7.98,
+          "sourceTime": "2026-11-13T12:38:15+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "橡胶制品",
+      "valid": 28,
+      "expected": 28,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:00+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:44+08:00",
+      "meanChangePct": 0.264457848830122,
+      "medianChangePct": 0.24608053468521834,
+      "upCount": 17,
+      "downCount": 7,
+      "flatCount": 4,
+      "upPct": 60.714285714285715,
+      "downPct": 25.0,
+      "flatPct": 14.285714285714286,
+      "top3": [
+        {
+          "code": "601118",
+          "name": "海南橡胶",
+          "changeRatio": 2.7777777777777675,
+          "latest": 5.55,
+          "sourceTime": "2026-11-13T12:38:41+08:00"
+        },
+        {
+          "code": "301459",
+          "name": "丰茂股份",
+          "changeRatio": 1.6874999999999973,
+          "latest": 32.54,
+          "sourceTime": "2026-11-13T12:38:21+08:00"
+        },
+        {
+          "code": "002753",
+          "name": "永东股份",
+          "changeRatio": 1.3245033112582794,
+          "latest": 6.12,
+          "sourceTime": "2026-11-13T12:37:27+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "水泥建材",
+      "valid": 28,
+      "expected": 28,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:03+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:51+08:00",
+      "meanChangePct": -0.5043797583988289,
+      "medianChangePct": -0.42753247326542976,
+      "upCount": 7,
+      "downCount": 19,
+      "flatCount": 2,
+      "upPct": 25.0,
+      "downPct": 67.85714285714286,
+      "flatPct": 7.142857142857143,
+      "top3": [
+        {
+          "code": "002205",
+          "name": "国统股份",
+          "changeRatio": 10.04255319148936,
+          "latest": 12.93,
+          "sourceTime": "2026-11-13T12:37:21+08:00"
+        },
+        {
+          "code": "600801",
+          "name": "华新水泥",
+          "changeRatio": 3.7929672066376963,
+          "latest": 26.27,
+          "sourceTime": "2026-11-13T12:38:36+08:00"
+        },
+        {
+          "code": "002233",
+          "name": "塔牌集团",
+          "changeRatio": 1.4745308310992,
+          "latest": 7.57,
+          "sourceTime": "2026-11-13T12:37:36+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "汽车整车",
+      "valid": 24,
+      "expected": 24,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:03+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:40+08:00",
+      "meanChangePct": 0.642316691452027,
+      "medianChangePct": 0.41347731000547705,
+      "upCount": 16,
+      "downCount": 8,
+      "flatCount": 0,
+      "upPct": 66.66666666666667,
+      "downPct": 33.333333333333336,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "601777",
+          "name": "千里科技",
+          "changeRatio": 4.9490538573507985,
+          "latest": 7.21,
+          "sourceTime": "2026-11-13T12:38:24+08:00"
+        },
+        {
+          "code": "600418",
+          "name": "江淮汽车",
+          "changeRatio": 4.6743697478991635,
+          "latest": 19.93,
+          "sourceTime": "2026-11-13T12:38:38+08:00"
+        },
+        {
+          "code": "000550",
+          "name": "江铃汽车",
+          "changeRatio": 2.5157232704402537,
+          "latest": 16.3,
+          "sourceTime": "2026-11-13T12:36:48+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "汽车服务",
+      "valid": 11,
+      "expected": 11,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:33+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:44+08:00",
+      "meanChangePct": -0.3995997358975875,
+      "medianChangePct": -0.25773195876288113,
+      "upCount": 5,
+      "downCount": 6,
+      "flatCount": 0,
+      "upPct": 45.45454545454545,
+      "downPct": 54.54545454545455,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "601965",
+          "name": "中国汽研",
+          "changeRatio": 2.190280629705683,
+          "latest": 14.93,
+          "sourceTime": "2026-11-13T12:38:17+08:00"
+        },
+        {
+          "code": "603377",
+          "name": "ST东时",
+          "changeRatio": 1.831501831501825,
+          "latest": 2.78,
+          "sourceTime": "2026-11-13T12:38:44+08:00"
+        },
+        {
+          "code": "600653",
+          "name": "申华控股",
+          "changeRatio": 0.6410256410256416,
+          "latest": 1.57,
+          "sourceTime": "2026-11-13T12:38:16+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "汽车零部件",
+      "valid": 210,
+      "expected": 210,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:35+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:53+08:00",
+      "meanChangePct": 0.533110834731422,
+      "medianChangePct": 0.290044300350918,
+      "upCount": 128,
+      "downCount": 75,
+      "flatCount": 7,
+      "upPct": 60.95238095238095,
+      "downPct": 35.714285714285715,
+      "flatPct": 3.3333333333333335,
+      "top3": [
+        {
+          "code": "300237",
+          "name": "美晨科技",
+          "changeRatio": 19.85294117647057,
+          "latest": 3.26,
+          "sourceTime": "2026-11-13T12:38:03+08:00"
+        },
+        {
+          "code": "603166",
+          "name": "福达股份",
+          "changeRatio": 10.037174721189592,
+          "latest": 11.84,
+          "sourceTime": "2026-11-13T12:38:43+08:00"
+        },
+        {
+          "code": "000700",
+          "name": "模塑科技",
+          "changeRatio": 10.006414368184725,
+          "latest": 17.15,
+          "sourceTime": "2026-11-13T12:36:54+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "消费电子",
+      "valid": 97,
+      "expected": 97,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:32+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:53+08:00",
+      "meanChangePct": -0.3618272195978799,
+      "medianChangePct": -0.11467889908256636,
+      "upCount": 39,
+      "downCount": 52,
+      "flatCount": 6,
+      "upPct": 40.20618556701031,
+      "downPct": 53.608247422680414,
+      "flatPct": 6.185567010309279,
+      "top3": [
+        {
+          "code": "301578",
+          "name": "辰奕智能",
+          "changeRatio": 5.589123867069491,
+          "latest": 34.95,
+          "sourceTime": "2026-11-13T12:38:15+08:00"
+        },
+        {
+          "code": "002843",
+          "name": "泰嘉股份",
+          "changeRatio": 4.85436893203883,
+          "latest": 15.12,
+          "sourceTime": "2026-11-13T12:38:00+08:00"
+        },
+        {
+          "code": "300916",
+          "name": "朗特智能",
+          "changeRatio": 4.344827586206902,
+          "latest": 30.26,
+          "sourceTime": "2026-11-13T12:38:00+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "游戏",
+      "valid": 25,
+      "expected": 25,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:37:24+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:43+08:00",
+      "meanChangePct": 1.190955664135732,
+      "medianChangePct": 0.4914004914004809,
+      "upCount": 14,
+      "downCount": 11,
+      "flatCount": 0,
+      "upPct": 56.0,
+      "downPct": 44.0,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "600715",
+          "name": "文投控股",
+          "changeRatio": 10.032362459546928,
+          "latest": 3.4,
+          "sourceTime": "2026-11-13T12:38:34+08:00"
+        },
+        {
+          "code": "002425",
+          "name": "ST凯文",
+          "changeRatio": 9.999999999999996,
+          "latest": 3.96,
+          "sourceTime": "2026-11-13T12:37:36+08:00"
+        },
+        {
+          "code": "300031",
+          "name": "宝通科技",
+          "changeRatio": 4.431678292983169,
+          "latest": 25.45,
+          "sourceTime": "2026-11-13T12:37:27+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "煤炭行业",
+      "valid": 34,
+      "expected": 34,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:00+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:44+08:00",
+      "meanChangePct": 0.5901489436014676,
+      "medianChangePct": 0.6012180209557199,
+      "upCount": 22,
+      "downCount": 9,
+      "flatCount": 3,
+      "upPct": 64.70588235294117,
+      "downPct": 26.470588235294116,
+      "flatPct": 8.823529411764707,
+      "top3": [
+        {
+          "code": "601101",
+          "name": "昊华能源",
+          "changeRatio": 2.9049295774647894,
+          "latest": 11.69,
+          "sourceTime": "2026-11-13T12:38:35+08:00"
+        },
+        {
+          "code": "601918",
+          "name": "新集能源",
+          "changeRatio": 2.839116719242898,
+          "latest": 9.78,
+          "sourceTime": "2026-11-13T12:38:36+08:00"
+        },
+        {
+          "code": "601225",
+          "name": "陕西煤业",
+          "changeRatio": 2.3574144486692052,
+          "latest": 26.92,
+          "sourceTime": "2026-11-13T12:38:24+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "燃气",
+      "valid": 31,
+      "expected": 31,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:12+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:51+08:00",
+      "meanChangePct": -0.6121163024120411,
+      "medianChangePct": -0.6535947712418355,
+      "upCount": 9,
+      "downCount": 19,
+      "flatCount": 3,
+      "upPct": 29.032258064516128,
+      "downPct": 61.29032258064516,
+      "flatPct": 9.67741935483871,
+      "top3": [
+        {
+          "code": "603080",
+          "name": "新疆火炬",
+          "changeRatio": 3.15840621963072,
+          "latest": 21.23,
+          "sourceTime": "2026-11-13T12:38:16+08:00"
+        },
+        {
+          "code": "605169",
+          "name": "洪通燃气",
+          "changeRatio": 1.9188191881918801,
+          "latest": 13.81,
+          "sourceTime": "2026-11-13T12:38:31+08:00"
+        },
+        {
+          "code": "603706",
+          "name": "东方环宇",
+          "changeRatio": 1.6002977298101961,
+          "latest": 27.3,
+          "sourceTime": "2026-11-13T12:38:41+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "物流行业",
+      "valid": 52,
+      "expected": 52,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:06+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:45+08:00",
+      "meanChangePct": -0.37260413962334954,
+      "medianChangePct": -0.08278145695364061,
+      "upCount": 22,
+      "downCount": 26,
+      "flatCount": 4,
+      "upPct": 42.30769230769231,
+      "downPct": 50.0,
+      "flatPct": 7.6923076923076925,
+      "top3": [
+        {
+          "code": "001228",
+          "name": "永泰运",
+          "changeRatio": 2.03539823008851,
+          "latest": 34.59,
+          "sourceTime": "2026-11-13T12:36:33+08:00"
+        },
+        {
+          "code": "002352",
+          "name": "顺丰控股",
+          "changeRatio": 1.8954448180984331,
+          "latest": 33.33,
+          "sourceTime": "2026-11-13T12:38:03+08:00"
+        },
+        {
+          "code": "601598",
+          "name": "中国外运",
+          "changeRatio": 1.8207282913165252,
+          "latest": 7.27,
+          "sourceTime": "2026-11-13T12:38:40+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "环保行业",
+      "valid": 114,
+      "expected": 114,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:35+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:55+08:00",
+      "meanChangePct": 0.2521754287072056,
+      "medianChangePct": 0.07617059472447095,
+      "upCount": 59,
+      "downCount": 48,
+      "flatCount": 7,
+      "upPct": 51.75438596491228,
+      "downPct": 42.10526315789474,
+      "flatPct": 6.140350877192983,
+      "top3": [
+        {
+          "code": "603686",
+          "name": "福龙马",
+          "changeRatio": 10.032362459546928,
+          "latest": 13.6,
+          "sourceTime": "2026-11-13T12:38:33+08:00"
+        },
+        {
+          "code": "300692",
+          "name": "中环环保",
+          "changeRatio": 7.982740021574976,
+          "latest": 10.01,
+          "sourceTime": "2026-11-13T12:37:30+08:00"
+        },
+        {
+          "code": "300948",
+          "name": "冠中生态",
+          "changeRatio": 6.11719253058597,
+          "latest": 16.48,
+          "sourceTime": "2026-11-13T12:37:30+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "玻璃玻纤",
+      "valid": 18,
+      "expected": 18,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:00+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:46+08:00",
+      "meanChangePct": -1.662465858727725,
+      "medianChangePct": -1.398787196799201,
+      "upCount": 3,
+      "downCount": 15,
+      "flatCount": 0,
+      "upPct": 16.666666666666668,
+      "downPct": 83.33333333333333,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "601636",
+          "name": "旗滨集团",
+          "changeRatio": 2.6530612244897935,
+          "latest": 5.03,
+          "sourceTime": "2026-11-13T12:38:17+08:00"
+        },
+        {
+          "code": "600660",
+          "name": "福耀玻璃",
+          "changeRatio": 1.0026857654431427,
+          "latest": 56.41,
+          "sourceTime": "2026-11-13T12:38:16+08:00"
+        },
+        {
+          "code": "002613",
+          "name": "北玻股份",
+          "changeRatio": 0.6042296072507558,
+          "latest": 3.33,
+          "sourceTime": "2026-11-13T12:37:24+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "珠宝首饰",
+      "valid": 14,
+      "expected": 15,
+      "missing": 1,
+      "coveragePct": 93.3333,
+      "sufficientCoverage": false,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:00+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:53+08:00",
+      "meanChangePct": null,
+      "medianChangePct": null,
+      "upCount": 6,
+      "downCount": 6,
+      "flatCount": 2,
+      "upPct": null,
+      "downPct": null,
+      "flatPct": null,
+      "top3": [],
+      "missingCodes": [
+        "002731"
+      ]
+    },
+    {
+      "industry": "生物制品",
+      "valid": 68,
+      "expected": 68,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:38+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:56+08:00",
+      "meanChangePct": -1.0007018621396069,
+      "medianChangePct": -0.8504831677836888,
+      "upCount": 15,
+      "downCount": 52,
+      "flatCount": 1,
+      "upPct": 22.058823529411764,
+      "downPct": 76.47058823529412,
+      "flatPct": 1.4705882352941178,
+      "top3": [
+        {
+          "code": "002581",
+          "name": "未名医药",
+          "changeRatio": 6.7796610169491585,
+          "latest": 4.41,
+          "sourceTime": "2026-11-13T12:38:15+08:00"
+        },
+        {
+          "code": "300683",
+          "name": "海特生物",
+          "changeRatio": 5.858854860186419,
+          "latest": 23.85,
+          "sourceTime": "2026-11-13T12:38:12+08:00"
+        },
+        {
+          "code": "002693",
+          "name": "*ST双成",
+          "changeRatio": 1.6036655211912803,
+          "latest": 8.87,
+          "sourceTime": "2026-11-13T12:37:48+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "电力行业",
+      "valid": 79,
+      "expected": 79,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:54+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:51+08:00",
+      "meanChangePct": 0.8720274852632552,
+      "medianChangePct": 0.7104795737122565,
+      "upCount": 59,
+      "downCount": 18,
+      "flatCount": 2,
+      "upPct": 74.68354430379746,
+      "downPct": 22.78481012658228,
+      "flatPct": 2.5316455696202533,
+      "top3": [
+        {
+          "code": "001258",
+          "name": "立新能源",
+          "changeRatio": 8.258928571428553,
+          "latest": 9.7,
+          "sourceTime": "2026-11-13T12:36:48+08:00"
+        },
+        {
+          "code": "002039",
+          "name": "黔源电力",
+          "changeRatio": 4.520697167756001,
+          "latest": 19.19,
+          "sourceTime": "2026-11-13T12:37:45+08:00"
+        },
+        {
+          "code": "600863",
+          "name": "内蒙华电",
+          "changeRatio": 3.795066413662243,
+          "latest": 5.47,
+          "sourceTime": "2026-11-13T12:38:21+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "电子元件",
+      "valid": 129,
+      "expected": 129,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 1,
+      "sourceTimeMin": "2026-11-13T12:05:29+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:56+08:00",
+      "meanChangePct": -1.74072484095013,
+      "medianChangePct": -1.641651031894941,
+      "upCount": 32,
+      "downCount": 94,
+      "flatCount": 3,
+      "upPct": 24.8062015503876,
+      "downPct": 72.86821705426357,
+      "flatPct": 2.3255813953488373,
+      "top3": [
+        {
+          "code": "688371",
+          "name": "菲沃泰",
+          "changeRatio": 10.862619808306704,
+          "latest": 24.29,
+          "sourceTime": "2026-11-13T12:38:27+08:00"
+        },
+        {
+          "code": "688629",
+          "name": "华丰科技",
+          "changeRatio": 9.58,
+          "latest": 86.59,
+          "sourceTime": "2026-11-13T12:05:57+08:00"
+        },
+        {
+          "code": "300657",
+          "name": "弘信电子",
+          "changeRatio": 5.988409529942058,
+          "latest": 32.92,
+          "sourceTime": "2026-11-13T12:37:45+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "电子化学品",
+      "valid": 26,
+      "expected": 26,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:37:18+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:53+08:00",
+      "meanChangePct": -0.8169521182821724,
+      "medianChangePct": -0.25208404546315744,
+      "upCount": 12,
+      "downCount": 14,
+      "flatCount": 0,
+      "upPct": 46.15384615384615,
+      "downPct": 53.84615384615385,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "688019",
+          "name": "安集科技",
+          "changeRatio": 2.4487895716945953,
+          "latest": 220.06,
+          "sourceTime": "2026-11-13T12:38:31+08:00"
+        },
+        {
+          "code": "300429",
+          "name": "强力新材",
+          "changeRatio": 1.8867924528301878,
+          "latest": 9.18,
+          "sourceTime": "2026-11-13T12:37:33+08:00"
+        },
+        {
+          "code": "300576",
+          "name": "容大感光",
+          "changeRatio": 1.0629251700680271,
+          "latest": 23.77,
+          "sourceTime": "2026-11-13T12:37:51+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "电机",
+      "valid": 25,
+      "expected": 25,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:54+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:47+08:00",
+      "meanChangePct": -0.41602977827615434,
+      "medianChangePct": -0.3089598352214329,
+      "upCount": 9,
+      "downCount": 15,
+      "flatCount": 1,
+      "upPct": 36.0,
+      "downPct": 60.0,
+      "flatPct": 4.0,
+      "top3": [
+        {
+          "code": "002892",
+          "name": "科力尔",
+          "changeRatio": 3.159041394335522,
+          "latest": 9.47,
+          "sourceTime": "2026-11-13T12:37:33+08:00"
+        },
+        {
+          "code": "300660",
+          "name": "江苏雷利",
+          "changeRatio": 0.8250108554059823,
+          "latest": 23.22,
+          "sourceTime": "2026-11-13T12:38:12+08:00"
+        },
+        {
+          "code": "600580",
+          "name": "卧龙电驱",
+          "changeRatio": 0.6369426751592296,
+          "latest": 23.7,
+          "sourceTime": "2026-11-13T12:38:22+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "电池",
+      "valid": 68,
+      "expected": 68,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:29+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:54+08:00",
+      "meanChangePct": -0.7791566862411837,
+      "medianChangePct": -0.47418913657645584,
+      "upCount": 14,
+      "downCount": 54,
+      "flatCount": 0,
+      "upPct": 20.58823529411765,
+      "downPct": 79.41176470588235,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "002850",
+          "name": "科达利",
+          "changeRatio": 1.4701488077451619,
+          "latest": 169.79,
+          "sourceTime": "2026-11-13T12:38:15+08:00"
+        },
+        {
+          "code": "300953",
+          "name": "震裕科技",
+          "changeRatio": 1.448441247002403,
+          "latest": 105.76,
+          "sourceTime": "2026-11-13T12:37:36+08:00"
+        },
+        {
+          "code": "688638",
+          "name": "誉辰智能",
+          "changeRatio": 1.07,
+          "latest": 32.2,
+          "sourceTime": "2026-11-13T12:05:56+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "电源设备",
+      "valid": 32,
+      "expected": 32,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:47+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:37+08:00",
+      "meanChangePct": -0.41753135156070975,
+      "medianChangePct": -0.3109884084590666,
+      "upCount": 8,
+      "downCount": 22,
+      "flatCount": 2,
+      "upPct": 25.0,
+      "downPct": 68.75,
+      "flatPct": 6.25,
+      "top3": [
+        {
+          "code": "600405",
+          "name": "动力源",
+          "changeRatio": 6.812652068126504,
+          "latest": 4.39,
+          "sourceTime": "2026-11-13T12:38:36+08:00"
+        },
+        {
+          "code": "300820",
+          "name": "英杰电气",
+          "changeRatio": 3.184335443037974,
+          "latest": 52.17,
+          "sourceTime": "2026-11-13T12:38:21+08:00"
+        },
+        {
+          "code": "301516",
+          "name": "中远通",
+          "changeRatio": 2.331606217616588,
+          "latest": 15.8,
+          "sourceTime": "2026-11-13T12:38:21+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "电网设备",
+      "valid": 128,
+      "expected": 128,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:32+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:54+08:00",
+      "meanChangePct": -0.29979465419593576,
+      "medianChangePct": -0.31419552135741324,
+      "upCount": 44,
+      "downCount": 77,
+      "flatCount": 7,
+      "upPct": 34.375,
+      "downPct": 60.15625,
+      "flatPct": 5.46875,
+      "top3": [
+        {
+          "code": "300341",
+          "name": "麦克奥迪",
+          "changeRatio": 3.8118410381184153,
+          "latest": 12.8,
+          "sourceTime": "2026-11-13T12:37:54+08:00"
+        },
+        {
+          "code": "603016",
+          "name": "新宏泰",
+          "changeRatio": 3.433476394849788,
+          "latest": 28.92,
+          "sourceTime": "2026-11-13T12:38:25+08:00"
+        },
+        {
+          "code": "301002",
+          "name": "崧盛股份",
+          "changeRatio": 2.7000964320154286,
+          "latest": 31.95,
+          "sourceTime": "2026-11-13T12:37:42+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "石油行业",
+      "valid": 20,
+      "expected": 20,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:57+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:41+08:00",
+      "meanChangePct": 0.8747359019482822,
+      "medianChangePct": 0.6199988672864324,
+      "upCount": 13,
+      "downCount": 7,
+      "flatCount": 0,
+      "upPct": 65.0,
+      "downPct": 35.0,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "603353",
+          "name": "和顺石油",
+          "changeRatio": 10.006784260515602,
+          "latest": 32.43,
+          "sourceTime": "2026-11-13T12:38:36+08:00"
+        },
+        {
+          "code": "000819",
+          "name": "岳阳兴长",
+          "changeRatio": 4.635193133047203,
+          "latest": 12.19,
+          "sourceTime": "2026-11-13T12:36:15+08:00"
+        },
+        {
+          "code": "603798",
+          "name": "康普顿",
+          "changeRatio": 2.750000000000001,
+          "latest": 12.33,
+          "sourceTime": "2026-11-13T12:38:25+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "纺织服装",
+      "valid": 95,
+      "expected": 95,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:03+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:50+08:00",
+      "meanChangePct": 0.10948921576323113,
+      "medianChangePct": -0.1136363636363814,
+      "upCount": 45,
+      "downCount": 49,
+      "flatCount": 1,
+      "upPct": 47.36842105263158,
+      "downPct": 51.578947368421055,
+      "flatPct": 1.0526315789473684,
+      "top3": [
+        {
+          "code": "002042",
+          "name": "华孚时尚",
+          "changeRatio": 10.030395136778116,
+          "latest": 3.62,
+          "sourceTime": "2026-11-13T12:37:33+08:00"
+        },
+        {
+          "code": "002486",
+          "name": "嘉麟杰",
+          "changeRatio": 4.724409448818902,
+          "latest": 2.66,
+          "sourceTime": "2026-11-13T12:38:06+08:00"
+        },
+        {
+          "code": "603587",
+          "name": "地素时尚",
+          "changeRatio": 4.407713498622594,
+          "latest": 15.16,
+          "sourceTime": "2026-11-13T12:38:44+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "综合行业",
+      "valid": 20,
+      "expected": 20,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:06+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:38+08:00",
+      "meanChangePct": 0.13251866421618652,
+      "medianChangePct": 0.12468919116571328,
+      "upCount": 11,
+      "downCount": 8,
+      "flatCount": 1,
+      "upPct": 55.0,
+      "downPct": 40.0,
+      "flatPct": 5.0,
+      "top3": [
+        {
+          "code": "000158",
+          "name": "常山北明",
+          "changeRatio": 2.4545454545454506,
+          "latest": 11.27,
+          "sourceTime": "2026-11-13T12:36:12+08:00"
+        },
+        {
+          "code": "600673",
+          "name": "东阳光",
+          "changeRatio": 1.7424564385890358,
+          "latest": 23.94,
+          "sourceTime": "2026-11-13T12:38:21+08:00"
+        },
+        {
+          "code": "600770",
+          "name": "综艺股份",
+          "changeRatio": 1.3698630136986183,
+          "latest": 5.18,
+          "sourceTime": "2026-11-13T12:38:22+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "美容护理",
+      "valid": 28,
+      "expected": 28,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:03+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:51+08:00",
+      "meanChangePct": 0.11306970634658646,
+      "medianChangePct": 0.1952413479052808,
+      "upCount": 15,
+      "downCount": 13,
+      "flatCount": 0,
+      "upPct": 53.57142857142857,
+      "downPct": 46.42857142857143,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "001328",
+          "name": "登康口腔",
+          "changeRatio": 3.8016038016038047,
+          "latest": 34.95,
+          "sourceTime": "2026-11-13T12:36:39+08:00"
+        },
+        {
+          "code": "603193",
+          "name": "润本股份",
+          "changeRatio": 3.3783783783783603,
+          "latest": 16.83,
+          "sourceTime": "2026-11-13T12:38:24+08:00"
+        },
+        {
+          "code": "300849",
+          "name": "锦盛新材",
+          "changeRatio": 3.0905077262693084,
+          "latest": 18.68,
+          "sourceTime": "2026-11-13T12:37:33+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "能源金属",
+      "valid": 13,
+      "expected": 13,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:00+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:32+08:00",
+      "meanChangePct": 1.075172313923116,
+      "medianChangePct": 0.812567713976157,
+      "upCount": 12,
+      "downCount": 0,
+      "flatCount": 1,
+      "upPct": 92.3076923076923,
+      "downPct": 0.0,
+      "flatPct": 7.6923076923076925,
+      "top3": [
+        {
+          "code": "002667",
+          "name": "威领股份",
+          "changeRatio": 4.658823529411758,
+          "latest": 22.24,
+          "sourceTime": "2026-11-13T12:38:09+08:00"
+        },
+        {
+          "code": "002192",
+          "name": "融捷股份",
+          "changeRatio": 2.5730038799264814,
+          "latest": 50.23,
+          "sourceTime": "2026-11-13T12:38:06+08:00"
+        },
+        {
+          "code": "002240",
+          "name": "盛新锂能",
+          "changeRatio": 1.9938650306748498,
+          "latest": 19.95,
+          "sourceTime": "2026-11-13T12:38:06+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "航天航空",
+      "valid": 43,
+      "expected": 43,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:39+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:53+08:00",
+      "meanChangePct": -0.128269172149098,
+      "medianChangePct": 0.0,
+      "upCount": 21,
+      "downCount": 20,
+      "flatCount": 2,
+      "upPct": 48.83720930232558,
+      "downPct": 46.51162790697674,
+      "flatPct": 4.651162790697675,
+      "top3": [
+        {
+          "code": "688586",
+          "name": "江航装备",
+          "changeRatio": 1.8388791593695348,
+          "latest": 11.63,
+          "sourceTime": "2026-11-13T12:38:49+08:00"
+        },
+        {
+          "code": "688239",
+          "name": "航宇科技",
+          "changeRatio": 1.800720288115246,
+          "latest": 42.4,
+          "sourceTime": "2026-11-13T12:38:40+08:00"
+        },
+        {
+          "code": "000697",
+          "name": "ST炼石",
+          "changeRatio": 1.3903743315508106,
+          "latest": 9.48,
+          "sourceTime": "2026-11-13T12:36:36+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "航空机场",
+      "valid": 13,
+      "expected": 13,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:09+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:44+08:00",
+      "meanChangePct": 0.04758851211590824,
+      "medianChangePct": 0.0,
+      "upCount": 6,
+      "downCount": 5,
+      "flatCount": 2,
+      "upPct": 46.15384615384615,
+      "downPct": 38.46153846153846,
+      "flatPct": 15.384615384615385,
+      "top3": [
+        {
+          "code": "600009",
+          "name": "上海机场",
+          "changeRatio": 1.3311148086522475,
+          "latest": 24.36,
+          "sourceTime": "2026-11-13T12:38:16+08:00"
+        },
+        {
+          "code": "600004",
+          "name": "白云机场",
+          "changeRatio": 0.4926108374384351,
+          "latest": 8.16,
+          "sourceTime": "2026-11-13T12:38:13+08:00"
+        },
+        {
+          "code": "000089",
+          "name": "深圳机场",
+          "changeRatio": 0.44843049327353307,
+          "latest": 6.72,
+          "sourceTime": "2026-11-13T12:36:12+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "航运港口",
+      "valid": 33,
+      "expected": 33,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:57+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:42+08:00",
+      "meanChangePct": 0.0529859194007199,
+      "medianChangePct": 0.24783147459726856,
+      "upCount": 18,
+      "downCount": 12,
+      "flatCount": 3,
+      "upPct": 54.54545454545455,
+      "downPct": 36.36363636363637,
+      "flatPct": 9.090909090909092,
+      "top3": [
+        {
+          "code": "601000",
+          "name": "唐山港",
+          "changeRatio": 2.25872689938399,
+          "latest": 4.98,
+          "sourceTime": "2026-11-13T12:38:23+08:00"
+        },
+        {
+          "code": "601975",
+          "name": "招商南油",
+          "changeRatio": 1.4367816091953973,
+          "latest": 3.53,
+          "sourceTime": "2026-11-13T12:38:42+08:00"
+        },
+        {
+          "code": "601083",
+          "name": "锦江航运",
+          "changeRatio": 1.2490815576781773,
+          "latest": 13.78,
+          "sourceTime": "2026-11-13T12:38:33+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "船舶制造",
+      "valid": 9,
+      "expected": 9,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:37:57+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:36+08:00",
+      "meanChangePct": -0.9866139387039458,
+      "medianChangePct": -0.7094994087504916,
+      "upCount": 1,
+      "downCount": 8,
+      "flatCount": 0,
+      "upPct": 11.11111111111111,
+      "downPct": 88.88888888888889,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "300600",
+          "name": "国瑞科技",
+          "changeRatio": 0.6896551724137989,
+          "latest": 8.76,
+          "sourceTime": "2026-11-13T12:38:00+08:00"
+        },
+        {
+          "code": "600150",
+          "name": "XD中国船",
+          "changeRatio": -0.11695906432750366,
+          "latest": 34.16,
+          "sourceTime": "2026-11-13T12:38:25+08:00"
+        },
+        {
+          "code": "300008",
+          "name": "天海防务",
+          "changeRatio": -0.35026269702275964,
+          "latest": 5.69,
+          "sourceTime": "2026-11-13T12:38:21+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "装修建材",
+      "valid": 68,
+      "expected": 68,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:15+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:50+08:00",
+      "meanChangePct": -0.03428089610295706,
+      "medianChangePct": -0.13145722380331087,
+      "upCount": 29,
+      "downCount": 35,
+      "flatCount": 4,
+      "upPct": 42.64705882352941,
+      "downPct": 51.470588235294116,
+      "flatPct": 5.882352941176471,
+      "top3": [
+        {
+          "code": "002853",
+          "name": "皮阿诺",
+          "changeRatio": 10.005053057099547,
+          "latest": 21.77,
+          "sourceTime": "2026-11-13T12:37:36+08:00"
+        },
+        {
+          "code": "301227",
+          "name": "森鹰窗业",
+          "changeRatio": 6.942463147883962,
+          "latest": 22.49,
+          "sourceTime": "2026-11-13T12:37:54+08:00"
+        },
+        {
+          "code": "603389",
+          "name": "*ST亚振",
+          "changeRatio": 5.409974640743877,
+          "latest": 62.35,
+          "sourceTime": "2026-11-13T12:38:46+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "装修装饰",
+      "valid": 35,
+      "expected": 35,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:15+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:45+08:00",
+      "meanChangePct": -0.5781266015406126,
+      "medianChangePct": -0.6514657980456032,
+      "upCount": 9,
+      "downCount": 26,
+      "flatCount": 0,
+      "upPct": 25.714285714285715,
+      "downPct": 74.28571428571429,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "605318",
+          "name": "法狮龙",
+          "changeRatio": 10.000000000000014,
+          "latest": 84.26,
+          "sourceTime": "2026-11-13T12:38:43+08:00"
+        },
+        {
+          "code": "605287",
+          "name": "德才股份",
+          "changeRatio": 4.179927859113089,
+          "latest": 49.1,
+          "sourceTime": "2026-11-13T12:38:38+08:00"
+        },
+        {
+          "code": "002620",
+          "name": "ST瑞和",
+          "changeRatio": 3.5087719298245554,
+          "latest": 5.31,
+          "sourceTime": "2026-11-13T12:38:09+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "计算机设备",
+      "valid": 48,
+      "expected": 48,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:00+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:47+08:00",
+      "meanChangePct": 0.30889790116934757,
+      "medianChangePct": 0.0938996662912132,
+      "upCount": 26,
+      "downCount": 19,
+      "flatCount": 3,
+      "upPct": 54.166666666666664,
+      "downPct": 39.583333333333336,
+      "flatPct": 6.25,
+      "top3": [
+        {
+          "code": "300771",
+          "name": "智莱科技",
+          "changeRatio": 4.995196926032657,
+          "latest": 10.93,
+          "sourceTime": "2026-11-13T12:37:54+08:00"
+        },
+        {
+          "code": "000034",
+          "name": "神州数码",
+          "changeRatio": 4.1042974408498205,
+          "latest": 21.56,
+          "sourceTime": "2026-11-13T12:36:00+08:00"
+        },
+        {
+          "code": "000066",
+          "name": "中国长城",
+          "changeRatio": 3.4775233248515702,
+          "latest": 12.2,
+          "sourceTime": "2026-11-13T12:36:21+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "证券",
+      "valid": 47,
+      "expected": 49,
+      "missing": 2,
+      "coveragePct": 95.9184,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:57+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:41+08:00",
+      "meanChangePct": 0.020484243823385616,
+      "medianChangePct": 0.10932944606413114,
+      "upCount": 25,
+      "downCount": 17,
+      "flatCount": 5,
+      "upPct": 53.191489361702125,
+      "downPct": 36.170212765957444,
+      "flatPct": 10.638297872340425,
+      "top3": [
+        {
+          "code": "600061",
+          "name": "国投资本",
+          "changeRatio": 1.6583747927031451,
+          "latest": 6.13,
+          "sourceTime": "2026-11-13T12:38:31+08:00"
+        },
+        {
+          "code": "601066",
+          "name": "中信建投",
+          "changeRatio": 0.874769797421737,
+          "latest": 21.91,
+          "sourceTime": "2026-11-13T12:38:33+08:00"
+        },
+        {
+          "code": "002670",
+          "name": "国盛金控",
+          "changeRatio": 0.6048387096774244,
+          "latest": 9.98,
+          "sourceTime": "2026-11-13T12:37:33+08:00"
+        }
+      ],
+      "missingCodes": [
+        "601059",
+        "601198"
+      ]
+    },
+    {
+      "industry": "贵金属",
+      "valid": 11,
+      "expected": 11,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:03+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:37+08:00",
+      "meanChangePct": 0.04434230746830201,
+      "medianChangePct": 0.05254860746189181,
+      "upCount": 6,
+      "downCount": 4,
+      "flatCount": 1,
+      "upPct": 54.54545454545455,
+      "downPct": 36.36363636363637,
+      "flatPct": 9.090909090909092,
+      "top3": [
+        {
+          "code": "001337",
+          "name": "四川黄金",
+          "changeRatio": 1.200417536534449,
+          "latest": 38.78,
+          "sourceTime": "2026-11-13T12:36:03+08:00"
+        },
+        {
+          "code": "000506",
+          "name": "中润资源",
+          "changeRatio": 0.43321299638989536,
+          "latest": 13.91,
+          "sourceTime": "2026-11-13T12:36:42+08:00"
+        },
+        {
+          "code": "601069",
+          "name": "西部黄金",
+          "changeRatio": 0.3532008830022157,
+          "latest": 22.73,
+          "sourceTime": "2026-11-13T12:38:37+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "贸易行业",
+      "valid": 33,
+      "expected": 33,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:57+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:43+08:00",
+      "meanChangePct": -0.39327445686804946,
+      "medianChangePct": -0.3554502369668171,
+      "upCount": 11,
+      "downCount": 21,
+      "flatCount": 1,
+      "upPct": 33.333333333333336,
+      "downPct": 63.63636363636363,
+      "flatPct": 3.0303030303030303,
+      "top3": [
+        {
+          "code": "600128",
+          "name": "苏豪弘业",
+          "changeRatio": 6.78391959798995,
+          "latest": 8.5,
+          "sourceTime": "2026-11-13T12:38:22+08:00"
+        },
+        {
+          "code": "600710",
+          "name": "苏美达",
+          "changeRatio": 2.367941712204005,
+          "latest": 11.24,
+          "sourceTime": "2026-11-13T12:38:36+08:00"
+        },
+        {
+          "code": "002091",
+          "name": "江苏国泰",
+          "changeRatio": 1.4725568942436456,
+          "latest": 7.58,
+          "sourceTime": "2026-11-13T12:38:03+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "软件开发",
+      "valid": 171,
+      "expected": 171,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:31+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:55+08:00",
+      "meanChangePct": 0.6247862061176737,
+      "medianChangePct": 0.42194092827003316,
+      "upCount": 116,
+      "downCount": 53,
+      "flatCount": 2,
+      "upPct": 67.83625730994152,
+      "downPct": 30.994152046783626,
+      "flatPct": 1.1695906432748537,
+      "top3": [
+        {
+          "code": "301218",
+          "name": "华是科技",
+          "changeRatio": 20.00000000000001,
+          "latest": 103.92,
+          "sourceTime": "2026-11-13T12:38:06+08:00"
+        },
+        {
+          "code": "688343",
+          "name": "云天励飞-U",
+          "changeRatio": 8.709090909090907,
+          "latest": 59.79,
+          "sourceTime": "2026-11-13T12:38:48+08:00"
+        },
+        {
+          "code": "301236",
+          "name": "软通动力",
+          "changeRatio": 7.852265673494728,
+          "latest": 34.75,
+          "sourceTime": "2026-11-13T12:38:27+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "通信服务",
+      "valid": 36,
+      "expected": 37,
+      "missing": 1,
+      "coveragePct": 97.2973,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:43+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:48+08:00",
+      "meanChangePct": 1.0849909247126621,
+      "medianChangePct": 0.6784310476558731,
+      "upCount": 25,
+      "downCount": 9,
+      "flatCount": 2,
+      "upPct": 69.44444444444444,
+      "downPct": 25.0,
+      "flatPct": 5.555555555555555,
+      "top3": [
+        {
+          "code": "002148",
+          "name": "北纬科技",
+          "changeRatio": 9.958506224066387,
+          "latest": 7.95,
+          "sourceTime": "2026-11-13T12:37:21+08:00"
+        },
+        {
+          "code": "603206",
+          "name": "嘉环科技",
+          "changeRatio": 4.58302028549962,
+          "latest": 13.92,
+          "sourceTime": "2026-11-13T12:38:19+08:00"
+        },
+        {
+          "code": "300081",
+          "name": "恒信东方",
+          "changeRatio": 4.242424242424246,
+          "latest": 3.44,
+          "sourceTime": "2026-11-13T12:37:45+08:00"
+        }
+      ],
+      "missingCodes": [
+        "301139"
+      ]
+    },
+    {
+      "industry": "通信设备",
+      "valid": 101,
+      "expected": 101,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:31+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:54+08:00",
+      "meanChangePct": -0.5262347705229102,
+      "medianChangePct": -0.1628664495113972,
+      "upCount": 39,
+      "downCount": 56,
+      "flatCount": 6,
+      "upPct": 38.613861386138616,
+      "downPct": 55.445544554455445,
+      "flatPct": 5.9405940594059405,
+      "top3": [
+        {
+          "code": "301307",
+          "name": "美利信",
+          "changeRatio": 7.226329596947297,
+          "latest": 44.96,
+          "sourceTime": "2026-11-13T12:38:30+08:00"
+        },
+        {
+          "code": "688788",
+          "name": "科思科技",
+          "changeRatio": 6.46,
+          "latest": 25.86,
+          "sourceTime": "2026-11-13T12:05:31+08:00"
+        },
+        {
+          "code": "603118",
+          "name": "共进股份",
+          "changeRatio": 5.905511811023622,
+          "latest": 13.45,
+          "sourceTime": "2026-11-13T12:38:31+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "通用设备",
+      "valid": 188,
+      "expected": 188,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:32+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:52+08:00",
+      "meanChangePct": -0.14538735893902746,
+      "medianChangePct": 0.0,
+      "upCount": 86,
+      "downCount": 93,
+      "flatCount": 9,
+      "upPct": 45.744680851063826,
+      "downPct": 49.46808510638298,
+      "flatPct": 4.787234042553192,
+      "top3": [
+        {
+          "code": "002520",
+          "name": "日发精机",
+          "changeRatio": 10.000000000000002,
+          "latest": 7.7,
+          "sourceTime": "2026-11-13T12:37:30+08:00"
+        },
+        {
+          "code": "000595",
+          "name": "*ST宝实",
+          "changeRatio": 9.940357852882704,
+          "latest": 5.53,
+          "sourceTime": "2026-11-13T12:36:33+08:00"
+        },
+        {
+          "code": "002685",
+          "name": "华东重机",
+          "changeRatio": 9.920634920634921,
+          "latest": 5.54,
+          "sourceTime": "2026-11-13T12:38:15+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "造纸印刷",
+      "valid": 36,
+      "expected": 36,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:36:21+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:48+08:00",
+      "meanChangePct": -0.6097013232576319,
+      "medianChangePct": -0.49763238257729814,
+      "upCount": 15,
+      "downCount": 21,
+      "flatCount": 0,
+      "upPct": 41.666666666666664,
+      "downPct": 58.333333333333336,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "002012",
+          "name": "凯恩股份",
+          "changeRatio": 2.4469820554649324,
+          "latest": 6.28,
+          "sourceTime": "2026-11-13T12:37:18+08:00"
+        },
+        {
+          "code": "605377",
+          "name": "华旺科技",
+          "changeRatio": 2.022756005056892,
+          "latest": 8.07,
+          "sourceTime": "2026-11-13T12:38:40+08:00"
+        },
+        {
+          "code": "603863",
+          "name": "松炀资源",
+          "changeRatio": 1.704545454545447,
+          "latest": 12.53,
+          "sourceTime": "2026-11-13T12:38:36+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "酿酒行业",
+      "valid": 36,
+      "expected": 36,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:57+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:51+08:00",
+      "meanChangePct": 0.8305860817387626,
+      "medianChangePct": 0.7065913113512059,
+      "upCount": 27,
+      "downCount": 9,
+      "flatCount": 0,
+      "upPct": 75.0,
+      "downPct": 25.0,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "000596",
+          "name": "古井贡酒",
+          "changeRatio": 5.103969754253314,
+          "latest": 111.2,
+          "sourceTime": "2026-11-13T12:36:18+08:00"
+        },
+        {
+          "code": "600238",
+          "name": "*ST椰岛",
+          "changeRatio": 5.102040816326536,
+          "latest": 4.12,
+          "sourceTime": "2026-11-13T12:38:19+08:00"
+        },
+        {
+          "code": "000860",
+          "name": "顺鑫农业",
+          "changeRatio": 4.141501294219158,
+          "latest": 12.07,
+          "sourceTime": "2026-11-13T12:36:48+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "采掘行业",
+      "valid": 19,
+      "expected": 19,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:37:27+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:50+08:00",
+      "meanChangePct": 0.033117191939445165,
+      "medianChangePct": 0.0,
+      "upCount": 8,
+      "downCount": 9,
+      "flatCount": 2,
+      "upPct": 42.10526315789474,
+      "downPct": 47.36842105263158,
+      "flatPct": 10.526315789473685,
+      "top3": [
+        {
+          "code": "600583",
+          "name": "海油工程",
+          "changeRatio": 4.451510333863279,
+          "latest": 6.57,
+          "sourceTime": "2026-11-13T12:38:24+08:00"
+        },
+        {
+          "code": "600968",
+          "name": "海油发展",
+          "changeRatio": 1.2019230769230727,
+          "latest": 4.21,
+          "sourceTime": "2026-11-13T12:38:16+08:00"
+        },
+        {
+          "code": "601808",
+          "name": "中海油服",
+          "changeRatio": 0.9764035801464687,
+          "latest": 12.41,
+          "sourceTime": "2026-11-13T12:38:27+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "钢铁行业",
+      "valid": 44,
+      "expected": 44,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:57+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:42+08:00",
+      "meanChangePct": -0.5085356240354125,
+      "medianChangePct": -0.30236960871399404,
+      "upCount": 13,
+      "downCount": 27,
+      "flatCount": 4,
+      "upPct": 29.545454545454547,
+      "downPct": 61.36363636363637,
+      "flatPct": 9.090909090909092,
+      "top3": [
+        {
+          "code": "600282",
+          "name": "南钢股份",
+          "changeRatio": 1.1848341232227448,
+          "latest": 4.27,
+          "sourceTime": "2026-11-13T12:38:33+08:00"
+        },
+        {
+          "code": "000708",
+          "name": "中信特钢",
+          "changeRatio": 1.1372867587327278,
+          "latest": 12.45,
+          "sourceTime": "2026-11-13T12:36:15+08:00"
+        },
+        {
+          "code": "600581",
+          "name": "八一钢铁",
+          "changeRatio": 0.873362445414848,
+          "latest": 2.31,
+          "sourceTime": "2026-11-13T12:38:24+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "铁路公路",
+      "valid": 28,
+      "expected": 28,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:54+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:40+08:00",
+      "meanChangePct": -0.020903256580577914,
+      "medianChangePct": 0.0,
+      "upCount": 13,
+      "downCount": 12,
+      "flatCount": 3,
+      "upPct": 46.42857142857143,
+      "downPct": 42.857142857142854,
+      "flatPct": 10.714285714285714,
+      "top3": [
+        {
+          "code": "601333",
+          "name": "广深铁路",
+          "changeRatio": 2.1406727828746126,
+          "latest": 3.34,
+          "sourceTime": "2026-11-13T12:38:30+08:00"
+        },
+        {
+          "code": "600377",
+          "name": "宁沪高速",
+          "changeRatio": 1.8050541516245486,
+          "latest": 14.1,
+          "sourceTime": "2026-11-13T12:38:27+08:00"
+        },
+        {
+          "code": "601816",
+          "name": "京沪高铁",
+          "changeRatio": 1.5444015444015458,
+          "latest": 5.26,
+          "sourceTime": "2026-11-13T12:38:32+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "银行",
+      "valid": 42,
+      "expected": 42,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:44+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:43+08:00",
+      "meanChangePct": 1.454518642708378,
+      "medianChangePct": 1.309091947157611,
+      "upCount": 42,
+      "downCount": 0,
+      "flatCount": 0,
+      "upPct": 100.0,
+      "downPct": 0.0,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "601665",
+          "name": "齐鲁银行",
+          "changeRatio": 3.318250377073903,
+          "latest": 6.85,
+          "sourceTime": "2026-11-13T12:38:15+08:00"
+        },
+        {
+          "code": "002948",
+          "name": "青岛银行",
+          "changeRatio": 3.015873015873022,
+          "latest": 6.49,
+          "sourceTime": "2026-11-13T12:38:18+08:00"
+        },
+        {
+          "code": "601169",
+          "name": "北京银行",
+          "changeRatio": 2.495840266222968,
+          "latest": 6.16,
+          "sourceTime": "2026-11-13T12:38:18+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "非金属材料",
+      "valid": 27,
+      "expected": 27,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:44+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:52+08:00",
+      "meanChangePct": -0.7808041577261148,
+      "medianChangePct": -0.5255255255255277,
+      "upCount": 8,
+      "downCount": 18,
+      "flatCount": 1,
+      "upPct": 29.62962962962963,
+      "downPct": 66.66666666666667,
+      "flatPct": 3.7037037037037037,
+      "top3": [
+        {
+          "code": "688357",
+          "name": "建龙微纳",
+          "changeRatio": 1.9238023387400902,
+          "latest": 27.02,
+          "sourceTime": "2026-11-13T12:38:46+08:00"
+        },
+        {
+          "code": "600516",
+          "name": "方大炭素",
+          "changeRatio": 1.8691588785046744,
+          "latest": 4.36,
+          "sourceTime": "2026-11-13T12:38:33+08:00"
+        },
+        {
+          "code": "001301",
+          "name": "尚太科技",
+          "changeRatio": 1.0726072607260793,
+          "latest": 49.0,
+          "sourceTime": "2026-11-13T12:36:06+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "风电设备",
+      "valid": 31,
+      "expected": 31,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:05:37+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:53+08:00",
+      "meanChangePct": 0.5262381426780622,
+      "medianChangePct": 0.38350910834133195,
+      "upCount": 20,
+      "downCount": 7,
+      "flatCount": 4,
+      "upPct": 64.51612903225806,
+      "downPct": 22.580645161290324,
+      "flatPct": 12.903225806451612,
+      "top3": [
+        {
+          "code": "688349",
+          "name": "三一重能",
+          "changeRatio": 3.2740213523131603,
+          "latest": 14.51,
+          "sourceTime": "2026-11-13T12:38:42+08:00"
+        },
+        {
+          "code": "601615",
+          "name": "明阳智能",
+          "changeRatio": 3.0456852791878086,
+          "latest": 8.12,
+          "sourceTime": "2026-11-13T12:38:42+08:00"
+        },
+        {
+          "code": "688660",
+          "name": "电气风电",
+          "changeRatio": 2.79,
+          "latest": 7.38,
+          "sourceTime": "2026-11-13T12:05:37+08:00"
+        }
+      ],
+      "missingCodes": []
+    },
+    {
+      "industry": "食品饮料",
+      "valid": 110,
+      "expected": 110,
+      "missing": 0,
+      "coveragePct": 100.0,
+      "sufficientCoverage": true,
+      "zeroVolumeCount": 0,
+      "sourceTimeMin": "2026-11-13T12:35:54+08:00",
+      "sourceTimeMax": "2026-11-13T12:38:55+08:00",
+      "meanChangePct": -0.5099599859438312,
+      "medianChangePct": -0.23709315375981538,
+      "upCount": 48,
+      "downCount": 62,
+      "flatCount": 0,
+      "upPct": 43.63636363636363,
+      "downPct": 56.36363636363637,
+      "flatPct": 0.0,
+      "top3": [
+        {
+          "code": "002286",
+          "name": "保龄宝",
+          "changeRatio": 4.886363636363632,
+          "latest": 9.23,
+          "sourceTime": "2026-11-13T12:37:21+08:00"
+        },
+        {
+          "code": "002597",
+          "name": "金禾实业",
+          "changeRatio": 3.9111540318686564,
+          "latest": 21.52,
+          "sourceTime": "2026-11-13T12:37:36+08:00"
+        },
+        {
+          "code": "002946",
+          "name": "新乳业",
+          "changeRatio": 3.811792733770105,
+          "latest": 17.43,
+          "sourceTime": "2026-11-13T12:37:51+08:00"
+        }
+      ],
+      "missingCodes": []
+    }
+  ],
+  "invalidRecords": [
+    {
+      "recordIndex": 183,
+      "code": "000635",
+      "reason": "missing_or_invalid_native_values"
+    },
+    {
+      "recordIndex": 1191,
+      "code": "002731",
+      "reason": "missing_or_invalid_native_values"
+    },
+    {
+      "recordIndex": 2536,
+      "code": "301139",
+      "reason": "missing_or_invalid_native_values"
+    },
+    {
+      "recordIndex": 2986,
+      "code": "600185",
+      "reason": "missing_or_invalid_native_values"
+    },
+    {
+      "recordIndex": 3616,
+      "code": "601059",
+      "reason": "missing_or_invalid_native_values"
+    },
+    {
+      "recordIndex": 3662,
+      "code": "601198",
+      "reason": "missing_or_invalid_native_values"
+    }
+  ],
+  "missingQuoteCodes": [
+    "000635",
+    "002731",
+    "301139",
+    "600185",
+    "601059",
+    "601198"
+  ],
+  "method": "冻结前收盘行业名单的个股原生涨跌幅等权均值/中位数；上涨、下跌、平盘比例按有效报价计。原生百分数不再乘100。零成交单独统计，不补造涨幅。全市场分母不缩小，市场/行业有效报价不足95%指标留空。",
+  "limitations": [
+    "非东财板块指数；不替换原496分类榜",
+    "非MA50/非行业宽度均线信号/非多日趋势排行",
+    "批次源时间不同，不是11:30精确截点；源标签不是已独立核实的最后成交时刻",
+    "沿用当前冻结名单，存在存续样本偏差",
+    "领涨股仅为本次有效样本排序，不是买入建议"
+  ],
+  "publicationApproved": true,
+  "nameDate": "2026-11-12",
+  "runId": "ffd-sector-midday-20261113-123900",
+  "pointsUsed": 15328
+}
