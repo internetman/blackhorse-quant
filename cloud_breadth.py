@@ -143,6 +143,17 @@ def run(root=ROOT, now=None, event='workflow_dispatch', cron='', requested='auto
         return dict(status='skipped', session=session, reason='Delayed/outside lunch window; never run close instead')
     if session == 'close' and event == 'schedule' and now.hour < 16:
         return dict(status='skipped', session=session, reason='Before close collection window')
+    # Full historical bootstrap is an explicit manual exception only.
+    manual_bootstrap = event == 'workflow_dispatch' and force is True
+    if not manual_bootstrap:
+        try:
+            data = validate_pair(root, session, now, calendar)
+            return dict(status='already_current', alreadyCurrent=True, session=session,
+                        asOf=data['asOf'], generatedAt=data['generatedAt'], historyCalls=0)
+        except (ValueError, KeyError, TypeError, OSError, AttributeError):
+            return dict(status='blocked_incremental_unverified', session=session,
+                        reason='Verified incremental history engine is not available; automatic full-history collection is disabled',
+                        historyCalls=0, dataChanged=False)
     check_repository(root)
     if changed_paths(root) or git(root, 'diff', '--cached', '--name-only'):
         raise ValueError('Cloud collection requires a clean checkout')

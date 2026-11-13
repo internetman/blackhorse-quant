@@ -105,7 +105,7 @@ def run_lock(path):
 def refresh(root=ROOT, now=None, scheduled=False, attempts=2, retry_delay=30, force=False):
     from complete_breadth import collect, VERSION
     now = (now or dt.datetime.now(ZONE)).astimezone(ZONE)
-    calendar = load_calendar(root/'market-trading-calendar.json', now.year, allow_fetch=True)
+    calendar = load_calendar(root/'market-trading-calendar.json', now.year, allow_fetch=bool(force and not scheduled))
     if scheduled and (not is_trading_day(now.date(), calendar) or now.hour < 16):
         return dict(status='skipped', reason='Not an exchange close refresh window', attemptedAt=now.isoformat())
     expected = expected_close(now, calendar)
@@ -124,6 +124,11 @@ def refresh(root=ROOT, now=None, scheduled=False, attempts=2, retry_delay=30, fo
         # Retry slots still verify production, but do not create three status
         # commits/deployments per day after the first successful publication.
         return dict(old_status, checkedAt=now.isoformat(), alreadyCurrent=True)
+    if not force:
+        return dict(status='blocked_incremental_unverified', session='close',
+                    requestedCutoff=expected, asOf=previous.get('asOf') if previous else None,
+                    reason='Verified incremental history engine unavailable; full-history refresh requires explicit manual force',
+                    historyCalls=0, dataChanged=False)
     if not current:
         # The collector writes only caches. The old successful snapshot remains
         # untouched until every check below has passed.
@@ -177,7 +182,7 @@ def main():
     with run_lock(ROOT/'output'/'daily-breadth.lock'):
         try:
             report = refresh(scheduled=args.scheduled, attempts=args.attempts, retry_delay=args.retry_delay, force=args.force)
-            if (args.publish or args.publish_checkout) and report['status'] != 'skipped':
+            if (args.publish or args.publish_checkout) and report['status'] == 'success':
                 from publish_breadth import publish, publish_checkout, verify_live
                 publication = publish_checkout(ROOT) if args.publish_checkout else publish(ROOT, include_code=args.include_code, approve_scope_upgrade=args.approve_scope_upgrade, install_cloud=args.install_cloud, expected_remote_commit=args.expected_remote_commit)
                 report['publication'] = publication

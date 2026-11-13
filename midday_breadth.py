@@ -258,10 +258,14 @@ def refresh(root=ROOT, now=None, scheduled=False, force=False):
             validate_midday(previous, now.date().isoformat(), calendar)
             report = dict(status='success', session='midday', asOf=previous['asOf'], generatedAt=previous['generatedAt'], coveragePct=previous['coveragePct'])
             saved = read_json(status) or {}
-            if any(saved.get(k) != v for k, v in report.items()):
-                atomic_json(status, report)
-            return dict(report, alreadyCurrent=True)
+            if all(saved.get(k) == v for k, v in report.items()):
+                return dict(report, alreadyCurrent=True)
         except (ValueError, KeyError, TypeError): pass
+    if not force:
+        return dict(status='blocked_incremental_unverified', session='midday',
+                    requestedDate=now.date().isoformat(), asOf=previous.get('asOf') if previous else None,
+                    reason='Verified incremental history engine unavailable; full-history refresh requires explicit manual force',
+                    historyCalls=0, dataChanged=False)
     try:
         result = collect(root=root, now=now)
         validate_midday(result, now.date().isoformat(), calendar)

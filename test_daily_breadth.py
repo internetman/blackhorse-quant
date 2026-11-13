@@ -60,13 +60,13 @@ class DailyTests(unittest.TestCase):
         before = self.target.read_bytes()
         with patch('complete_breadth.collect', side_effect=ValueError('stale source')):
             with self.assertRaisesRegex(ValueError, 'stale source'):
-                refresh(self.root, self.now, attempts=1)
+                refresh(self.root, self.now, attempts=1, force=True)
         self.assertEqual(before, self.target.read_bytes())
         self.assertEqual(json.loads((self.root/'market-breadth-status.json').read_text())['status'], 'failed')
 
     def test_success_then_second_run_is_idempotent(self):
         with patch('complete_breadth.collect', return_value=snapshot()) as collect:
-            self.assertEqual(refresh(self.root, self.now)['status'], 'success')
+            self.assertEqual(refresh(self.root, self.now, force=True)['status'], 'success')
             status = (self.root/'market-breadth-status.json').read_bytes()
             retry = refresh(self.root, self.now)
             self.assertEqual(retry['status'], 'success')
@@ -102,7 +102,7 @@ class DailyTests(unittest.TestCase):
         legacy['market'][-1]['ma50'] = dict(pct=None, above=0, valid=0)
         self.target.write_text(json.dumps(legacy))
         with patch('complete_breadth.collect', return_value=snapshot()) as collect:
-            refresh(self.root, self.now)
+            refresh(self.root, self.now, force=True)
             self.assertEqual(collect.call_count, 1)
         self.assertEqual(json.loads(self.target.read_text())['scopeVersion'], VERSION)
 

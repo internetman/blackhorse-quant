@@ -69,7 +69,7 @@
     const fresh=window.MarketWeather.freshness(data,new Date(),attempt);
     const partial=data.availableMetrics && !data.availableMetrics.includes('ma50');
     if(partial)period='ma20';
-    root.innerHTML = `<div class="breadth-head"><h2>市场天气与市场宽度</h2><div><span class="breadth-note">${esc(data.asOf)} 收盘 · ${cached?'沿用上次快照':'已保存快照'} · ${fresh.usable?(partial?'MA20数据有效；MA50缺失':'数据有效'):'数据待更新'}</span> <a class="breadth-download" href="/market-breadth.json" download>下载原始数据</a></div></div>${middayPanel()}${participation()}${weather()}<div class="breadth-stats">${[
+    root.innerHTML = `<div class="breadth-head"><h2>市场天气与市场宽度</h2><div><span class="breadth-note">${esc(data.asOf)} 收盘 · ${cached?'沿用上次快照':'已保存快照'} · ${fresh.usable?(partial?'MA20数据有效；MA50缺失':'数据有效'):'数据待更新'}</span> <a class="breadth-download" href="/market-breadth.json" download>下载原始数据</a></div></div><p class="weather-stale" data-history-policy="incremental-only">历史更新已切换为增量优先：日常任务不再全量重拉历史。安全复权增量尚未启用，宽度保留已验证日期 ${esc(data.asOf)}，不冒充今日数据。11月13日核查：FFD 因子完整覆盖仅至10月23日，当前区间仍有缺口。独立行业午休观察和页面行情模块不受此保护开关影响。</p>${middayPanel()}${participation()}${weather()}<div class="breadth-stats">${[
       [`${data.universeLabel || '全市场'} MA20站上比例`,pct(latest.ma20.pct),fraction(latest.ma20)],
       ['MA50 站上比例',pct(latest.ma50.pct),partial?'当前MA50未完整取得，不使用旧值':fraction(latest.ma50)],
       ['MA20 较5交易日前',delta==null?'—':`${delta>0?'+':''}${delta.toFixed(1)} 点`,'百分点变化'],

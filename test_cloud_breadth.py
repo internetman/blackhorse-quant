@@ -97,7 +97,7 @@ class CloudTests(unittest.TestCase):
     def test_forced_cold_run_and_cross_session_isolation(self):
         with patch.object(cloud, 'check_repository'), patch.object(cloud, 'changed_paths', return_value=set()), patch.object(cloud, 'git', return_value=''), patch.object(cloud, 'publish_session', return_value={'status':'unchanged'}) as pub, patch.object(cloud, 'verify_site', return_value={'status':'verified'}), patch.object(cloud.daily, 'refresh', return_value={'status':'success'}) as refresh:
             receipt = cloud.run(self.root, self.now, 'push')
-            self.assertFalse(receipt['forcedCollection']); self.assertFalse(refresh.call_args.kwargs['force'])
+            self.assertEqual(receipt['status'],'already_current'); refresh.assert_not_called()
             receipt = cloud.run(self.root, self.now, 'workflow_dispatch', force=True)
             self.assertTrue(receipt['forcedCollection']); self.assertTrue(refresh.call_args.kwargs['force'])
             def pollute(**kw):
@@ -105,7 +105,7 @@ class CloudTests(unittest.TestCase):
                 return {'status':'success'}
             refresh.side_effect = pollute; pub.reset_mock()
             with self.assertRaisesRegex(ValueError, 'other session'):
-                cloud.run(self.root, self.now, 'push')
+                cloud.run(self.root, self.now, 'workflow_dispatch', force=True)
             pub.assert_not_called()
             cache = self.root/'output'/'qfq-breadth-cache'; cache.mkdir(parents=True)
             (cache/'x.json').write_text('{}')
@@ -116,7 +116,7 @@ class CloudTests(unittest.TestCase):
         publication = dict(status='pushed', commit='verified-commit', files=['market-breadth.json'])
         with patch.object(cloud, 'check_repository'), patch.object(cloud, 'changed_paths', return_value=set()), patch.object(cloud, 'git', return_value=''), patch.object(cloud, 'publish_session', return_value=publication), patch.object(cloud, 'verify_site', side_effect=RuntimeError('Vercel not updated')), patch.object(cloud.daily, 'refresh', return_value={'status':'success'}):
             with self.assertRaises(cloud.PublicationVerificationError) as caught:
-                cloud.run(self.root, self.now, 'push')
+                cloud.run(self.root, self.now, 'workflow_dispatch', force=True)
         self.assertEqual(caught.exception.receipt['publication']['commit'], 'verified-commit')
         self.assertEqual(caught.exception.receipt['failedStage'], 'website_verification')
 

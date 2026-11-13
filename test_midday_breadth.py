@@ -77,7 +77,7 @@ class MiddayTests(unittest.TestCase):
                 for date in [NOW.replace(hour=10),NOW.replace(hour=13),NOW.replace(hour=12,minute=55),NOW.replace(day=14),NOW.replace(month=10,day=1)]:
                     self.assertEqual(midday.refresh(root,date,scheduled=True)['status'],'skipped')
                 collect.assert_not_called()
-                self.assertEqual(midday.refresh(root,NOW)['status'],'success')
+                self.assertEqual(midday.refresh(root,NOW,force=True)['status'],'success')
                 self.assertTrue(midday.refresh(root,NOW)['alreadyCurrent'])
                 self.assertEqual(collect.call_count,1)
             self.assertEqual(original,(close.read_bytes(),status.read_bytes()))
@@ -85,10 +85,10 @@ class MiddayTests(unittest.TestCase):
             with patch('midday_breadth.collect',side_effect=ValueError('stale quote')):
                 with self.assertRaises(ValueError):midday.refresh(root,NOW,force=True)
             self.assertEqual(before,(root/'market-breadth-midday.json').read_bytes())
-            self.assertTrue(midday.refresh(root,NOW)['alreadyCurrent'])
+            self.assertEqual(midday.refresh(root,NOW)['status'],'blocked_incremental_unverified')
             restored=json.loads((root/'market-breadth-midday-status.json').read_text())
-            self.assertEqual(restored['status'],'success')
-            self.assertEqual(restored['generatedAt'],candidate()['generatedAt'])
+            self.assertEqual(restored['status'],'failed')
+            self.assertEqual(restored['requestedDate'],NOW.date().isoformat())
             self.assertEqual(original,(close.read_bytes(),status.read_bytes()))
             self.assertFalse((root/'output'/'breadth-history').exists())
             self.assertFalse((root/'output'/'qfq-breadth-cache').exists())
