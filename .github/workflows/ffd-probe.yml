@@ -34,7 +34,10 @@ jobs:
               with urllib.request.urlopen(urllib.request.Request(base+path, headers=headers), timeout=30) as r:
                   return json.load(r)
           health = read('/health')
-          entitlement = read('/v1/entitlement', True)
+          envelope = read('/v1/entitlement', True)
+          if health.get('status') != 'ok' or envelope.get('code') != 200:
+              raise SystemExit('Health or entitlement rejected; no data query issued')
+          entitlement = envelope.get('data') or {}
           summary = entitlement.get('summary') or {}
           if not summary.get('has_usable_data_api_quota'):
               raise SystemExit('No verified usable quota; no data query issued')
