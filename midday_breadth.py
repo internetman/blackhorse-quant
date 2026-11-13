@@ -11,6 +11,7 @@ import hashlib
 import json
 import math
 import statistics
+import threading
 import urllib.parse
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -171,6 +172,11 @@ def safe_shadow_output(path, root=ROOT):
     return path
 
 
+def coverage_still_reachable(total_members, failures, universe_count):
+    """Upper bound assumes every remaining quote succeeds; never lower the gate."""
+    return total_members - failures >= math.ceil(.95 * universe_count)
+
+
 def collect(root=ROOT, now=None, workers=4):
     root = Path(root)
     started = (now or dt.datetime.now(ZONE)).astimezone(ZONE)
@@ -202,8 +208,11 @@ def collect(root=ROOT, now=None, workers=4):
     archive.mkdir(parents=True, exist_ok=False)
     atomic_json(archive/'quotes.json', quotes)
     atomic_json(archive/'overview.json', overview)
+    stop = threading.Event()
     def one(stock):
         try:
+            if stop.is_set():
+                raise ValueError('Skipped: 95% coverage already mathematically unreachable')
             observed = dt.datetime.now(ZONE)
             if observed.date() != started.date() or observed.time().replace(tzinfo=None) >= dt.time(12, 55):
                 raise ValueError('Noon collection deadline reached')
@@ -225,7 +234,13 @@ def collect(root=ROOT, now=None, workers=4):
         for count, (code, item) in enumerate(pool.map(one, stocks), 1):
             if isinstance(item, str): failures.append(dict(code=code, error=item))
             else: results[code] = item
+            if not coverage_still_reachable(len(stocks), len(failures), n):
+                stop.set()
             if count % 250 == 0: print(f'Midday {count}/{len(stocks)}; excluded={len(failures)}', flush=True)
+    diagnostic = dict(valid=len(results), expected=n, membership=len(stocks), stoppedUnreachable=stop.is_set(),
+                      errors=Counter(f['error'] for f in failures).most_common(), failedStocks=failures)
+    atomic_json(archive/'collection-diagnostic.json', diagnostic)
+    print('Midday diagnostic: '+json.dumps({k:v for k,v in diagnostic.items() if k!='failedStocks'}, ensure_ascii=False), flush=True)
     return build_snapshot(base, stocks, results, failures, quotes, n, started, dt.datetime.now(ZONE))
 
 
