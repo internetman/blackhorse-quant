@@ -2,6 +2,9 @@
   const data = window.M2_DATA;
   if (!data) return;
   const archiveStore = window.M2Archive;
+  const legacyDate = String(data.selectionAsOf || data.asOf || "日期待核");
+  const legacyDateEl = document.getElementById("legacySnapshotDate");
+  if (legacyDateEl) legacyDateEl.textContent = `（${legacyDate}）`;
 
   const $ = (id) => document.getElementById(id);
   const formatPrice = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "—";
