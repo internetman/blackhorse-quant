@@ -1050,7 +1050,7 @@
       }
       const dist = data.marketDistribution || {};
       const observation = data.observation || {};
-      const observationLabel = observation.mode === "published_observation" ? `已发布观察快照${observation.stale ? "（已滞后，仅供回顾）" : ""} · 抓取 ${observation.finishedAt || "未知"} · ${observation.runId || ""} · 午休抓取不等于11:30截点；源行情时间未核验` : "免费源抓取；源行情时间未核验";
+      const observationLabel = observation.mode === "published_observation" ? `已发布观察快照${observation.stale ? "（已滞后，仅供回顾）" : ""} · 抓取 ${observation.finishedAt || "未知"} · ${observation.runId || ""} · 会话 ${observation.session || "未知"}；抓取不等于精确午盘/收盘截点，源行情时间未核验` : "免费源抓取；源行情时间未核验";
       const sectorRankStatus = data.sectorRankStatus || { ready: true, message: "板块排行已更新。" };
       const sectorRankReady = sectorRankStatus.ready !== false;
       const sectorRankCached = !!sectorRankStatus.cached;

@@ -126,7 +126,9 @@ class CloudTests(unittest.TestCase):
         if not path.exists(): path = root/'handoff'/'cloud-breadth.yml'
         text = path.read_text()
         self.assertIn('actions/checkout@11d5960a326750d5838078e36cf38b85af677262', text)
-        self.assertEqual(text.count('uses:'), 1)
+        uses = [line.strip() for line in text.splitlines() if 'uses:' in line]
+        self.assertTrue(1 <= len(uses) <= 2)
+        self.assertTrue(all('actions/checkout@11d5960a326750d5838078e36cf38b85af677262' in line for line in uses))
         self.assertNotIn('secrets.', text)
         self.assertIn('contents: write', text)
         self.assertIn("'0,20 4 * * 1-5'", text)

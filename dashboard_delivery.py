@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import server
+from dashboard_collect import observation_warnings
 
 ROOT = Path(__file__).resolve().parent
 ZONE = ZoneInfo('Asia/Shanghai')
@@ -37,10 +38,7 @@ def observed_payload(root=ROOT, now=None):
     data['observation'] = dict(observation,mode='published_observation',ageSeconds=round(max(0,age)),stale=stale,
                                servedAt=now.isoformat(),quoteTimeVerified=False)
     data['moduleStatus'] = server.dashboard_module_status(data)
-    data['warnings'] = list(data.get('warnings', []))+[
-        '已发布观察快照，不是实时流；源行情时间未提供，不能认定为11:30截点。',
-        '板块排名为东财496分类，与宽度86行业不等价；不是全行业趋势排名。',
-        '5组板块日线缺失；正式R02记录为历史配置，未根据新闻重新确认。']
+    data['warnings'] = list(data.get('warnings', []))+observation_warnings(observation)
     if stale:
         data['warnings'].append('观察快照已滞后；仅供回顾，不代表当前市场。')
     return data
@@ -61,10 +59,10 @@ def build_delivery(force=False, *, root=ROOT, now=None, timeout=20, live_builder
         live['observation'] = dict(mode='live_fetch_attempt',runId='live-'+now_text,finishedAt=now_text,
                                    session='source_time_unverified',quoteTimeVerified=False,stale=False)
         live['moduleStatus'] = server.dashboard_module_status(live)
-        live.setdefault('warnings',[]).extend([
-            '本次抓取不是源行情时间，实时时效仍未核验。',
-            '板块排名为东财496分类，与宽度86行业不等价；不是全行业趋势排名。',
-            '量价观察未核新闻/公告；正式R02记录为历史配置，非本轮自动确认。'])
+        live.setdefault('warnings',[]).extend(observation_warnings(dict(
+            missingSectorHistoryCount=sum(not row.get('trend10') for row in live.get('top5',[])),
+            breadthClassificationCount=len(live.get('r02Breadth',{}).get('rows',[])),
+            sectorClassificationCount=None)))
         return live
     except Exception as exc:
         saved['observation']['liveAttemptFailed'] = True
