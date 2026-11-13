@@ -735,7 +735,7 @@
       for (const sector of data.top5 || []) {
         const code = sector.code;
         if (!code) continue;
-        const trend = sector.trend10 || sector.trend5 || [];
+        const trend = sector.trend10Verified === true ? (sector.trend10 || []) : [];
         if (hasTrend(trend)) {
           cache[code] = {
             name: sector.name,
@@ -915,7 +915,7 @@
       const reasons = [];
       if (upRatio != null && upRatio >= 70) reasons.push("上涨家数覆盖面够");
       if ((sector.leaderPct || 0) >= Math.max((sector.pct || 0) + 6, 12)) reasons.push("龙头强度高于板块");
-      if (stats.total != null && stats.total > 0 && stats.last3 != null && stats.last3 > 0) reasons.push("10日相对趋势抬升");
+      if (stats.total != null && stats.total > 0 && stats.last3 != null && stats.last3 > 0) reasons.push("10个完整交易日相对趋势抬升");
       if ((sector.amountYi || 0) >= 80) reasons.push("成交额有配合");
       if (reasons.length === 0) reasons.push("更多是短线弹性，先看明日扩散");
 
@@ -935,7 +935,7 @@
               <div class="analysis-note">${escapeHtml(leaderNote)}</div>
             </div>
             <div class="analysis-item">
-              <div class="analysis-label">10日相对趋势</div>
+              <div class="analysis-label">10个完整交易日相对趋势</div>
               <div class="analysis-value ${clsPct(stats.total)}">${signed(stats.total)}</div>
               <div class="analysis-note">${escapeHtml(stats.position)} · 近3日 ${signed(stats.last3)}</div>
             </div>
@@ -960,7 +960,7 @@
     function renderTop5(sectors) {
       return sectors.map((sector) => {
         const color = sector.pct >= 0 ? "var(--red)" : "var(--green)";
-        const trend = sector.trend10 || sector.trend5 || [];
+        const trend = sector.trend10Verified === true ? (sector.trend10 || []) : [];
         const cacheNote = sector.trend10Cached
           ? ` · <span class="trend-cache-note">沿用上次趋势 ${escapeHtml(shortDateTime(sector.trend10CachedAt))}</span>`
           : "";
@@ -983,8 +983,8 @@
             <td colspan="7">
               <div class="trend-panel">
                 <div class="trend-panel-head">
-                  <span>${escapeHtml(sector.name)} · 10日相对趋势</span>
-                  <span>以第1日收盘为0%，最近 ${trend.length || "--"} 个交易日 · 数据日期 ${escapeHtml(trend[0]?.date || "缺失")} → ${escapeHtml(trend.at(-1)?.date || "缺失")}（当日条目可能未收盘）${cacheNote}</span>
+                  <span>${escapeHtml(sector.name)} · 10个完整交易日相对趋势</span>
+                  <span>以第1日收盘为0%，最近 ${trend.length || "--"} 个交易日 · 数据日期 ${escapeHtml(trend[0]?.date || "缺失")} → ${escapeHtml(trend.at(-1)?.date || "缺失")}（仅完整收盘；不含盘中条目）${cacheNote}</span>
                 </div>
                 ${sparkline(trend, color)}
                 ${renderAttribution(sector, trend)}
@@ -1049,7 +1049,7 @@
     function render(data) {
       if (data.observation?.mode !== "published_observation") {
         hydrateSectorRankCache(data);
-        hydrateTrendCache(data);
+        // Only server-verified completed history is eligible; no browser substitution.
       }
       const dist = data.marketDistribution || {};
       const observation = data.observation || {};

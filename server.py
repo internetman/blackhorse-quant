@@ -881,10 +881,10 @@ def get_sector_leaders(code: str, limit: int = 10) -> list[dict[str, Any]]:
 
 
 def get_sector_klines(code: str, days: int = TREND_DAYS) -> list[dict[str, Any]]:
-    # Fetch a longer window because non-trading days are omitted by the endpoint.
-    today = dt.date.today()
-    begin = (today - dt.timedelta(days=35)).strftime("%Y%m%d")
-    end = today.strftime("%Y%m%d")
+    from board_history_validation import completed_dates, parse_board_history
+    dates = completed_dates(days)
+    begin = dates[0].replace('-', '')
+    end = dates[-1].replace('-', '')
     url = (
         "https://push2his.eastmoney.com/api/qt/stock/kline/get"
         f"?secid=90.{urllib.parse.quote(code)}"
@@ -893,28 +893,7 @@ def get_sector_klines(code: str, days: int = TREND_DAYS) -> list[dict[str, Any]]
         f"&ut={EASTMONEY_UT}&klt=101&fqt=1&beg={begin}&end={end}&lmt=40"
     )
     payload = fetch_eastmoney_json(url)
-    rows = payload.get("data", {}).get("klines") or []
-    parsed = []
-    for row in rows[-days:]:
-        parts = row.split(",")
-        if len(parts) < 11:
-            continue
-        parsed.append(
-            {
-                "date": parts[0],
-                "open": num(parts[1]),
-                "close": num(parts[2]),
-                "high": num(parts[3]),
-                "low": num(parts[4]),
-                "volume": num(parts[5]),
-                "amountYi": money_yi(num(parts[6])),
-                "amplitude": num(parts[7]),
-                "pct": num(parts[8]),
-                "change": num(parts[9]),
-                "turnover": num(parts[10]),
-            }
-        )
-    return parsed
+    return parse_board_history(payload, code, dates)
 
 
 def clone_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -928,10 +907,17 @@ def apply_trend_cache(
     source: str,
 ) -> bool:
     cached = _trend_cache.get(code)
-    if not cached:
+    if not cached or not cached.get('verifiedCompleted'):
+        return False
+    from board_history_validation import completed_dates, validate_rows
+    try:
+        validate_rows(cached['rows'], completed_dates())
+    except (ValueError, KeyError, TypeError):
         return False
     trend = clone_rows(cached["rows"])
     sector["trend10"] = trend
+    sector["trend10Verified"] = True
+    sector["trend10BarStatus"] = "completed"
     sector["trend5"] = trend
     sector["trend10Source"] = source
     sector["trend10Cached"] = True
@@ -941,11 +927,14 @@ def apply_trend_cache(
 
 
 def store_trend_cache(code: str, trend: list[dict[str, Any]], now: float) -> str:
+    from board_history_validation import completed_dates, validate_rows
+    validate_rows(trend, completed_dates())
     updated_at = dt.datetime.now().astimezone().isoformat(timespec="seconds")
     _trend_cache[code] = {
         "ts": now,
         "updatedAt": updated_at,
         "rows": clone_rows(trend),
+        "verifiedCompleted": True,
     }
     return updated_at
 
@@ -1169,14 +1158,16 @@ def build_dashboard_payload(force: bool = False) -> dict[str, Any]:
                 code = str(sector.get("code") or "")
                 cached = _trend_cache.get(code)
                 if cached and now - cached["ts"] < TREND_CACHE_TTL_SECONDS:
-                    apply_trend_cache(sector, code, now, "server-cache")
-                    continue
+                    if apply_trend_cache(sector, code, now, "server-cache"):
+                        continue
 
                 try:
                     trend = get_sector_klines(code, TREND_DAYS)
                     if len(trend) < 2:
                         raise FetchError(f"not enough kline rows: {len(trend)}")
                     sector["trend10"] = trend
+                    sector["trend10Verified"] = True
+                    sector["trend10BarStatus"] = "completed"
                     sector["trend5"] = trend
                     sector["trend10Source"] = "live"
                     sector["trend10Cached"] = False
