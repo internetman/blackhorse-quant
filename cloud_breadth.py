@@ -146,7 +146,7 @@ def run(root=ROOT, now=None, event='workflow_dispatch', cron='', requested='auto
     check_repository(root)
     if changed_paths(root) or git(root, 'diff', '--cached', '--name-only'):
         raise ValueError('Cloud collection requires a clean checkout')
-    force = force or event == 'push'
+    force = bool(force)  # Deployments must not discard a verified same-date generation.
     caches = [root/'output'/'public-breadth-cache', root/'output'/'qfq-breadth-cache']
     count = sum(sum(1 for _ in p.rglob('*.json')) for p in caches if p.exists())
     if force and count:

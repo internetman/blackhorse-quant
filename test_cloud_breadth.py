@@ -97,6 +97,8 @@ class CloudTests(unittest.TestCase):
     def test_forced_cold_run_and_cross_session_isolation(self):
         with patch.object(cloud, 'check_repository'), patch.object(cloud, 'changed_paths', return_value=set()), patch.object(cloud, 'git', return_value=''), patch.object(cloud, 'publish_session', return_value={'status':'unchanged'}) as pub, patch.object(cloud, 'verify_site', return_value={'status':'verified'}), patch.object(cloud.daily, 'refresh', return_value={'status':'success'}) as refresh:
             receipt = cloud.run(self.root, self.now, 'push')
+            self.assertFalse(receipt['forcedCollection']); self.assertFalse(refresh.call_args.kwargs['force'])
+            receipt = cloud.run(self.root, self.now, 'workflow_dispatch', force=True)
             self.assertTrue(receipt['forcedCollection']); self.assertTrue(refresh.call_args.kwargs['force'])
             def pollute(**kw):
                 (self.root/'market-breadth-midday.json').write_text('{}')
@@ -108,7 +110,7 @@ class CloudTests(unittest.TestCase):
             cache = self.root/'output'/'qfq-breadth-cache'; cache.mkdir(parents=True)
             (cache/'x.json').write_text('{}')
             with self.assertRaisesRegex(ValueError, 'empty source caches'):
-                cloud.run(self.root, self.now, 'push')
+                cloud.run(self.root, self.now, 'workflow_dispatch', force=True)
 
     def test_verification_failure_preserves_published_commit_receipt(self):
         publication = dict(status='pushed', commit='verified-commit', files=['market-breadth.json'])
