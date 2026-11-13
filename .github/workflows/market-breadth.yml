@@ -58,7 +58,7 @@ jobs:
         run: python3 cloud_dashboard.py --session "$REQUESTED_SESSION"
   refresh:
     needs: dashboard
-    if: always() && github.repository == 'internetman/blackhorse-quant' && github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && github.repository == 'internetman/blackhorse-quant' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 55
     permissions:
