@@ -1,0 +1,20 @@
+const {chromium}=require('playwright');
+const fs=require('fs'); const assert=require('node:assert/strict');
+(async()=>{
+ const browser=await chromium.launch({headless:true,executablePath:'/usr/bin/chromium'});const page=await browser.newPage({viewport:{width:390,height:844}});
+ await page.route('https://test.invalid/**',route=>route.fulfill({status:200,contentType:'text/html',body:'<div id="dailyCandidateContent"></div>'}));
+ await page.goto('https://test.invalid/');
+ await page.evaluate(()=>{window.fetch=async()=>{throw Error('missing')};});
+ await page.addScriptTag({content:fs.readFileSync('m2-daily-candidates.js','utf8')});
+ await page.waitForFunction(()=>document.body.textContent.includes('尚未就绪'));
+ assert.match(await page.textContent('body'),/不是本次新筛选/);
+ await page.evaluate(()=>{window.fetch=async path=>({ok:true,json:async()=>path.includes('calendar')?null:{schemaVersion:1,mode:'replay',asOfDate:'2026-11-11',candidates:Array.from({length:8},(_,i)=>({code:String(600000+i),name:'<img src=x onerror=alert(1)>',asOfDate:'2026-11-11',confirmedSignal:true,reasons:['样本'],pendingChecks:['复权']}))}})});
+ await page.addStyleTag({content:fs.readFileSync('m2-daily-candidates.css','utf8')});
+ await page.addScriptTag({content:fs.readFileSync('m2-daily-candidates.js','utf8')});
+ await page.waitForFunction(()=>document.querySelectorAll('.daily-card').length===8);
+ assert.equal(await page.locator('img').count(),0);
+ assert.match(await page.textContent('body'),/历史试跑/);
+ assert.equal(await page.locator('.daily-card .daily-status').filter({hasText:'待核'}).count(),8);
+ assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
+ await browser.close();console.log('Headless render: missing response, replay, 8 candidates, escaped names, manual-only labels, mobile width passed');
+})().catch(e=>{console.error(e);process.exit(1)});

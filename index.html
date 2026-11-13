@@ -7,6 +7,7 @@
     <title>Mark Minervini 2 · 黑马量化</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c1118'/%3E%3Cpath d='M5 22 12 14l5 4 10-11' fill='none' stroke='%2398e59b' stroke-width='3'/%3E%3C/svg%3E" />
     <link rel="stylesheet" href="m2-styles.css?v=20260824-manual-archive" />
+    <link rel="stylesheet" href="m2-daily-candidates.css" />
   </head>
   <body>
     <div class="noise"></div>
@@ -55,9 +56,16 @@
           <div class="regime-rule"><span>原则</span> 🟡 允许个股先行，禁止放宽趋势与止损标准。</div>
         </section>
 
+        <section id="daily-candidates" class="content-section" aria-labelledby="dailyCandidateTitle">
+          <div class="section-heading"><div><div class="section-kicker">AUTOMATED REVIEW CANDIDATES</div><h2 id="dailyCandidateTitle">每日候选</h2></div></div>
+          <div id="dailyCandidateContent" aria-live="polite"><p>每日候选读取中；下方为原导入记录。</p></div>
+        </section>
+
+        <details id="legacyFootprints" class="legacy-footprints">
+          <summary>历史导入与归档 <span id="legacySnapshotDate">日期待核</span> · 默认收起，非当前自动候选</summary>
         <section class="decision-grid">
           <article class="decision-card featured-card">
-            <div class="card-topline"><span class="section-kicker">TODAY'S DECISION</span><span class="status-chip neutral">NO TRIGGER</span></div>
+            <div class="card-topline"><span class="section-kicker">IMPORTED SNAPSHOT</span><span class="status-chip neutral">NO TRIGGER</span></div>
             <h2 id="decisionTitle">—</h2>
             <p id="decisionText">—</p>
             <div class="decision-foot">
@@ -76,7 +84,7 @@
           <article class="metric-card alert-metric">
             <div class="section-kicker">STATE CHANGES</div>
             <div class="metric-value" id="changeCount">—</div>
-            <div class="metric-label">今日状态变化</div>
+            <div class="metric-label">导入时状态变化</div>
             <div class="metric-foot" id="changeNote">—</div>
           </article>
         </section>
@@ -85,7 +93,7 @@
           <div class="section-heading">
             <div>
               <div class="section-kicker">THE CANDIDATES</div>
-              <h2>股票足迹</h2>
+              <h2>股票足迹 · 原导入记录</h2>
             </div>
             <div class="home-filter-control">
               <label><span>阶段筛选</span><select id="homeStageFilter"><option value="all">全部阶段</option></select></label>
@@ -103,6 +111,8 @@
           <div class="watch-grid" id="watchGrid"></div>
         </section>
 
+        </details>
+
         <section id="rules" class="bottom-grid">
           <article class="rules-card">
             <div class="section-kicker">ENTRY GATE</div>
@@ -116,7 +126,7 @@
             </div>
           </article>
           <article class="log-card">
-            <div class="section-kicker">TODAY'S LOG</div>
+            <div class="section-kicker">SNAPSHOT LOG</div>
             <h2>记录，而不是感觉</h2>
             <div id="changeLog" class="change-log"></div>
           </article>
@@ -138,11 +148,13 @@
         </div>
       </div>
     </div>
+    <script src="market-weather.js"></script>
     <script src="m2-data.js?v=20260825-close"></script>
     <script src="m2-table-data.js?v=20260825-close"></script>
     <script src="m2-sector-map.js?v=20260825-close"></script>
     <script src="m2-valuation-map.js?v=20260825-close"></script>
     <script src="m2-archive.js?v=20260824-manual-archive"></script>
+    <script src="m2-daily-candidates.js"></script>
     <script src="m2-app.js?v=20260824-manual-archive"></script>
   </body>
 </html>

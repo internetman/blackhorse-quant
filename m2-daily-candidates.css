@@ -1,0 +1,10 @@
+#daily-candidates { margin: 24px 0; }
+.daily-status { color: #f0ca79; font-weight: 600; }
+.daily-meta { color: #a8b4c4; font-size: .85rem; line-height: 1.6; }
+.daily-warning { color: #e3bb80; font-size: .85rem; line-height: 1.6; }
+.daily-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,280px),1fr)); gap: 14px; }
+.daily-card { background: #121a24; border: 1px solid #293748; border-radius: 14px; padding: 20px; min-width: 0; overflow-wrap: anywhere; }
+.daily-card h3 { margin: 0 0 12px; }.daily-card p { line-height: 1.6; }
+
+.legacy-footprints { margin: 24px 0; border: 1px solid #293748; padding: 16px; border-radius: 14px; }
+.legacy-footprints > summary { cursor: pointer; color: #a8b4c4; line-height: 1.6; }
