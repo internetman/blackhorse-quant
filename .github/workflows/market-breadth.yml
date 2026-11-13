@@ -55,7 +55,7 @@ jobs:
       - name: Collect, publish only session data, and verify website generation
         env:
           REQUESTED_SESSION: ${{ inputs.session || 'auto' }}
-          FORCE_COLLECTION: ${{ github.event_name == 'push' || inputs.force }}
+          FORCE_COLLECTION: ${{ inputs.force || false }}
         run: |
           args=(--session "$REQUESTED_SESSION")
           if [ "$FORCE_COLLECTION" = true ]; then args+=(--force); fi
