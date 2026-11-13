@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "mode": "derived-pilot",
+  "asOfDate": "2026-11-13",
+  "valid": 356,
+  "total": 360,
+  "sectors": [
+    "半导体",
+    "消费电子",
+    "光伏设备",
+    "电子化学品"
+  ],
+  "candidates": [
+    {
+      "code": "688213",
+      "name": "思特威-W",
+      "classification": "S2正常"
+    },
+    {
+      "code": "603893",
+      "name": "瑞芯微",
+      "classification": "S2正常"
+    },
+    {
+      "code": "688018",
+      "name": "乐鑫科技",
+      "classification": "S2延伸"
+    }
+  ]
+}

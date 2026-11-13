@@ -5,12 +5,21 @@
   function model(data, expected, isArchived = () => false) {
     if (!data || data.schemaVersion !== 1 || !validDate(data.asOfDate) || !Array.isArray(data.candidates)) throw new Error('候选格式或数据日期无效');
     const seen = new Set();
-    const candidates = data.candidates.filter(c => {
+    const eligible = data.candidates.filter(c => {
       if (!c || !/^\d{6}$/.test(c.code) || seen.has(c.code) || isArchived(c.code) || c.asOfDate !== data.asOfDate) return false;
       seen.add(c.code); return true;
     });
-    const label = data.mode === 'replay' ? '历史试跑 · 非今日名单' : data.mode !== 'close' ? '运行口径待核 · 非确认名单' : !expected ? '新鲜度待核' : data.asOfDate < expected ? '数据滞后 · 非最新名单' : data.asOfDate > expected ? '收盘日期待核' : '最新完整收盘候选 · 待人工复盘';
-    return {data,candidates,label};
+    const current = data.mode === 'close' && validDate(expected) && data.asOfDate === expected;
+    // A dated file alone does not prove that collection/analysis completed.
+    const verified = data.runStatus === 'success' && data.barStatus === 'completed'
+      && Number.isInteger(data.candidateCount) && data.candidateCount === data.candidates.length
+      && data.candidates.every(c => c && /^\d{6}$/.test(c.code) && c.asOfDate === data.asOfDate);
+    const usable = current && verified;
+    const label = data.mode === 'replay' ? '历史试跑 · 不展示为每日候选' : data.mode !== 'close' ? '运行口径待核 · 暂不展示候选' : !validDate(expected) ? '交易日历待核 · 暂不展示候选' : data.asOfDate < expected ? '数据滞后 · 等待最新完整收盘结果' : data.asOfDate > expected ? '收盘日期待核 · 暂不展示候选' : !verified ? '本次运行未核实成功 · 暂不展示候选' : '最新完整收盘候选 · 待人工复盘';
+    const emptyMessage = !usable ? '当前没有经核实的最新候选结果；这不代表筛选结果为零，不使用旧名单补足。'
+      : data.candidateCount === 0 ? '本次完整筛选已成功，符合规则的候选为 0 只。'
+      : !eligible.length ? '本次候选均已手动归档；可在归档箱恢复。' : '';
+    return {data,candidates:usable ? eligible : [],label,usable,emptyMessage};
   }
   function node(tag, text, cls) {
     const el = document.createElement(tag); if (text != null) el.textContent = String(text); if (cls) el.className = cls; return el;
@@ -18,7 +27,7 @@
   function render(host, state) {
     host.replaceChildren();
     const heading = document.getElementById('dailyCandidateTitle');
-    if (heading) heading.textContent = `每日候选 · ${state.data.asOfDate}`;
+    if (heading) heading.textContent = state.usable ? `正式每日候选 · ${state.data.asOfDate}` : `正式每日候选 · 等待有效更新（收到 ${state.data.asOfDate}）`;
     host.append(node('p',state.label,'daily-status'));
     const d = state.data, u = d.universe || {};
     host.append(node('p',`行情截至 ${d.asOfDate} · 来源：${d.source || '待核'} · ${u.scope || '范围待核'} · 有效 ${u.valid ?? '—'} / ${u.total ?? '—'}（${u.coveragePct ?? '—'}%）`,'daily-meta'));
@@ -36,7 +45,7 @@
       card.append(node('p',`人工复核：${checks.length ? checks.join('；') : '复权、形态、量能及重大事件'}`,'daily-warning'));
       grid.append(card);
     }
-    if (!state.candidates.length) grid.append(node('p','本次没有可展示候选，不使用旧名单补足。'));
+    if (!state.candidates.length) grid.append(node('p',state.emptyMessage));
     host.append(grid);
   }
   async function boot() {
@@ -49,7 +58,10 @@
       const refresh = () => render(host,model(data,root.MarketWeather?.expectedCloseDate() || null,code => Boolean(root.M2Archive?.isArchived(code))));
       refresh();
       root.M2Archive?.subscribe(refresh);
-    } catch (_) { host.replaceChildren(node('p','每日候选尚未就绪或读取失败；下方股票足迹是原导入记录，不是本次新筛选结果。','daily-warning')); }
+      // Re-evaluate the trading-date boundary while this page stays open.
+      root.setInterval(refresh, 60000);
+      document.addEventListener('visibilitychange', refresh);
+    } catch (_) { host.replaceChildren(node('p','正式自动候选尚未发布或读取失败；独立试跑结果另列，不等于正式自动任务已完成。这不代表筛选结果为零。下方股票足迹是原导入记录，不是本次新筛选结果。','daily-warning')); }
   }
   if (typeof module !== 'undefined' && module.exports) module.exports = {model};
   if (typeof document !== 'undefined') boot();
