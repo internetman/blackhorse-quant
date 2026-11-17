@@ -105,11 +105,15 @@ responses must match their canonical checksum, cutoff, symbol and adjusted
 series. A native raw file still must provide explicit `qfqday`; never accept
 a raw `day` fallback. Native FFD overlaps must carry qfq execution, declared
 share/CNY units and CNY row currency. All three overlaps must match OHLC.
-A native row with explicitly null price/volume/amount cells and verified
-identity/dimensions quarantines only that symbol across the original archives.
-It remains in the original sector denominator; no part of its bars can enter
-the seed. Private bridge receipts record affected code/date/field names without
-prices. Unknown identity, malformed schema or non-null data, incompatible
+The required overlap is the final **three verified exchange sessions** ending
+on the seed cutoff. A native row with explicitly null price/volume/amount
+cells and otherwise verified identity/dimensions quarantines that symbol only
+if the null falls within the required overlap. It remains in the original
+sector denominator and cannot supply a partial overlap. Outside-window nulls
+are retained in the private archive audit but are not appended, imputed or
+used as evidence; a complete independent three-day overlap can still pass.
+Private receipts record affected code/date/field names, never prices.
+Unknown identity, malformed schema or non-null data, incompatible
 metadata/currency and duplicate code/date rows still reject the archive.
 An original asset list alone does not prove sector membership; if three
 original members lack independent sector mapping, do not fabricate a 360-member

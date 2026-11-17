@@ -76,13 +76,38 @@ class Tests(unittest.TestCase):
         self.assertEqual(len(keys),6)
         self.assertEqual(held[bad],{DATES[-2]:["amt"]})
         self.assertEqual(set(b.load_ffd_rows(archived)),{CODE})
-        merged, held = b.merge_ffd_archives([archived],expected_symbols={CODE,bad})
+        merged, held, _ = b.merge_ffd_archives([archived],expected_symbols={CODE,bad})
         self.assertEqual(set(merged),{CODE})
         self.assertIn(bad,held)
         with self.assertRaisesRegex(ValueError,"duplicate"):
             b.merge_ffd_archives([archived,ffd(bad)])
         with self.assertRaisesRegex(ValueError,"identity"):
             b.merge_ffd_archives([archived],expected_symbols={CODE})
+
+    def test_only_exact_overlap_nulls_quarantine_and_older_nulls_are_audited(self):
+        solar="002623.SZ"
+        archived=ffd(solar)
+        outside=dict(archived["raw_rows"][0],time="2026-11-09",volume=None,amt=None)
+        archived["raw_rows"].insert(0,outside)
+        required=["2026-11-11","2026-11-12","2026-11-13"]
+        rows, held, historical = b.merge_ffd_archives([archived],expected_symbols={solar},required_dates=required)
+        self.assertEqual(list(rows[solar]),required)
+        self.assertEqual(held,{})
+        self.assertEqual(historical,{solar:{"2026-11-09":["volume","amt"]}})
+        winner,_=b.bridge(tencent(solar),rows[solar],solar,PREV,required_dates=required)
+        self.assertIsNone(next(x for x in winner if x["date"]=="2026-11-09")["amount"])
+        self.assertTrue(all(x["amount"] is not None for x in winner[-3:]))
+        malformed=ffd(solar)
+        malformed["raw_rows"].append(dict(outside,trade_currency="USD"))
+        with self.assertRaisesRegex(ValueError,"CNY"):
+            b.merge_ffd_archives([malformed],required_dates=required)
+        with self.assertRaisesRegex(ValueError,"duplicate"):
+            b.merge_ffd_archives([archived,dict(archived,raw_rows=[outside])],required_dates=required)
+        archived["raw_rows"][-1]["amount"] = 10
+        archived["raw_rows"][-1]["amt"] = None
+        _, held, historical = b.merge_ffd_archives([archived],required_dates=required)
+        self.assertIn(solar,held)
+        self.assertIn(solar,historical)
 
     def test_null_cannot_hide_global_invalid_data(self):
         def partial():

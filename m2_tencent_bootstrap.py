@@ -14,8 +14,8 @@ import time
 import urllib.parse
 import urllib.request
 
-from m2_incremental import OVERLAP, SECTORS, days_between, validate_seed
-from m2_seed_bridge import bridge, merge_ffd_archives, vendor_symbol
+from m2_incremental import SECTORS, days_between, validate_seed
+from m2_seed_bridge import bridge, merge_ffd_archives, required_overlap_dates, vendor_symbol
 from trading_calendar import expected_close, is_trading_day, load_calendar
 from zoneinfo import ZoneInfo
 
@@ -86,12 +86,10 @@ def prepare(manifest, cutoff, overlap_files, calendar, now):
         raise ValueError("dated frozen membership evidence required")
     securities = [{**s,"risk":s.get("risk","unknown")} for s in manifest["securities"]]
     validate_seed(securities)
-    overlap, quarantined = merge_ffd_archives((read_regular(p) for p in overlap_files),
-                                             expected_symbols={s["code"] for s in securities})
-    overlap_start = (dt.date.fromisoformat(cutoff)-dt.timedelta(days=24)).isoformat()
-    required_days = days_between(overlap_start,cutoff,calendar)[-OVERLAP:]
-    if len(required_days) != OVERLAP:
-        raise ValueError("verified calendar does not cover three close overlaps")
+    required_days = required_overlap_dates(cutoff,calendar)
+    overlap, quarantined, outside = merge_ffd_archives(
+        (read_regular(p) for p in overlap_files),
+        expected_symbols={s["code"] for s in securities},required_dates=required_days)
     covered = {k:0 for k in SECTORS}
     risk_known = {k:0 for k in SECTORS}
     ready = {}
@@ -106,11 +104,11 @@ def prepare(manifest, cutoff, overlap_files, calendar, now):
         if s["risk"] != "unknown" and s.get("riskAsOf") == cutoff and s.get("riskEvidence"):
             risk_known[s["sector"]] += 1
         ready[code] = overlap[code]
-    return ready, covered, risk_known, quarantined
+    return ready, covered, risk_known, required_days, quarantined, outside
 
 
-def validated_history(wrap,evidence,code,cutoff,calendar):
-    rows, ev = bridge(wrap,evidence,code,cutoff)
+def validated_history(wrap,evidence,code,cutoff,calendar,required):
+    rows, ev = bridge(wrap,evidence,code,cutoff,required_dates=required)
     full_dates = days_between(rows[0]["date"],cutoff,calendar)
     if [r["date"] for r in rows] != full_dates or len(rows) > TARGET_BARS:
         raise ValueError("historical sessions contain gaps or exceed bounded response")
@@ -122,7 +120,7 @@ def run(state, cutoff, manifest, overlap_files, calendar, now, *, limit, execute
     if type(limit) is not int or not 1 <= limit <= MAX_EXECUTE:
         raise ValueError(f"explicit request limit must be 1 through {MAX_EXECUTE}")
     require_private(state)
-    ready, possible, risk, quarantined = prepare(manifest,cutoff,overlap_files,calendar,now)
+    ready, possible, risk, required, quarantined, outside = prepare(manifest,cutoff,overlap_files,calendar,now)
     frozen = {s["code"] for s in manifest["securities"]}
     if codes is not None and (len(codes) != len(set(codes)) or not set(codes) <= frozen):
         raise ValueError("requested symbols are not unique members of original frozen scope")
@@ -137,7 +135,7 @@ def run(state, cutoff, manifest, overlap_files, calendar, now, *, limit, execute
         raw_path = history_dir/f"{code}.json"
         if raw_path.exists():
             try:
-                validated_history(read_regular(raw_path),ready[code],code,cutoff,calendar)
+                validated_history(read_regular(raw_path),ready[code],code,cutoff,calendar,required)
                 valid += 1
             except (OSError, ValueError, KeyError, TypeError, IndexError):
                 held += 1
@@ -152,6 +150,9 @@ def run(state, cutoff, manifest, overlap_files, calendar, now, *, limit, execute
                   theoreticalHistoryGatePossible=gate_possible,reused=valid,held=held,
                   ffdQuarantinedSymbolCount=sum(c in frozen for c in quarantined),
                   ffdQuarantinedArchiveSymbolCount=len(quarantined),
+                  requiredOverlapDates=required,
+                  ffdOutOfWindowNullSymbolCount=len(outside),
+                  ffdOutOfWindowNullRowCount=sum(map(len,outside.values())),
                   heldUnverifiedVenue=sum(s["code"].endswith(".BJ") for s in manifest["securities"]),
                   hasThreeOldOverlap=len(ready),planned=min(limit,len(pending)),
                   remainingAfterThisBatch=max(0,len(pending)-len(selected)),requestLimit=limit,
@@ -172,6 +173,13 @@ def run(state, cutoff, manifest, overlap_files, calendar, now, *, limit, execute
         receipt_dir.mkdir(mode=0o700,exist_ok=True)
         require_private(history_dir)
         require_private(receipt_dir)
+        archive_audit = dict(requiredOverlapDates=required,inWindow=quarantined,outsideWindow=outside)
+        audit_path = receipt_dir/"archive-null-audit.json"
+        if audit_path.exists():
+            if read_regular(audit_path) != archive_audit:
+                raise ValueError("private bootstrap archive-null audit changed; review before continuing")
+        else:
+            save(audit_path,archive_audit,exclusive=True)
         report["status"] = "bounded_batch"
         for code in selected:
             out, log = history_dir/f"{code}.json",receipt_dir/f"{code}.json"
@@ -188,7 +196,7 @@ def run(state, cutoff, manifest, overlap_files, calendar, now, *, limit, execute
                 digest_value = digest(raw)
                 wrap = dict(provider="Tencent",adjustment="qfq",effectiveKey="qfqday",cutoff=cutoff,
                             symbol=vendor_symbol(code),sha256=digest_value,response=raw)
-                rows, ev = validated_history(wrap,ready[code],code,cutoff,calendar)
+                rows, ev = validated_history(wrap,ready[code],code,cutoff,calendar,required)
                 save(out,wrap,exclusive=True)
                 save(log,dict(receipt,state="verified",responseSha256=digest_value,rows=len(rows),
                               overlap=ev["overlap"],volumeScale=ev["volumeScale"]))

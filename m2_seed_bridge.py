@@ -10,7 +10,9 @@ import math
 import os
 from pathlib import Path
 
-from m2_incremental import FIELDS, M2_SYMBOL, OVERLAP, SECTORS, UNVERIFIED_VENUE, valid_rows, validate_seed
+from m2_incremental import (FIELDS, M2_SYMBOL, OVERLAP, SECTORS, UNVERIFIED_VENUE,
+                            days_between, valid_rows, validate_seed)
+from trading_calendar import is_trading_day, load_calendar
 
 
 def vendor_symbol(code):
@@ -133,10 +135,25 @@ def load_ffd_rows(envelope):
     return {code:days for code,days in out.items() if code not in held}
 
 
-def merge_ffd_archives(envelopes, *, expected_symbols=None):
+def required_overlap_dates(cutoff, calendar):
+    day = dt.date.fromisoformat(cutoff)
+    if day.isoformat() != cutoff or not is_trading_day(day,calendar):
+        raise ValueError("overlap cutoff is not a verified exchange date")
+    first = (day-dt.timedelta(days=24)).isoformat()
+    expected = days_between(first,cutoff,calendar)[-OVERLAP:]
+    if len(expected) != OVERLAP or expected[-1] != cutoff:
+        raise ValueError("verified calendar does not cover all three close observations")
+    return expected
+
+
+def merge_ffd_archives(envelopes, *, expected_symbols=None, required_dates=None):
     merged = defaultdict(dict)
-    held = defaultdict(dict)
+    all_nulls = defaultdict(dict)
     seen = set()
+    required = None if required_dates is None else tuple(required_dates)
+    if required is not None and (len(required) != OVERLAP or tuple(sorted(set(required))) != required
+            or any(dt.date.fromisoformat(day).isoformat() != day for day in required)):
+        raise ValueError("required overlap dates must be three unique canonical dates")
     for envelope in envelopes:
         rows, quarantined, keys = load_ffd_archive(envelope)
         if expected_symbols is not None and any(code not in expected_symbols for code,_ in keys):
@@ -147,15 +164,22 @@ def merge_ffd_archives(envelopes, *, expected_symbols=None):
         for code, days in rows.items():
             merged[code].update(days)
         for code, days in quarantined.items():
-            held[code].update(days)
+            all_nulls[code].update(days)
+    held, outside = {}, {}
+    for code, days in all_nulls.items():
+        for day, missing in days.items():
+            dest = held if required is None or day in required else outside
+            dest.setdefault(code,{})[day] = missing
     for code in held:
         merged.pop(code,None)
-    return merged, held
+    return merged, held, outside
 
 
-def bridge(envelope, evidence, code, cutoff):
+def bridge(envelope, evidence, code, cutoff, *, required_dates=None):
     rows = convert_tencent(envelope, code, cutoff)
     tail = rows[-OVERLAP:]
+    if required_dates is not None and [r["date"] for r in tail] != list(required_dates):
+        raise ValueError("Tencent tail does not match three verified overlap dates")
     if len(tail) != OVERLAP or any(r["date"] not in evidence for r in tail):
         raise ValueError("missing FFD overlap on one or more last three sessions")
     used = [evidence[r["date"]] for r in tail]
@@ -174,7 +198,7 @@ def bridge(envelope, evidence, code, cutoff):
               overlap=[r["date"] for r in used], originalOlderAmountUnavailable=True)
 
 
-def build(manifest, cutoff, tencent_dir, ffd_paths):
+def build(manifest, cutoff, tencent_dir, ffd_paths, *, calendar=None):
     if not manifest.get("membershipSource") or not manifest.get("membershipDate"):
         raise ValueError("missing verified frozen universe evidence")
     if manifest["membershipDate"] > cutoff:
@@ -194,12 +218,15 @@ def build(manifest, cutoff, tencent_dir, ffd_paths):
         securities.append(security)
     validate_seed(securities)
     frozen = {s["code"] for s in securities}
-    overlap, quarantined = merge_ffd_archives((json.loads(file.read_text()) for file in ffd_paths),
-                                            expected_symbols=frozen)
+    required = required_overlap_dates(cutoff, calendar if calendar is not None else load_calendar())
+    overlap, quarantined, outside = merge_ffd_archives((json.loads(file.read_text()) for file in ffd_paths),
+                                            expected_symbols=frozen, required_dates=required)
     seed = dict(schemaVersion=1, adjustment="qfq", volumeUnit="share", amountUnit="CNY",
                 olderAmountsUnavailable=True,
                 provenance="Verified Tencent qfq OHLCV + native FFD qfq OHLCV/amt overlap, freeze before reuse",
-                membershipDate=manifest["membershipDate"], securities=securities, histories={})
+                membershipDate=manifest["membershipDate"], securities=securities, histories={},
+                sourceArchiveNullAudit=dict(requiredOverlapDates=required,inWindow=quarantined,
+                                            outsideWindow=outside))
     missing, passed, eligible_counts = {}, {}, {k: 0 for k in SECTORS}
     hist_counts = {k:0 for k in SECTORS}
     for item in securities:
@@ -218,7 +245,8 @@ def build(manifest, cutoff, tencent_dir, ffd_paths):
             if not file.is_file():
                 secid = ("1." if code.endswith(".SH") else "0.") + code[:6]
                 file = tencent_dir / f"{secid}.json"
-            rows, evidence = bridge(json.loads(file.read_text()), overlap[code], code, cutoff)
+            rows, evidence = bridge(json.loads(file.read_text()), overlap[code], code, cutoff,
+                                    required_dates=required)
             seed["histories"][code] = rows
             passed[code] = evidence
             hist_counts[item["sector"]] += 1
@@ -230,6 +258,9 @@ def build(manifest, cutoff, tencent_dir, ffd_paths):
                       riskUnknown=sum(s["risk"]=="unknown" for s in securities),
                       ffdQuarantinedSymbolCount=sum(code in frozen for code in quarantined),
                       ffdQuarantinedArchiveSymbolCount=len(quarantined),
+                      requiredOverlapDates=required,
+                      ffdOutOfWindowNullSymbolCount=len(outside),
+                      ffdOutOfWindowNullRowCount=sum(map(len,outside.values())),
                       heldUnverifiedVenue=sum(s["code"].endswith(".BJ") for s in securities),
                       validHistoryBySector=hist_counts, validKnownRiskBySector=eligible_counts,
                       canReachHistoricalGate=all(hist_counts[k]*100 >= SECTORS[k]*95 for k in SECTORS),
@@ -242,11 +273,14 @@ def main():
     p.add_argument("--tencent-dir",type=Path,required=True)
     p.add_argument("--ffd-overlap",type=Path,required=True,nargs="+")
     p.add_argument("--cutoff",required=True)
+    p.add_argument("--calendar",type=Path,help="Independently verified exchange calendar; never fetches")
     p.add_argument("--write-seed",type=Path,help="Explicitly write seed.json into this private mode-0700 directory")
     a=p.parse_args()
     if dt.date.fromisoformat(a.cutoff).isoformat() != a.cutoff:
         p.error("use ISO completed seed date")
-    seed, report, passed, missing=build(json.loads(a.manifest.read_text()),a.cutoff,a.tencent_dir,a.ffd_overlap)
+    calendar = load_calendar(a.calendar,allow_fetch=False) if a.calendar else load_calendar()
+    seed, report, passed, missing=build(json.loads(a.manifest.read_text()),a.cutoff,a.tencent_dir,a.ffd_overlap,
+                                      calendar=calendar)
     if a.write_seed:
         state=a.write_seed.resolve(strict=True)
         repo=Path(__file__).resolve().parent
@@ -259,7 +293,7 @@ def main():
         if final_seed.exists() or (state/"seed-bridge-receipt.json").exists():
             p.error("private seed/receipt already exists; refuses replacement")
         import tempfile
-        for target, obj in ((state/"seed-bridge-receipt.json",dict(report,checks=passed,omissions=missing)),
+        for target, obj in ((state/"seed-bridge-receipt.json",dict(report,checks=passed,omissions=missing,archiveNullAudit=seed["sourceArchiveNullAudit"])),
                             (final_seed,seed)):
             with tempfile.NamedTemporaryFile(mode="w", dir=state, delete=True,encoding="utf-8") as out:
                 json.dump(obj,out,ensure_ascii=False,allow_nan=False)

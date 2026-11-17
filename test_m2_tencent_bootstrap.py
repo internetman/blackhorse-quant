@@ -103,6 +103,24 @@ class Tests(unittest.TestCase):
         self.assertEqual(held["status"],"no_verified_bootstrap_candidates")
         self.assertEqual(held["requestsMade"],0)
 
+    def test_out_of_window_solar_shape_is_verified_and_privately_audited(self):
+        original=json.loads(self.overlap.read_text())
+        older=dict(original["raw_rows"][-1],time="2026-11-09",volume=None,amt=None)
+        original["raw_rows"].append(older)
+        self.overlap.write_text(json.dumps(original))
+        preview=self.execute(limit=1,codes=[B])
+        self.assertEqual(preview["requiredOverlapDates"],["2026-11-11","2026-11-12","2026-11-13"])
+        self.assertEqual(preview["ffdOutOfWindowNullRowCount"],1)
+        self.assertEqual(preview["ffdQuarantinedSymbolCount"],0)
+        self.assertTrue(preview["theoreticalHistoryGatePossible"])
+        self.assertEqual(self.calls,[])
+        self.assertFalse((self.state/f"tencent-receipts-{PREV}").exists())
+        actual=self.execute(execute=True,limit=1,codes=[B])
+        self.assertEqual(actual["validatedNew"],1)
+        audit=json.loads((self.state/f"tencent-receipts-{PREV}"/"archive-null-audit.json").read_text())
+        self.assertEqual(audit["outsideWindow"],{B:{"2026-11-09":["volume","amt"]}})
+        self.assertEqual(audit["inWindow"],{})
+
 
 if __name__=="__main__":
     unittest.main()
