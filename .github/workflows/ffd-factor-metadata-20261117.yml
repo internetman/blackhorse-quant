@@ -1,0 +1,56 @@
+name: FFD factor metadata only (2026-11-17)
+on:
+  push:
+    branches: [diag/ffd-factor-metadata-20261117]
+    paths: ['.github/workflows/ffd-factor-metadata-20261117.yml']
+permissions: {}
+jobs:
+  coverage:
+    if: github.repository == 'internetman/blackhorse-quant' && github.ref == 'refs/heads/diag/ffd-factor-metadata-20261117' && github.actor == 'internetman' && github.event.created == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Read zero-cost coverage metadata only
+        env:
+          FFD_API_KEY: ${{ secrets.FFD_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re, urllib.error, urllib.request
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, *a, **kw):
+                  return None
+          def fail(reason):
+              raise SystemExit(reason)
+          key = os.environ.get('FFD_API_KEY')
+          if not key:
+              fail('Existing FFD credential not available to this branch')
+          codes = ['600000.SH','000001.SZ','688053.SH']
+          body = dict(codes=codes, start_date='2026-11-12', end_date='2026-11-17',
+                      include_anchor=True, coverage_policy='coverage_only', accept_partial_billing=False)
+          request = urllib.request.Request('https://ffd.findesk.cn/api/v1/market/adjustment-factor-events',
+                      data=json.dumps(body).encode(), method='POST',
+                      headers={'Authorization':'Bearer '+key,'Content-Type':'application/json','Accept':'application/json'})
+          try:
+              with urllib.request.build_opener(NoRedirect).open(request,timeout=30) as response:
+                  j=json.loads(response.read(100000))
+          except urllib.error.HTTPError as e:
+              fail(f'FFD metadata request returned HTTP {e.code}; no retry')
+          except Exception:
+              fail('FFD metadata transport or response unavailable; no retry')
+          if not isinstance(j,dict) or j.get('code')!=200 or j.get('items')!=[]:
+              fail('Unexpected response; no data displayed and no retry')
+          meta=j.get('meta',{})
+          if type(meta) is not dict or any(type(meta.get(k)) is not int or meta[k]!=0 for k in ('charged_points','delivered_records','billable_records')) or meta.get('upstream_called') is not False:
+              fail('Zero-charge metadata receipt not confirmed; no data displayed and no retry')
+          coverage=j.get('coverage',{}); d=j.get('dataset',{}); rows=coverage.get('perSecurity',[])
+          if not isinstance(rows,list) or not all(isinstance(r,dict) for r in rows) or sorted(str(r.get('securityCode')) for r in rows)!=sorted(codes):
+              fail('Expected exact sample identity in coverage receipt')
+          def day(value):
+              return value if isinstance(value,str) and re.fullmatch(r'\d{4}-\d{2}-\d{2}', value) else None
+          result=dict(start=body['start_date'],end=body['end_date'],chargedPoints=0,
+                      complete=coverage.get('complete') is True,datasetPublished=d.get('status')=='published',
+                      datasetCoverageEnd=day(d.get('coverageEnd')),samples=[dict(code=r['securityCode'],complete=r.get('complete') is True,
+                      noChange=r.get('completeNoChange') if type(r.get('completeNoChange')) is bool else None,
+                      verifiedFrom=day(r.get('verifiedCoverageStart')),completeThrough=day(r.get('completeThrough'))) for r in rows])
+          print(json.dumps(result,separators=(',',':')))
+          PY
