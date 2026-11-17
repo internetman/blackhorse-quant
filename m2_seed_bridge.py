@@ -15,6 +15,26 @@ from m2_incremental import (FIELDS, M2_SYMBOL, OVERLAP, SECTORS, UNVERIFIED_VENU
 from trading_calendar import is_trading_day, load_calendar
 
 
+# Error text from the provider or arbitrary exceptions is never a receipt
+# field. Only these application-owned validation categories can escape.
+BRIDGE_FAILURES = frozenset({
+    "cached_provenance", "cached_digest", "provider_result_not_success",
+    "provider_payload_shape", "provider_security_identity", "explicit_qfq_missing",
+    "historical_row_shape", "historical_row_values", "historical_cutoff",
+    "expected_overlap_dates", "archived_overlap_missing", "overlap_ohlc_mismatch",
+    "overlap_volume_units", "historical_seed_quality", "history_response_limit",
+    "history_trading_dates", "archive_calendar_unverified",
+})
+
+
+class BridgeValidationError(ValueError):
+    def __init__(self, reason, message):
+        if reason not in BRIDGE_FAILURES:
+            raise ValueError("unknown bridge failure category")
+        super().__init__(message)
+        self.reason = reason
+
+
 def vendor_symbol(code):
     if not isinstance(code,str) or not M2_SYMBOL.fullmatch(code) or code.endswith(".BJ"):
         raise ValueError("Tencent bootstrap only accepts verified Shanghai/Shenzhen source scope")
@@ -31,28 +51,52 @@ def finite(*values):
 
 def convert_tencent(envelope, code, cutoff):
     sym = vendor_symbol(code)
+    if not isinstance(envelope,dict):
+        raise BridgeValidationError("provider_payload_shape","Tencent response must be an object")
     raw = envelope
     if "response" in envelope:
         if (envelope.get("symbol") != sym or envelope.get("provider") != "Tencent"
                 or envelope.get("adjustment") != "qfq" or envelope.get("effectiveKey") != "qfqday"
                 or envelope.get("cutoff") != cutoff):
-            raise ValueError("cached Tencent provenance, cutoff or symbol mismatch")
+            raise BridgeValidationError("cached_provenance","cached Tencent provenance, cutoff or symbol mismatch")
         raw = envelope["response"]
         encoded = json.dumps(raw,ensure_ascii=False,sort_keys=True,separators=(",",":")).encode()
         if hashlib.sha256(encoded).hexdigest() != envelope.get("sha256"):
-            raise ValueError("Tencent cache digest mismatch")
+            raise BridgeValidationError("cached_digest","Tencent cache digest mismatch")
+    if not isinstance(raw,dict):
+        raise BridgeValidationError("provider_payload_shape","Tencent original response is not an object")
     if raw.get("code") not in (0, "0"):
-        raise ValueError("Tencent response not successful")
-    node = raw["data"][sym]
+        raise BridgeValidationError("provider_result_not_success","Tencent response not successful")
+    data = raw.get("data")
+    if not isinstance(data,dict):
+        raise BridgeValidationError("provider_payload_shape","Tencent response data is not an object")
+    if sym not in data:
+        raise BridgeValidationError("provider_security_identity","Tencent requested symbol absent")
+    node = data[sym]
+    if not isinstance(node,dict):
+        raise BridgeValidationError("provider_payload_shape","Tencent symbol entry is not an object")
     if "qfqday" not in node:
         # A "day" fallback is not independently verified adjusted data.
-        raise ValueError("Tencent explicit qfqday series not available")
+        raise BridgeValidationError("explicit_qfq_missing","Tencent explicit qfqday series not available")
+    if not isinstance(node["qfqday"],list):
+        raise BridgeValidationError("provider_payload_shape","Tencent qfqday series is not a list")
     rows = []
-    for date, o, c, h, l, v, *_ in node["qfqday"]:
-        oo, cc, hh, ll, vv = finite(o, c, h, l, v)
+    for row in node["qfqday"]:
+        if not isinstance(row,(list,tuple)) or len(row)<6 or not isinstance(row[0],str):
+            raise BridgeValidationError("historical_row_shape","Tencent native row missing date or fields")
+        date, o, c, h, l, v, *_ = row
+        try:
+            if dt.date.fromisoformat(date).isoformat() != date:
+                raise ValueError("noncanonical date")
+        except ValueError:
+            raise BridgeValidationError("history_trading_dates","invalid Tencent historical trading date") from None
+        try:
+            oo, cc, hh, ll, vv = finite(o, c, h, l, v)
+        except (TypeError, ValueError, OverflowError):
+            raise BridgeValidationError("historical_row_values","invalid Tencent historical value") from None
         rows.append(dict(date=date, open=oo, high=hh, low=ll, close=cc, volume=vv, amount=None))
     if not rows or rows[-1]["date"] != cutoff or any(r["date"] > cutoff for r in rows):
-        raise ValueError("Tencent series does not terminate at requested close")
+        raise BridgeValidationError("historical_cutoff","Tencent series does not terminate at requested close")
     return rows
 
 
@@ -179,23 +223,28 @@ def bridge(envelope, evidence, code, cutoff, *, required_dates=None):
     rows = convert_tencent(envelope, code, cutoff)
     tail = rows[-OVERLAP:]
     if required_dates is not None and [r["date"] for r in tail] != list(required_dates):
-        raise ValueError("Tencent tail does not match three verified overlap dates")
+        raise BridgeValidationError("expected_overlap_dates","Tencent tail does not match three verified overlap dates")
     if len(tail) != OVERLAP or any(r["date"] not in evidence for r in tail):
-        raise ValueError("missing FFD overlap on one or more last three sessions")
+        raise BridgeValidationError("archived_overlap_missing","missing FFD overlap on one or more last three sessions")
     used = [evidence[r["date"]] for r in tail]
     if any(abs(old[k]-new[k]) > 1e-8 for old,new in zip(tail,used) for k in FIELDS[:4]):
-        raise ValueError("same-date adjusted OHLC disagree between Tencent and FFD")
+        raise BridgeValidationError("overlap_ohlc_mismatch","same-date adjusted OHLC disagree between Tencent and FFD")
     # Tencent feed unit is not uniform; infer one multiplier per complete series
     # using all last three overlap sessions and reject all ambiguous cases.
     scales = [scale for scale in (1, 100)
               if all(abs(old["volume"]*scale-new["volume"]) <= (50 if scale==100 else 1e-8)
                      for old,new in zip(tail,used))]
     if len(scales) != 1:
-        raise ValueError("ambiguous or mixed Tencent volume units")
+        raise BridgeValidationError("overlap_volume_units","ambiguous or mixed Tencent volume units")
     scale = scales[0]
     merged = [dict(r,volume=r["volume"]*scale) for r in rows[:-OVERLAP]] + used
-    return valid_rows(merged, permit_older_missing_amount=True), dict(volumeScale=scale,
-              overlap=[r["date"] for r in used], originalOlderAmountUnavailable=True)
+    if [r["date"] for r in merged] != sorted({r["date"] for r in merged}):
+        raise BridgeValidationError("history_trading_dates","Tencent historical dates are unsorted or duplicate")
+    try:
+        validated = valid_rows(merged, permit_older_missing_amount=True)
+    except (ValueError, KeyError, TypeError, OverflowError):
+        raise BridgeValidationError("historical_seed_quality","Tencent historical seed did not pass quality checks") from None
+    return validated, dict(volumeScale=scale,overlap=[r["date"] for r in used],originalOlderAmountUnavailable=True)
 
 
 def build(manifest, cutoff, tencent_dir, ffd_paths, *, calendar=None):

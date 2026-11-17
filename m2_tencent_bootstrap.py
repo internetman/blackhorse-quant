@@ -11,11 +11,13 @@ from pathlib import Path
 import stat
 import tempfile
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
-from m2_incremental import SECTORS, days_between, validate_seed
-from m2_seed_bridge import bridge, merge_ffd_archives, required_overlap_dates, vendor_symbol
+from m2_incremental import M2_SYMBOL, SECTORS, days_between, validate_seed
+from m2_seed_bridge import (BRIDGE_FAILURES, BridgeValidationError, bridge, merge_ffd_archives,
+                            required_overlap_dates, vendor_symbol)
 from trading_calendar import expected_close, is_trading_day, load_calendar
 from zoneinfo import ZoneInfo
 
@@ -25,6 +27,44 @@ MAX_PAYLOAD_BYTES = 3 * 1024 * 1024
 REQUEST_INTERVAL = 1.0
 MAX_EXECUTE = 360
 ZONE = ZoneInfo("Asia/Shanghai")
+
+
+FAILURE_REASONS = BRIDGE_FAILURES | frozenset({
+    "provider_http_redirect_refused","provider_http_rate_limited","provider_http_access_refused",
+    "provider_http_error","provider_timeout","provider_transport","provider_response_size",
+    "provider_invalid_json","provider_request_failed","validation_unclassified","private_storage",
+})
+
+
+class ResponseSizeError(ValueError):
+    """The public provider response exceeded the byte limit."""
+
+
+def failure_reason(exc,phase):
+    if phase == "persist":
+        return "private_storage"
+    if phase == "validate":
+        reason = getattr(exc,"reason",None) if isinstance(exc,BridgeValidationError) else None
+        return reason if isinstance(reason,str) and reason in BRIDGE_FAILURES else "validation_unclassified"
+    if isinstance(exc,urllib.error.HTTPError):
+        if type(exc.code) is not int:
+            return "provider_http_error"
+        if 300 <= exc.code < 400:
+            return "provider_http_redirect_refused"
+        if exc.code == 429:
+            return "provider_http_rate_limited"
+        if exc.code in (401,403):
+            return "provider_http_access_refused"
+        return "provider_http_error"
+    if isinstance(exc,TimeoutError) or (isinstance(exc,urllib.error.URLError) and isinstance(exc.reason,TimeoutError)):
+        return "provider_timeout"
+    if isinstance(exc,ResponseSizeError):
+        return "provider_response_size"
+    if isinstance(exc,(json.JSONDecodeError,UnicodeError)):
+        return "provider_invalid_json"
+    if isinstance(exc,OSError):
+        return "provider_transport"
+    return "provider_request_failed"
 
 
 def digest(data):
@@ -43,7 +83,7 @@ def fetch_original(query):
     with opener.open(req,timeout=12) as res:
         raw = res.read(MAX_PAYLOAD_BYTES+1)
     if len(raw) > MAX_PAYLOAD_BYTES:
-        raise ValueError("Tencent response exceeds allowed size")
+        raise ResponseSizeError("Tencent response exceeds allowed size")
     return json.loads(raw)
 
 
@@ -109,10 +149,35 @@ def prepare(manifest, cutoff, overlap_files, calendar, now):
 
 def validated_history(wrap,evidence,code,cutoff,calendar,required):
     rows, ev = bridge(wrap,evidence,code,cutoff,required_dates=required)
-    full_dates = days_between(rows[0]["date"],cutoff,calendar)
-    if [r["date"] for r in rows] != full_dates or len(rows) > TARGET_BARS:
-        raise ValueError("historical sessions contain gaps or exceed bounded response")
+    if len(rows) > TARGET_BARS:
+        raise BridgeValidationError("history_response_limit","historical response exceeds bounded bar count")
+    try:
+        full_dates = days_between(rows[0]["date"],cutoff,calendar)
+    except (KeyError,ValueError,TypeError):
+        raise BridgeValidationError("archive_calendar_unverified","source history falls outside verified calendar") from None
+    if [r["date"] for r in rows] != full_dates:
+        raise BridgeValidationError("history_trading_dates","historical sessions contain exchange-date gaps")
     return rows,ev
+
+
+def global_hold_count(receipt_dir,history_dir,cutoff):
+    # Check the whole private journal, not only whichever codes were selected.
+    # Old receipts without diagnostic detail still hold and are never migrated.
+    blocked = 0
+    for path in receipt_dir.glob("*.json"):
+        if path.name == "archive-null-audit.json":
+            continue
+        try:
+            if not M2_SYMBOL.fullmatch(path.stem):
+                raise ValueError("unknown journal record")
+            receipt = read_regular(path)
+            if (receipt.get("cutoff") != cutoff or receipt.get("code") != path.stem
+                    or receipt.get("state") != "verified"
+                    or not stat.S_ISREG((history_dir/f"{path.stem}.json").lstat().st_mode)):
+                blocked += 1
+        except (OSError,ValueError,TypeError,AttributeError):
+            blocked += 1
+    return blocked
 
 
 def run(state, cutoff, manifest, overlap_files, calendar, now, *, limit, execute=False,
@@ -130,6 +195,7 @@ def run(state, cutoff, manifest, overlap_files, calendar, now, *, limit, execute
     for path in (history_dir,receipt_dir):
         if path.exists():
             require_private(path)
+    global_holds = global_hold_count(receipt_dir,history_dir,cutoff)
     pending, valid, held = [], 0, 0
     for code in checks:
         raw_path = history_dir/f"{code}.json"
@@ -147,7 +213,7 @@ def run(state, cutoff, manifest, overlap_files, calendar, now, *, limit, execute
     gate_possible = all(possible[k]*100 >= SECTORS[k]*95 for k in SECTORS)
     report = dict(status="plan_only",seedCutoff=cutoff,scope="four-sector-close-v1",
                   availableOldOverlapBySector=possible,qualifiedRiskAtSeedCutoffBySector=risk,
-                  theoreticalHistoryGatePossible=gate_possible,reused=valid,held=held,
+                  theoreticalHistoryGatePossible=gate_possible,reused=valid,held=held,globalReconciliationHolds=global_holds,
                   ffdQuarantinedSymbolCount=sum(c in frozen for c in quarantined),
                   ffdQuarantinedArchiveSymbolCount=len(quarantined),
                   requiredOverlapDates=required,
@@ -159,13 +225,13 @@ def run(state, cutoff, manifest, overlap_files, calendar, now, *, limit, execute
                   requestsMade=0,validatedNew=0,ffdCalls=0,ffdPointsUsed=0,barsPublished=False)
     if not execute:
         return report
+    if global_holds or held:
+        return dict(report,status="held_saved_attempt_requires_reconciliation")
     if not selected:
         return dict(report,status="no_verified_bootstrap_candidates")
     # A large recovery is wasted when frozen overlap cannot reach its 95% gate.
     if not gate_possible and (codes is None or len(selected) != 1):
         return dict(report,status="blocked_overlap_coverage")
-    if held:
-        return dict(report,status="held_saved_attempt_requires_reconciliation")
     with os.fdopen(os.open(state/f"tencent-{cutoff}.lock",
                            os.O_CREAT|os.O_RDWR|os.O_NOFOLLOW,0o600),"r+") as lock:
         fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -173,6 +239,9 @@ def run(state, cutoff, manifest, overlap_files, calendar, now, *, limit, execute
         receipt_dir.mkdir(mode=0o700,exist_ok=True)
         require_private(history_dir)
         require_private(receipt_dir)
+        current_holds = global_hold_count(receipt_dir,history_dir,cutoff)
+        if current_holds:
+            return dict(report,status="held_saved_attempt_requires_reconciliation",globalReconciliationHolds=current_holds)
         archive_audit = dict(requiredOverlapDates=required,inWindow=quarantined,outsideWindow=outside)
         audit_path = receipt_dir/"archive-null-audit.json"
         if audit_path.exists():
@@ -191,21 +260,30 @@ def run(state, cutoff, manifest, overlap_files, calendar, now, *, limit, execute
             if report["requestsMade"]:
                 sleep(REQUEST_INTERVAL)
             report["requestsMade"] += 1
+            phase = "request"
             try:
                 raw = fetch(url)
+                phase = "validate"
                 digest_value = digest(raw)
                 wrap = dict(provider="Tencent",adjustment="qfq",effectiveKey="qfqday",cutoff=cutoff,
                             symbol=vendor_symbol(code),sha256=digest_value,response=raw)
                 rows, ev = validated_history(wrap,ready[code],code,cutoff,calendar,required)
+                phase = "persist"
                 save(out,wrap,exclusive=True)
                 save(log,dict(receipt,state="verified",responseSha256=digest_value,rows=len(rows),
                               overlap=ev["overlap"],volumeScale=ev["volumeScale"]))
                 report["validatedNew"] += 1
-            except (OSError,ValueError,KeyError,TypeError,IndexError) as exc:
-                # Stop after the first anomalous response. Do not log exception
-                # text or overwrite originals, and don't switch provider.
-                save(log,dict(receipt,state="reconciliation_needed",exceptionType=type(exc).__name__))
-                report["status"] = "held_provider_or_validation"
+            except Exception as exc:
+                # Classify without storing exception text, raw payload, price,
+                # authentication metadata or any inferred provider permission.
+                reason = failure_reason(exc,phase)
+                try:
+                    save(log,dict(receipt,state="reconciliation_needed",failureReason=reason))
+                except OSError:
+                    # Pending receipt still prevents further use; do not retry
+                    # a network request after local journal update failure.
+                    reason = "private_storage"
+                report.update(status="held_provider_or_validation",failureReason=reason)
                 break
     return report
 

@@ -147,7 +147,16 @@ to the Tencent qfq endpoint, 340 bars and a 12-second network timeout; there
 are no redirects, automatic retries, FFD keys, or fallback providers. Original
 Tencent values are saved privately without invented turnover and are validated
 against three dated, previously saved FFD OHLCV/amount rows. Private request
-receipts block repeating a failed or uncertain request until reviewed. A full
+receipts block all additional requests in that cutoff's private journal
+until a failed or uncertain attempt is reviewed; changing the selected stock
+does not bypass the hold. New receipts use only fixed diagnostic categories
+(such as `explicit_qfq_missing`, `overlap_ohlc_mismatch`, `overlap_volume_units`,
+or `history_trading_dates`), never provider exception text, raw responses on
+failure, price values, keys or entitlement. Old reasonless receipts stay
+unchanged and remain held. An independently retained alternative-source
+original could be evaluated separately only after the attempted receipt is
+reconciled and the alternate source passes the same explicit date, price
+basis and overlap gates; do not switch providers automatically. A full
 batch is paced to at least one second between sequential requests. It refuses
 to run when saved overlaps cannot theoretically meet the sector gate, except
 for a separately specified one-symbol canary. A future full run would need at
