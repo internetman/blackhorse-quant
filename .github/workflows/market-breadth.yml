@@ -8,19 +8,24 @@ on:
         type: choice
         options: [auto, close, midday]
         default: auto
+      target_date:
+        description: Optional YYYY-MM-DD target for a manual close run
+        type: string
+        required: false
       force:
         description: Force real collection with empty cache for cold acceptance
         type: boolean
         default: false
   schedule:
-    # Beijing 12:00 / 12:20, then 16:40 / 17:40 / 18:40.
-    - cron: '0,20 4 * * 1-5'
+    # Beijing 12:07 / 12:27 (avoid the hour), then 16:40 / 17:40 / 18:40.
+    - cron: '7,27 4 * * 1-5'
     - cron: '40 8,9,10 * * 1-5'
   push:
     branches: [main]
     paths:
       - '.github/workflows/market-breadth.yml'
       - 'cloud_breadth.py'
+      - 'close_target.py'
       - 'cloud_dashboard.py'
       - 'dashboard_collect.py'
       - 'daily_breadth.py'
@@ -53,6 +58,7 @@ jobs:
           python3 -m pip install --disable-pip-version-check -r requirements-breadth.txt
           python3 -m unittest discover -p 'test*py' -q
       - name: Observe and publish independent dated page modules
+        if: ${{ !inputs.target_date }}
         env:
           REQUESTED_SESSION: ${{ inputs.session || 'auto' }}
         run: python3 cloud_dashboard.py --session "$REQUESTED_SESSION"
@@ -82,7 +88,9 @@ jobs:
         env:
           REQUESTED_SESSION: ${{ inputs.session || 'auto' }}
           FORCE_COLLECTION: ${{ inputs.force || false }}
+          TARGET_DATE: ${{ inputs.target_date || '' }}
         run: |
           args=(--session "$REQUESTED_SESSION")
+          if [ -n "$TARGET_DATE" ]; then args+=(--target-date "$TARGET_DATE"); fi
           if [ "$FORCE_COLLECTION" = true ]; then args+=(--force); fi
           python3 cloud_breadth.py "${args[@]}"

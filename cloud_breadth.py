@@ -11,7 +11,8 @@ from pathlib import Path
 import daily_breadth as daily
 import midday_breadth as midday
 from market_breadth import ROOT, ZONE, fetch
-from trading_calendar import load_calendar, is_trading_day, expected_close
+from trading_calendar import load_calendar, is_trading_day
+from close_target import close_target
 from publish_breadth import git, REPOSITORY, SITE
 
 class PublicationVerificationError(RuntimeError):
@@ -20,7 +21,11 @@ class PublicationVerificationError(RuntimeError):
         self.receipt = dict(receipt, status='failed', failedStage='website_verification', error=str(error)[:600])
 
 
-CRONS = {'0,20 4 * * 1-5': 'midday', '40 8,9,10 * * 1-5': 'close'}
+CRONS = {
+    '0,20 4 * * 1-5': 'midday',  # Queued runs from the prior schedule.
+    '7,27 4 * * 1-5': 'midday',
+    '40 8,9,10 * * 1-5': 'close',
+}
 FILES = {
     'close': ('market-breadth.json', 'market-breadth-status.json', 'market-trading-calendar.json'),
     'midday': ('market-breadth-midday.json', 'market-breadth-midday-status.json', 'market-trading-calendar.json'),
@@ -58,10 +63,10 @@ def check_repository(root):
         raise ValueError('Unexpected production repository')
 
 
-def validate_pair(root, session, now, calendar):
+def validate_pair(root, session, now, calendar, target_date=None):
     data, status = (daily.read_json(root / name) for name in FILES[session][:2])
     if session == 'close':
-        daily.validate_snapshot(data, expected_close(now, calendar))
+        daily.validate_snapshot(data, close_target(now, calendar, target_date))
         daily.require_publishable(data)
         if data.get('scopeVersion') not in daily.ADJUSTED_SCOPES:
             raise ValueError('Cloud close requires complete adjusted MA20/MA50 scope')
@@ -74,10 +79,10 @@ def validate_pair(root, session, now, calendar):
     return data
 
 
-def publish_session(root, session, now, calendar):
+def publish_session(root, session, now, calendar, target_date=None):
     """Only data/status for this session plus verified calendar; never force push."""
     check_repository(root)
-    data = validate_pair(root, session, now, calendar)
+    data = validate_pair(root, session, now, calendar, target_date)
     git(root, 'fetch', '--quiet', 'origin', 'main')
     head = git(root, 'rev-parse', 'HEAD')
     if head != git(root, 'rev-parse', 'FETCH_HEAD'):
@@ -131,29 +136,44 @@ def verify_site(root, session, attempts=18, delay=10):
     raise RuntimeError(f'Website deployment not verified; Git integration may not deploy job-token pushes. No additional credential or deployment permission was used. {error}')
 
 
-def run(root=ROOT, now=None, event='workflow_dispatch', cron='', requested='auto', force=False):
+def run(root=ROOT, now=None, event='workflow_dispatch', cron='', requested='auto', force=False, target_date=None):
     root = Path(root)
     now = (now or dt.datetime.now(ZONE)).astimezone(ZONE)
     session = choose_session(event, cron, requested, now)
     # Unknown exchange calendars fail closed before collection or publication.
     calendar = load_calendar(root/'market-trading-calendar.json', now.year, allow_fetch=False)
-    if not is_trading_day(now.date(), calendar):
+    if target_date is not None and (event != 'workflow_dispatch' or requested != 'close'):
+        raise ValueError('Explicit target date requires a manual close job')
+    today = now.date()
+    trading_today = is_trading_day(today, calendar)
+    if session == 'midday' and not trading_today:
         return dict(status='skipped', session=session, reason='Not a verified exchange trading day')
     if session == 'midday' and not midday.noon_window(now, calendar):
         return dict(status='skipped', session=session, reason='Delayed/outside lunch window; never run close instead')
-    if session == 'close' and event == 'schedule' and now.hour < 16:
-        return dict(status='skipped', session=session, reason='Before close collection window')
-    # Full historical bootstrap is an explicit manual exception only.
+    # Code pushes are not backfill requests; close schedules and manual close
+    # jobs may catch up to a finalized prior exchange date.
+    if event == 'push' and not trading_today:
+        return dict(status='skipped', session=session, reason='Not a verified exchange trading day')
+    resolved_date = close_target(now, calendar, target_date) if session == 'close' else today.isoformat()
+    if session == 'close' and target_date is not None:
+        current = daily.read_json(root / FILES['close'][0])
+        if isinstance(current, dict) and current.get('asOf', '') > resolved_date:
+            return dict(status='skipped_stale_target', session=session, targetDate=resolved_date,
+                        asOf=current['asOf'], historyCalls=0, dataChanged=False)
+    # The legacy force mode has no historical-date support and must never run
+    # against an earlier target disguised by changing the wall clock.
     manual_bootstrap = event == 'workflow_dispatch' and force is True
+    if manual_bootstrap and session == 'close' and (resolved_date != today.isoformat() or now.hour < 16):
+        raise ValueError('Forced cold collection only supports the current finalized close')
     if not manual_bootstrap:
         try:
-            data = validate_pair(root, session, now, calendar)
+            data = validate_pair(root, session, now, calendar, resolved_date if session == 'close' else None)
             return dict(status='already_current', alreadyCurrent=True, session=session,
-                        asOf=data['asOf'], generatedAt=data['generatedAt'], historyCalls=0)
+                        asOf=data['asOf'], targetDate=resolved_date, generatedAt=data['generatedAt'], historyCalls=0)
         except (ValueError, KeyError, TypeError, OSError, AttributeError):
             return dict(status='blocked_incremental_unverified', session=session,
                         reason='Verified incremental history engine is not available; automatic full-history collection is disabled',
-                        historyCalls=0, dataChanged=False)
+                        targetDate=resolved_date, historyCalls=0, dataChanged=False)
     check_repository(root)
     if changed_paths(root) or git(root, 'diff', '--cached', '--name-only'):
         raise ValueError('Cloud collection requires a clean checkout')
@@ -177,8 +197,8 @@ def run(root=ROOT, now=None, event='workflow_dispatch', cron='', requested='auto
                 raise ValueError('Collection modified the other session; refusing publication')
         if report['status'] == 'skipped':
             return report
-        publication = publish_session(root, session, now, calendar)
-        receipt = dict(report, session=session, publication=publication, initialCacheFiles=count,
+        publication = publish_session(root, session, now, calendar, resolved_date if session == 'close' else None)
+        receipt = dict(report, session=session, targetDate=resolved_date, publication=publication, initialCacheFiles=count,
                        forcedCollection=force, elapsedSeconds=round(time.monotonic()-started, 2))
         # A successful Git push is not proof of a Vercel deployment.
         try:
@@ -192,6 +212,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--session', choices=['auto', 'close', 'midday'], default='auto')
     p.add_argument('--force', action='store_true')
+    p.add_argument('--target-date', help='Manual close target; defaults to latest finalized exchange date')
     args = p.parse_args()
     receipt = {}
     try:
@@ -199,7 +220,7 @@ def main():
             raise ValueError('Cloud publication only from production main Actions job')
         event = os.environ.get('GITHUB_EVENT_NAME', '')
         payload = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
-        receipt = run(event=event, cron=payload.get('schedule', ''), requested=args.session, force=args.force)
+        receipt = run(event=event, cron=payload.get('schedule', ''), requested=args.session, force=args.force, target_date=args.target_date)
     except Exception as exc:
         receipt = getattr(exc, 'receipt', dict(status='failed', error=str(exc)[:600]))
         raise
