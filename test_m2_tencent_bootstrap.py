@@ -91,6 +91,18 @@ class Tests(unittest.TestCase):
         self.assertEqual((report["requestsMade"],report["validatedNew"]),(2,2))
         self.assertEqual(self.delays,[t.REQUEST_INTERVAL])
 
+    def test_archive_quarantine_removes_only_impacted_symbol_from_canary_plan(self):
+        original=json.loads(self.overlap.read_text())
+        original["raw_rows"][-1]["amt"]=None
+        self.overlap.write_text(json.dumps(original))
+        canary=self.execute(execute=True,limit=1,codes=[A])
+        self.assertEqual(canary["ffdQuarantinedSymbolCount"],1)
+        self.assertEqual(canary["validatedNew"],1)
+        self.assertFalse(canary["theoreticalHistoryGatePossible"])
+        held=self.execute(execute=True,limit=1,codes=[B])
+        self.assertEqual(held["status"],"no_verified_bootstrap_candidates")
+        self.assertEqual(held["requestsMade"],0)
+
 
 if __name__=="__main__":
     unittest.main()

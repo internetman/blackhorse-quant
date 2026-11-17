@@ -25,6 +25,8 @@
           x.stage === 'S2' && typeof x.position === 'string') ||
         new Set(c.map(x => x.code)).size !== c.length) return null;
     return {asOfDate:expected,valid:u.valid,total:u.total,sectors,candidateCount:c.length,
+      emptyMessage:u.valid === u.total ? '本次四板块筛选完成，S2 候选为 0 只。' :
+        `已核验的 ${u.valid} / ${u.total} 只中未发现 S2 候选，未覆盖股票不能判定。`,
       candidates:c.filter(x => !isArchived(x.code)),
       limitations:Array.isArray(payload.limitations) ? payload.limitations.filter(v => typeof v === 'string') : []};
   }
@@ -52,7 +54,7 @@
       grid.append(el);
     }
     if (!state.candidates.length) grid.append(node('p',state.candidateCount
-      ? '本次候选均已归档。' : '本次四板块筛选完成，S2 候选为 0 只。'));
+      ? '本次候选均已归档。' : state.emptyMessage));
     host.append(grid);
   }
   async function boot() {

@@ -9,7 +9,11 @@ const good = {schemaVersion:1,mode:'derived-pilot',asOfDate,runStatus:'success',
   barStatus:'completed',universe,candidateCount:1,candidates};
 assert.equal(model(good,asOfDate).candidates.length,1);
 assert.equal(model(good,asOfDate,()=>true).candidates.length,0);
-assert.equal(model({...good,candidateCount:0,candidates:[]},asOfDate).candidateCount,0);
+const partialZero = model({...good,candidateCount:0,candidates:[]},asOfDate);
+assert.equal(partialZero.candidateCount,0);
+assert.match(partialZero.emptyMessage,/未覆盖股票不能判定/);
+const fullUniverse = {...universe,valid:80,sectors:universe.sectors.map(s=>({...s,valid:s.total}))};
+assert.match(model({...good,universe:fullUniverse,candidateCount:0,candidates:[]},asOfDate).emptyMessage,/为 0 只/);
 assert.equal(model(good,'2026-11-17'),null);
 assert.equal(model(good,null),null);
 assert.equal(formal(good,asOfDate).usable,false);

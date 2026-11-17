@@ -67,6 +67,39 @@ class Tests(unittest.TestCase):
             self.assertTrue(r["canReachCoverageGate"])
             self.assertEqual(seed["securities"][0]["riskAsOf"],PREV)
 
+    def test_explicit_native_null_quarantines_specific_symbol_not_archive(self):
+        bad = "603893.SH"
+        archived = ffd()
+        archived["raw_rows"] += ffd(bad)["raw_rows"]
+        archived["raw_rows"][-2]["amt"] = None
+        rows, held, keys = b.load_ffd_archive(archived)
+        self.assertEqual(len(keys),6)
+        self.assertEqual(held[bad],{DATES[-2]:["amt"]})
+        self.assertEqual(set(b.load_ffd_rows(archived)),{CODE})
+        merged, held = b.merge_ffd_archives([archived],expected_symbols={CODE,bad})
+        self.assertEqual(set(merged),{CODE})
+        self.assertIn(bad,held)
+        with self.assertRaisesRegex(ValueError,"duplicate"):
+            b.merge_ffd_archives([archived,ffd(bad)])
+        with self.assertRaisesRegex(ValueError,"identity"):
+            b.merge_ffd_archives([archived],expected_symbols={CODE})
+
+    def test_null_cannot_hide_global_invalid_data(self):
+        def partial():
+            payload=ffd()
+            payload["raw_rows"][0]["amt"]=None
+            return payload
+        for edit,error in [({"trade_currency":"USD"},"CNY"),({"code":"600000"},"identity"),
+                           ({"open":"broken"},"non-null"),({"open":-5},"price"),({"low":110},"OHLC")]:
+            original=partial()
+            original["raw_rows"][0].update(edit)
+            with self.assertRaisesRegex(ValueError,error):
+                b.load_ffd_rows(original)
+        original=partial()
+        original["raw_rows"].append(original["raw_rows"][0].copy())
+        with self.assertRaisesRegex(ValueError,"duplicate"):
+            b.load_ffd_rows(original)
+
 
 if __name__ == "__main__":
     unittest.main()

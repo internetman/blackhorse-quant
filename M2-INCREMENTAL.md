@@ -105,6 +105,15 @@ responses must match their canonical checksum, cutoff, symbol and adjusted
 series. A native raw file still must provide explicit `qfqday`; never accept
 a raw `day` fallback. Native FFD overlaps must carry qfq execution, declared
 share/CNY units and CNY row currency. All three overlaps must match OHLC.
+A native row with explicitly null price/volume/amount cells and verified
+identity/dimensions quarantines only that symbol across the original archives.
+It remains in the original sector denominator; no part of its bars can enter
+the seed. Private bridge receipts record affected code/date/field names without
+prices. Unknown identity, malformed schema or non-null data, incompatible
+metadata/currency and duplicate code/date rows still reject the archive.
+An original asset list alone does not prove sector membership; if three
+original members lack independent sector mapping, do not fabricate a 360-member
+production manifest. A one-code diagnostic is not a four-sector readiness pass.
 Tencent volume is inferred separately for each symbol: exact shares or lots
 converted to shares within 50 shares, with ambiguous and mixed units rejected.
 Historical amount stays null; the newest three actual amounts come from FFD.

@@ -63,7 +63,7 @@ def unwrap_ffd(data):
     return data
 
 
-def load_ffd_rows(envelope):
+def load_ffd_archive(envelope):
     raw = unwrap_ffd(envelope)
     basis = raw.get("adjustment_execution") or {}
     if basis.get("requested") != "qfq" or basis.get("effective") != "qfq":
@@ -80,27 +80,77 @@ def load_ffd_rows(envelope):
         rows = raw["data"].get("raw_rows")
     if not isinstance(rows, list):
         raise ValueError("FFD pilot raw_rows missing")
-    # Strictly handle native saved forms; no free-form file or input price API.
+    # Identity and dimensions must be known for every row, even a placeholder.
+    # Only native null price cells in an otherwise attributable row are
+    # quarantinable. Invalid currency, malformed complete data, unknown row
+    # shape and duplicate observations fail the entire archive.
+    native = tuple("amt" if k == "amount" else k for k in FIELDS)
     out = defaultdict(dict)
+    held = defaultdict(dict)
+    identities = set()
     for r in rows:
+        if not isinstance(r,dict) or not {*native,"code","time","trade_currency"} <= r.keys():
+            raise ValueError("malformed native FFD overlap row")
         code, day = r["code"], r["time"]
-        if not isinstance(code,str) or not M2_SYMBOL.fullmatch(code) or dt.date.fromisoformat(day).isoformat() != day:
+        if (not isinstance(code,str) or not M2_SYMBOL.fullmatch(code) or not isinstance(day,str)
+                or dt.date.fromisoformat(day).isoformat() != day):
             raise ValueError("invalid overlap identity/date")
-        prev = out[code].get(day)
-        if r.get("trade_currency") != "CNY":
+        key = (code,day)
+        if key in identities:
+            raise ValueError("duplicate FFD overlap code/date")
+        identities.add(key)
+        if r["trade_currency"] != "CNY":
             raise ValueError("overlap is not in CNY")
-        vals = [r.get("amt" if k == "amount" else k) for k in FIELDS]
-        if all(v is None for v in vals):
-            continue  # Explicit sparse response; not a bar.
+        vals = [r[k] for k in native]
+        present = [v for v in vals if v is not None]
+        # Prove all nonnull values at least have the native numeric shape;
+        # explicit NULL cannot camouflage a malformed non-null cell.
+        try:
+            nonnull = {field:finite(val)[0] for field,val in zip(native,vals) if val is not None}
+        except (TypeError, ValueError):
+            raise ValueError("malformed native non-null FFD data") from None
+        if any((value <= 0 if field in {"open","high","low","close"} else value < 0)
+               for field,value in nonnull.items()):
+            raise ValueError("invalid FFD overlap price, volume or turnover")
+        if any(nonnull[lo] > nonnull[hi] for lo,hi in (("low","open"),("low","close"),("low","high"),
+               ("open","high"),("close","high")) if lo in nonnull and hi in nonnull):
+            raise ValueError("invalid FFD overlap OHLC")
+        if len(present) != len(vals):
+            held[code][day] = [field for field,val in zip(native,vals) if val is None]
+            continue
         bar = dict(date=day, **dict(zip(FIELDS, finite(*vals))))
         if not (0 < bar["low"] <= min(bar["open"],bar["close"]) <= max(bar["open"],bar["close"]) <= bar["high"]):
             raise ValueError("invalid FFD overlap OHLC")
         if bar["volume"] < 0 or bar["amount"] < 0:
             raise ValueError("invalid FFD overlap volume/turnover")
-        if prev is not None and prev != bar:
-            raise ValueError("conflicting FFD overlap for one code/date")
         out[code][day] = bar
-    return out
+    return out, held, identities
+
+
+def load_ffd_rows(envelope):
+    """Compatibility view excludes the whole symbol after any native NULL."""
+    out, held, _ = load_ffd_archive(envelope)
+    return {code:days for code,days in out.items() if code not in held}
+
+
+def merge_ffd_archives(envelopes, *, expected_symbols=None):
+    merged = defaultdict(dict)
+    held = defaultdict(dict)
+    seen = set()
+    for envelope in envelopes:
+        rows, quarantined, keys = load_ffd_archive(envelope)
+        if expected_symbols is not None and any(code not in expected_symbols for code,_ in keys):
+            raise ValueError("FFD archived identity outside frozen manifest")
+        if seen.intersection(keys):
+            raise ValueError("duplicate persisted FFD overlap code/date")
+        seen.update(keys)
+        for code, days in rows.items():
+            merged[code].update(days)
+        for code, days in quarantined.items():
+            held[code].update(days)
+    for code in held:
+        merged.pop(code,None)
+    return merged, held
 
 
 def bridge(envelope, evidence, code, cutoff):
@@ -129,13 +179,6 @@ def build(manifest, cutoff, tencent_dir, ffd_paths):
         raise ValueError("missing verified frozen universe evidence")
     if manifest["membershipDate"] > cutoff:
         raise ValueError("membership is newer than target seed cutoff")
-    overlap = defaultdict(dict)
-    for file in ffd_paths:
-        for code, rows in load_ffd_rows(json.loads(file.read_text())).items():
-            for day, bar in rows.items():
-                if day in overlap[code] and overlap[code][day] != bar:
-                    raise ValueError("conflicting persisted FFD overlap responses")
-                overlap[code][day] = bar
     securities = []
     for item in manifest["securities"]:
         security = {k:item[k] for k in ("code","name","sector")}
@@ -150,6 +193,9 @@ def build(manifest, cutoff, tencent_dir, ffd_paths):
             security["riskEvidence"] = item["riskEvidence"]
         securities.append(security)
     validate_seed(securities)
+    frozen = {s["code"] for s in securities}
+    overlap, quarantined = merge_ffd_archives((json.loads(file.read_text()) for file in ffd_paths),
+                                            expected_symbols=frozen)
     seed = dict(schemaVersion=1, adjustment="qfq", volumeUnit="share", amountUnit="CNY",
                 olderAmountsUnavailable=True,
                 provenance="Verified Tencent qfq OHLCV + native FFD qfq OHLCV/amt overlap, freeze before reuse",
@@ -158,6 +204,10 @@ def build(manifest, cutoff, tencent_dir, ffd_paths):
     hist_counts = {k:0 for k in SECTORS}
     for item in securities:
         code = item["code"]
+        if code in quarantined:
+            missing[code] = {"reason":"native FFD cells explicitly null; symbol not screened",
+                             "datesAndFields":quarantined[code]}
+            continue
         if code.endswith(".BJ"):
             missing[code] = UNVERIFIED_VENUE
             continue
@@ -178,6 +228,8 @@ def build(manifest, cutoff, tencent_dir, ffd_paths):
             missing[code] = type(exc).__name__
     return seed, dict(cutoff=cutoff, bridged=len(passed), omitted=len(missing),
                       riskUnknown=sum(s["risk"]=="unknown" for s in securities),
+                      ffdQuarantinedSymbolCount=sum(code in frozen for code in quarantined),
+                      ffdQuarantinedArchiveSymbolCount=len(quarantined),
                       heldUnverifiedVenue=sum(s["code"].endswith(".BJ") for s in securities),
                       validHistoryBySector=hist_counts, validKnownRiskBySector=eligible_counts,
                       canReachHistoricalGate=all(hist_counts[k]*100 >= SECTORS[k]*95 for k in SECTORS),

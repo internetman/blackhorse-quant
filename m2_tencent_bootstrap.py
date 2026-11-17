@@ -15,7 +15,7 @@ import urllib.parse
 import urllib.request
 
 from m2_incremental import OVERLAP, SECTORS, days_between, validate_seed
-from m2_seed_bridge import bridge, load_ffd_rows, vendor_symbol
+from m2_seed_bridge import bridge, merge_ffd_archives, vendor_symbol
 from trading_calendar import expected_close, is_trading_day, load_calendar
 from zoneinfo import ZoneInfo
 
@@ -86,15 +86,8 @@ def prepare(manifest, cutoff, overlap_files, calendar, now):
         raise ValueError("dated frozen membership evidence required")
     securities = [{**s,"risk":s.get("risk","unknown")} for s in manifest["securities"]]
     validate_seed(securities)
-    overlap = {}
-    for p in overlap_files:
-        native = load_ffd_rows(read_regular(p))
-        for code, dated in native.items():
-            dst = overlap.setdefault(code,{})
-            for day, bar in dated.items():
-                if day in dst and dst[day] != bar:
-                    raise ValueError("saved FFD overlap conflict")
-                dst[day] = bar
+    overlap, quarantined = merge_ffd_archives((read_regular(p) for p in overlap_files),
+                                             expected_symbols={s["code"] for s in securities})
     overlap_start = (dt.date.fromisoformat(cutoff)-dt.timedelta(days=24)).isoformat()
     required_days = days_between(overlap_start,cutoff,calendar)[-OVERLAP:]
     if len(required_days) != OVERLAP:
@@ -113,7 +106,7 @@ def prepare(manifest, cutoff, overlap_files, calendar, now):
         if s["risk"] != "unknown" and s.get("riskAsOf") == cutoff and s.get("riskEvidence"):
             risk_known[s["sector"]] += 1
         ready[code] = overlap[code]
-    return ready, covered, risk_known
+    return ready, covered, risk_known, quarantined
 
 
 def validated_history(wrap,evidence,code,cutoff,calendar):
@@ -129,7 +122,7 @@ def run(state, cutoff, manifest, overlap_files, calendar, now, *, limit, execute
     if type(limit) is not int or not 1 <= limit <= MAX_EXECUTE:
         raise ValueError(f"explicit request limit must be 1 through {MAX_EXECUTE}")
     require_private(state)
-    ready, possible, risk = prepare(manifest,cutoff,overlap_files,calendar,now)
+    ready, possible, risk, quarantined = prepare(manifest,cutoff,overlap_files,calendar,now)
     frozen = {s["code"] for s in manifest["securities"]}
     if codes is not None and (len(codes) != len(set(codes)) or not set(codes) <= frozen):
         raise ValueError("requested symbols are not unique members of original frozen scope")
@@ -157,12 +150,16 @@ def run(state, cutoff, manifest, overlap_files, calendar, now, *, limit, execute
     report = dict(status="plan_only",seedCutoff=cutoff,scope="four-sector-close-v1",
                   availableOldOverlapBySector=possible,qualifiedRiskAtSeedCutoffBySector=risk,
                   theoreticalHistoryGatePossible=gate_possible,reused=valid,held=held,
+                  ffdQuarantinedSymbolCount=sum(c in frozen for c in quarantined),
+                  ffdQuarantinedArchiveSymbolCount=len(quarantined),
                   heldUnverifiedVenue=sum(s["code"].endswith(".BJ") for s in manifest["securities"]),
                   hasThreeOldOverlap=len(ready),planned=min(limit,len(pending)),
                   remainingAfterThisBatch=max(0,len(pending)-len(selected)),requestLimit=limit,
                   requestsMade=0,validatedNew=0,ffdCalls=0,ffdPointsUsed=0,barsPublished=False)
-    if not execute or not selected:
+    if not execute:
         return report
+    if not selected:
+        return dict(report,status="no_verified_bootstrap_candidates")
     # A large recovery is wasted when frozen overlap cannot reach its 95% gate.
     if not gate_possible and (codes is None or len(selected) != 1):
         return dict(report,status="blocked_overlap_coverage")
