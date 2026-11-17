@@ -23,6 +23,14 @@ OVERLAP = 3
 MAX_GAP = 5
 WINDOW = 49
 GATE = 95
+# Issuer-confirmed full-day halts, not assertions supplied by a quote payload.
+VERIFIED_HISTORICAL_SUSPENSIONS = {
+    ('688053', '2026-11-10'): (
+        'SSE issuer announcement 2026-027',
+        'https://epaper.cs.com.cn/zgzqb/html/2026-11/10/nw.D110000zgzqb_20261110_5-B021.htm',
+        '2026-11-11',
+    ),
+}
 
 
 def canonical_digest(value):
@@ -37,6 +45,22 @@ def trading_dates(first, last, calendar, *, max_span=45):
         raise ValueError('Gap date range must be bounded')
     return [(a+dt.timedelta(days=i)).isoformat() for i in range((b-a).days+1)
             if is_trading_day(a+dt.timedelta(days=i), calendar)]
+
+
+def verified_overlap(code, actual, calendar):
+    expected = trading_dates(actual[0], actual[-1], calendar)
+    if not set(actual) <= set(expected):
+        raise ValueError('Overlap contains a non-trading date')
+    omissions = []
+    for day in sorted(set(expected) - set(actual)):
+        evidence = VERIFIED_HISTORICAL_SUSPENSIONS.get((code, day))
+        if evidence is None:
+            raise ValueError('Seed has unverified historical overlap gap')
+        notice, source, resumed = evidence
+        if resumed not in actual:
+            raise ValueError('Seed lacks the verified resumed trading session')
+        omissions.append(dict(date=day, source=source, notice=notice, resumedOn=resumed))
+    return omissions
 
 
 def make_plan(membership, seed, target_date, calendar):
@@ -71,12 +95,13 @@ def make_plan(membership, seed, target_date, calendar):
             if item['barSha256'] != canonical_digest(bars):
                 raise ValueError('Seed digest mismatch')
             overlap = [r['date'] for r in bars[-OVERLAP:]]
-            if trading_dates(overlap[0], origin, calendar) != overlap:
-                raise ValueError('Seed does not cover the latest three sessions')
+            suspensions = verified_overlap(code, overlap, calendar)
             # Never bridge independent price bases implicitly. A verified FFD seed
             # stays on FFD; prior Tencent/Eastmoney bases require the same source.
             requests[code] = dict(provider=item['provider'], firstDate=overlap[0],
                                   lastDate=target_date, expectedDates=overlap+dates[1:])
+            if suspensions:
+                requests[code]['verifiedHistoricalSuspensions'] = suspensions
         except (KeyError, TypeError, ValueError):
             excluded['invalidOrMissingSeed'] += 1
     return dict(base=origin, target=target_date, dates=dates[1:], requests=requests,

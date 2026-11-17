@@ -39,6 +39,28 @@ class IncrementalBreadth(unittest.TestCase):
         self.assertEqual(plan['dates'],['2026-11-13','2026-11-16'])
         self.assertEqual(len(plan['requests'][self.codes[0]]['expectedDates']),5)
 
+    def test_prior_halt_attested_once_without_fabrication(self):
+        original = self.codes[0]
+        def change(code, allowed):
+            row = dict(self.seed['series'][original], code=code, provider='Tencent')
+            bars = [r for r in row['bars'] if r['date'] != '2026-11-10']
+            row.update(bars=bars, barSha256=canonical_digest(bars))
+            self.seed['series'][code] = row
+            self.members['stocks'][code] = 'small'
+            result = make_plan(self.members, self.seed, self.target, self.cal)
+            self.assertEqual(code in result['requests'], allowed)
+            return result
+        del self.members['stocks'][self.codes[1]]
+        bad = change('688054', False)
+        self.assertEqual(bad['universeCount'], 20)
+        del self.members['stocks']['688054']
+        proof = change('688053', True)
+        self.assertEqual(proof['universeCount'], 20)
+        row = proof['requests']['688053']
+        self.assertEqual(row['expectedDates'], ['2026-11-09','2026-11-11','2026-11-12','2026-11-13','2026-11-16'])
+        self.assertEqual(row['verifiedHistoricalSuspensions'][0]['date'], '2026-11-10')
+        self.assertEqual(row['expectedDates'][-1], self.target)
+
     def test_aggregate_pass_sector_blank_and_no_raw_data(self):
         del self.deltas[self.codes[0]]
         result, updated = self.run_stage()
