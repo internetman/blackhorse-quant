@@ -107,3 +107,23 @@ M2. Publication would need an explicitly separate validation/promotion step.
 Any indeterminate paid-mode failure retains the scheduler's reconciliation
 block; do not silently clear it or retry. No secret, raw prices, request
 receipts, or sample input data should be placed in a public repository.
+
+### Read-only mini acceptance before installation
+
+From the dedicated Mac mini, using its verified absolute local Python
+executable and the exact reviewed PR commit, run only the offline preview:
+
+```sh
+/path/to/trusted/python3 -I -B /path/to/reviewed/checkout/mac_mini_preflight.py \
+  --checkout /path/to/reviewed/checkout --expected-commit FULL_REVIEWED_COMMIT \
+  --at 2026-11-16T16:40:00+08:00
+```
+
+Replace placeholders with the exact pinned commit and absolute local paths.
+This command does not fetch/check out a branch, render or install a plist,
+invoke the worker, create state or contact FFD. It verifies the actual file
+bytes against the pinned Git tree and checks Python 3.9-compatible syntax,
+`fcntl`, SSL, Asia/Shanghai IANA timezone data and the real scheduler preview.
+A clean checkout is required (including no ignored bytecode); do not delete
+files or overwrite a working checkout to pass the check. A successful sample
+shows the close date and `preview_no_worker`, not a live or installed schedule.

@@ -105,3 +105,38 @@ Historical amount stays null; the newest three actual amounts come from FFD.
 The offline command never accesses either vendor. Add `--write-seed` with a
 private 0700 path only after reviewing the report. It never overwrites an
 existing seed; history and target-day risk gates remain independently required.
+
+### One-time recovery helper for missing Tencent archives
+
+`m2_tencent_bootstrap.py` is an operator-only **one-time** recovery tool, never a
+daily scheduler or a paid FFD operation. Its default only inventories saved
+native overlaps, prior results and the conservative number of missing symbols.
+Use existing private pilot receipts and an independently reviewed, exact frozen
+manifest. The supplied historical exchange calendar must cover all 320+ bars.
+A verified current quote or company display name cannot establish historical or
+target-date ST/delisting status.
+
+```sh
+python -B m2_tencent_bootstrap.py --state-dir "$M2_PRIVATE_STATE" \
+  --manifest "$PRIVATE_UNIVERSE" --ffd-overlap "$PRIVATE_OLD_FFD_RESPONSE" \
+  --cutoff 2026-11-13 --symbols 688213.SH --limit 1
+```
+
+The command above is no-network / zero spend. For a separately approved free
+canary, add `--execute` to that same single-symbol command. One call is bounded
+to the Tencent qfq endpoint, 340 bars and a 12-second network timeout; there
+are no redirects, automatic retries, FFD keys, or fallback providers. Original
+Tencent values are saved privately without invented turnover and are validated
+against three dated, previously saved FFD OHLCV/amount rows. Private request
+receipts block repeating a failed or uncertain request until reviewed. A full
+batch is paced to at least one second between sequential requests. It refuses
+to run when saved overlaps cannot theoretically meet the sector gate, except
+for a separately specified one-symbol canary. A future full run would need at
+most 360 free Tencent requests (less valid originals already cached); request
+time and success depend on source response and quota/service conditions. Public
+endpoint availability does not establish data redistribution rights; do not
+upload raw responses or transformed price/volume series.
+
+Pass the private `tencent-YYYY-MM-DD` output directory to the offline bridge.
+A verified bootstrap history is not a date-specific risk classification, not
+a completed M2 screen, and not a website deployment or scheduled update.
