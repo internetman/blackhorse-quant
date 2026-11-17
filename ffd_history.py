@@ -23,7 +23,7 @@ EXPERIMENT_SCOPE = "qfq-shsz-ffd-experimental-v1"
 _NETWORK_LOCK = threading.Lock()
 
 
-def parse_history(payload, code, start, cutoff, index=False, expected_dates=None):
+def parse_history(payload, code, start, cutoff, index=False, expected_dates=None, fields=("close", "volume")):
     if not isinstance(payload, dict) or payload.get("code") != 200:
         raise ValueError("FFD did not return a successful history response")
     coverage = payload.get("coverage")
@@ -48,18 +48,21 @@ def parse_history(payload, code, start, cutoff, index=False, expected_dates=None
     if adjustment.get("requested") != expected or adjustment.get("effective") != expected:
         raise ValueError("FFD adjustment does not match requested price basis")
     data = payload.get("data") or {}
-    columns = [data.get(k) for k in ("time", "code", "close", "volume")]
+    columns = [data.get("amt" if k == "amount" else k) for k in ("time", "code", *fields)]
     if any(not isinstance(c, list) for c in columns) or not columns[0] or len({len(c) for c in columns}) != 1:
         raise ValueError("FFD missing or malformed history columns")
     rows = []
-    for date, identity, close, volume in zip(*columns):
+    for date, identity, *values in zip(*columns):
         if identity != code or not isinstance(date, str) or dt.date.fromisoformat(date).isoformat() != date or not start <= date <= cutoff:
             raise ValueError("FFD wrong identity or out-of-range daily date")
-        if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) for v in (close, volume)):
+        if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) for v in values):
             raise ValueError("FFD null, nonnumeric or nonfinite daily value")
-        if close <= 0 or volume < 0:
+        bar = dict(zip(fields, map(float, values)))
+        if any(v <= 0 if k in {"open", "high", "low", "close"} else v < 0 for k, v in bar.items()):
             raise ValueError("FFD invalid daily value")
-        rows.append(dict(date=date, close=float(close), volume=float(volume)))
+        if {"open", "close", "low", "high"} <= bar.keys() and not (bar["low"] <= min(bar["open"], bar["close"]) <= max(bar["open"], bar["close"]) <= bar["high"]):
+            raise ValueError("FFD inconsistent OHLC")
+        rows.append(dict(date=date, **bar))
     dates = [r["date"] for r in rows]
     if dates != sorted(set(dates)) or dates[-1] != cutoff:
         raise ValueError("FFD duplicate, unordered or stale history")
@@ -104,29 +107,43 @@ class HistoryClient:
             raise ValueError("FFD_API_KEY must be supplied in the environment")
         self.limit = max_points
         self.reserved = 0
+        self.requests_made = 0
         self.halted = False
         self._lock = _NETWORK_LOCK
         self._post = post
         self.receipt_dir = Path(receipt_dir) if receipt_dir is not None else Path(__file__).resolve().parent/'output'/'ffd-request-receipts'
 
-    def history(self, code, start, cutoff, index=False, expected_dates=None):
+    def history(self, code, start, cutoff, index=False, expected_dates=None, *, fields=("close", "volume"), reuse_completed=False):
         if not re.fullmatch(r"[0-9]{6}\.(SH|SZ)", code):
             raise ValueError("FFD needs an explicit Shanghai/Shenzhen code")
         first, last = dt.date.fromisoformat(start), dt.date.fromisoformat(cutoff)
         if first > last:
             raise ValueError("FFD reversed date range")
-        reserve = ((last-first).days+1)*2  # close + volume; identity/time are free
+        fields = tuple(fields)
+        if fields not in (("close", "volume"), ("open", "high", "low", "close", "volume", "amount")):
+            raise ValueError("FFD unsupported history field set")
+        reserve = ((last-first).days+1)*len(fields)  # identity/time are free
         with self._lock:
             if self.halted:
                 raise ValueError("FFD run halted; reconcile original request before retrying")
-            if self.reserved+reserve > self.limit:
-                raise ValueError("FFD per-run point budget exhausted")
-            body = dict(function="history", codes=code, indicators="close,volume",
+            body = dict(function="history", codes=code, indicators=",".join("amt" if name == "amount" else name for name in fields),
                         start_date=start, end_date=cutoff, options="" if index else "CPS:2",
                         coverage_policy="strict")
             fingerprint = hashlib.sha256(json.dumps(body, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
             self.receipt_dir.mkdir(parents=True, exist_ok=True)
             path = self.receipt_dir/(fingerprint+".json")
+            if reuse_completed and path.exists():
+                previous = json.loads(path.read_text())
+                if previous.get("state") != "completed" or previous.get("requestFingerprint") != fingerprint:
+                    raise ValueError("FFD pending or rejected attempt requires reconciliation")
+                response_path = self.receipt_dir/(fingerprint+".response.json")
+                encoded = response_path.read_bytes()
+                if hashlib.sha256(encoded).hexdigest() != previous.get("sanitizedResponseSha256"):
+                    raise ValueError("FFD stored response does not match its receipt")
+                payload = json.loads(encoded)
+                return parse_history(payload, code, start, cutoff, index, expected_dates, fields), dict(payload, _ledgerReused=True)
+            if self.reserved+reserve > self.limit:
+                raise ValueError("FFD per-run point budget exhausted")
             request_id = uuid.uuid4().hex
             receipt = dict(schema="ffd-request-receipt-v1", state="pending", request=body,
                            clientRequestId=request_id, requestFingerprint=fingerprint,
@@ -176,6 +193,7 @@ class HistoryClient:
             response = None
             try:
                 post = self._post or _urllib_post
+                self.requests_made += 1
                 response = post(ENDPOINT, headers={"Authorization": "Bearer "+self._key,
                                 "Content-Type": "application/json", "User-Agent": "blackhorse-ffd-probe/1.0",
                                 "X-Request-ID": request_id, "X-FFD-Client-Request-ID": request_id},
@@ -228,7 +246,7 @@ class HistoryClient:
                 persist("rejected")
                 raise ValueError("FFD service rejected request; inspect persistent receipt "+request_id)
             try:
-                rows = parse_history(payload, code, start, cutoff, index, expected_dates=expected_dates)
+                rows = parse_history(payload, code, start, cutoff, index, expected_dates=expected_dates, fields=fields)
             except Exception:
                 persist("validation_failed")
                 raise ValueError("FFD data validation failed; inspect persistent receipt "+request_id) from None

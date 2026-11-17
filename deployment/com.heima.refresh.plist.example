@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key><string>com.heima.refresh</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/ABSOLUTE/PYTHON-ENV/bin/python3</string>
+        <string>/ABSOLUTE/HEIMA-PRIVATE-APP/mac_mini_scheduler.py</string>
+        <string>--calendar</string><string>/ABSOLUTE/HEIMA-PRIVATE-APP/market-trading-calendar.json</string>
+        <string>--state-dir</string><string>/ABSOLUTE/PRIVATE-STATE</string>
+        <string>--worker</string><string>/ABSOLUTE/VERIFIED-WORKER</string>
+    </array>
+    <key>WorkingDirectory</key><string>/ABSOLUTE/HEIMA-PRIVATE-APP</string>
+    <key>RunAtLoad</key><true/>
+    <key>StartInterval</key><integer>60</integer>
+    <key>StandardOutPath</key><string>/ABSOLUTE/PRIVATE-STATE/launchd.stdout.log</string>
+    <key>StandardErrorPath</key><string>/ABSOLUTE/PRIVATE-STATE/launchd.stderr.log</string>
+</dict>
+</plist>
