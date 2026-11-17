@@ -78,3 +78,32 @@ Use only the intended, explicitly connected Mac mini. Do not install on the lapt
 3. Verify selectable dates, worker readiness, local timezone behavior, and private state permissions with the actual mini. A 60-second launchd tick does not depend on the Mac's local timezone: the Python code explicitly uses Asia/Shanghai. The noon lane is limited to today's verified lunch window, with one safe retry; the close lane targets the latest finalized verified date with bounded retry/catch-up. The Python `fcntl` lock serializes both lanes; don't concurrently enable a second machine to do paid collection.
 4. The adapter must accept `--session midday|close --target-date YYYY-MM-DD --state-dir DIR`; write only one small JSON receipt to stdout. Return `session` and `targetDate`. `verified` or `already_current` also needs `verifiedDate` equal to the target and `publicationVerified:true`. `retryable_no_paid_query` requires `historyCalls:0` and explicitly proves that no paid request occurred. The adapter must independently guard date/coverage/quotes, persist a quota ledger, and publish only authorized derived snapshots. The launcher leaves a durable in-flight record before spawn. A crash, timeout, unverified receipt, or uncertain consumption blocks all later paid starts until an operator reconciles the separate quota ledger; do not delete the receipt to force an automatic retry.
 5. Only after offline and approved bounded live acceptance, add `--execute` to ProgramArguments, revalidate and reload the agent. Verify on a real trading day with the MacBook unavailable. The Scheduler does not change the system time zone, energy policies, login, or permissions.
+
+## Close-only M2 mini worker (private, deployment is separate)
+
+The generic scheduler can dispatch `m2_mini_worker.py` via an executable local
+wrapper (see `deployment/m2-worker-wrapper.sh.example`; supply the absolute
+Python/app paths). Do not point the generic scheduler to two workers with the
+same state directory or wire this close-only worker as a midday data source.
+A midday dispatch explicitly responds `retryable_no_paid_query`, with no query.
+
+The scheduler default still previews without launching the worker. Even when
+scheduler dispatch is enabled, the M2 adapter only runs `--plan-only` unless
+the private scheduler state directory contains an owned, mode-`0600`
+`m2-worker.json` with `"executionEnabled": true` and a reviewed positive
+integer `"maxPoints"`. Optional `"historyCalendar"` is an absolute verified
+private calendar path, not a mechanism to override an official published year.
+Do not put a credential in this configuration. Review spend, persistent receipt
+reconciliation, preflight coverage, and available authorized credentials
+before enabling live execution. The M2 private producer state/seed/risk inputs
+live in `<scheduler-state>/m2/`, itself owned and `0700`. The worker uses the
+scheduler-supplied verified close date, not the device's wall-clock date.
+
+A successful local candidate is recorded as `private_preview_ready` with scope
+`four-sector-close-v1`, the exact date, and `publicationVerified: false`.
+The scheduler won't re-dispatch that day after private success. This is not
+public website success, market breadth, a completed noon lane, or full-market
+M2. Publication would need an explicitly separate validation/promotion step.
+Any indeterminate paid-mode failure retains the scheduler's reconciliation
+block; do not silently clear it or retry. No secret, raw prices, request
+receipts, or sample input data should be placed in a public repository.

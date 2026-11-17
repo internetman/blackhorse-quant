@@ -21,6 +21,8 @@ NOON_ATTEMPTS = (dt.time(12, 7), dt.time(12, 27))
 CLOSE_ATTEMPTS = (dt.time(16, 40), dt.time(17, 40), dt.time(18, 40))
 SAFE_RETRY = 'retryable_no_paid_query'
 SUCCESS = frozenset(('verified', 'already_current'))
+PRIVATE_READY = 'private_preview_ready'
+M2_SCOPE = 'four-sector-close-v1'
 
 
 def candidate(now, calendar):
@@ -95,12 +97,13 @@ def tick(now, calendar, directory, worker, execute=False, run=subprocess.run):
             return dict(receipt, status='reconcile_pending_run')
         key = f'{session}:{date}'
         previous = state.get(key, {})
-        if previous.get('status') in SUCCESS or slot <= previous.get('slot', 0):
+        if previous.get('status') in SUCCESS | {PRIVATE_READY} or slot <= previous.get('slot', 0):
             return dict(receipt, status='already_attempted')
         # Persist possible quota use before launching; a crash cannot retry
         # an unknown paid request silently. The worker owns its quota ledger.
         state[key] = dict(receipt, status='inflight')
         save_state(path, state)
+        evidence = {}
         try:
             if session == 'midday':
                 china = now.astimezone(ZONE)
@@ -121,11 +124,17 @@ def tick(now, calendar, directory, worker, execute=False, run=subprocess.run):
             elif status in SUCCESS:
                 if result.get('verifiedDate') != date or result.get('publicationVerified') is not True:
                     raise ValueError('publication not verified')
+            elif status == PRIVATE_READY:
+                calls = result.get('historyCalls')
+                if (session != 'close' or result.get('scope') != M2_SCOPE or result.get('verifiedDate') != date
+                        or result.get('publicationVerified') is not False or type(calls) is not int or calls < 0):
+                    raise ValueError('private preview scope/date or quota evidence not verified')
+                evidence = {'scope': M2_SCOPE, 'publicationVerified': False, 'historyCalls': calls}
             else:
                 raise ValueError('unrecognized result')
         except (subprocess.SubprocessError, OSError, ValueError, TypeError, KeyError):
             status = 'uncertain'
-        state[key] = dict(receipt, status=status)
+        state[key] = dict(receipt, status=status, **evidence)
         save_state(path, state)
         return state[key]
 

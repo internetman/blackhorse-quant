@@ -107,6 +107,7 @@ class HistoryClient:
             raise ValueError("FFD_API_KEY must be supplied in the environment")
         self.limit = max_points
         self.reserved = 0
+        self.requests_made = 0
         self.halted = False
         self._lock = _NETWORK_LOCK
         self._post = post
@@ -192,6 +193,7 @@ class HistoryClient:
             response = None
             try:
                 post = self._post or _urllib_post
+                self.requests_made += 1
                 response = post(ENDPOINT, headers={"Authorization": "Bearer "+self._key,
                                 "Content-Type": "application/json", "User-Agent": "blackhorse-ffd-probe/1.0",
                                 "X-Request-ID": request_id, "X-FFD-Client-Request-ID": request_id},

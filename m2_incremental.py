@@ -250,6 +250,7 @@ def run(state, cutoff, budget, calendar, now, *, client_factory=HistoryClient, p
     receipt = dict(j, status="candidate_ready" if sufficient and not (abnormal_charge or client and client.halted) else "partial",
                    valid=valid, expected=sum(SECTORS.values()), sectorValid=sector_counts,
                    reservedPoints=client.reserved if client else 0,
+                   historyCalls=getattr(client, "requests_made", None) if client else 0,
                    reportedSuccessPoints=reported, successfulRequestsWithUnknownCharge=unknown_charge,
                    failedOrOmitted=missing, stopUncertain=bool(abnormal_charge or client and client.halted))
     write(state / f"run-{cutoff}.json", receipt)
