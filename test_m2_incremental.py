@@ -34,7 +34,7 @@ class Tests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.state = Path(self.temp.name)
         self.patch = patch.object(m, "SECTORS", SECTORS); self.patch.start(); self.addCleanup(self.patch.stop)
-        self.securities = [dict(code=f"60000{i}.SH", sector=sector, risk="eligible",name=f"测试{i}")
+        self.securities = [dict(code=f"60000{i}.SH", sector=sector, risk="eligible", riskAsOf=TARGET, riskEvidence="synthetic test",name=f"测试{i}")
                            for i, sector in enumerate(SECTORS)]
         rows = [bar(day, 20+i) for i,day in enumerate(DATES)]
         self.base = dict(schemaVersion=1, adjustment="qfq", volumeUnit="share", amountUnit="CNY",
@@ -131,6 +131,17 @@ class Tests(unittest.TestCase):
         rows[-3]["amount"] = None
         with self.assertRaisesRegex(ValueError,"historical field"):
             m.valid_rows(rows,permit_older_missing_amount=True)
+
+    def test_stale_risk_requires_target_day_document(self):
+        for sec in self.base["securities"]:
+            sec["riskAsOf"] = PREV
+        self.write_seed()
+        report = self.run_local(plan_only=True)
+        self.assertFalse(report["canReachCoverageGate"])
+        self.assertEqual(report["riskUnknown"],4)
+        m.write(self.state/f"risk-{TARGET}.json", dict(asOfDate=TARGET,evidence="fixture source",
+            statuses={s["code"]:"eligible" for s in self.base["securities"]}))
+        self.assertTrue(self.run_local(plan_only=True)["canReachCoverageGate"])
 
     def test_vendor_uses_amt_and_ledger_reuse(self):
         code = self.securities[0]["code"]

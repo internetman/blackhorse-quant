@@ -114,6 +114,26 @@ def validate_seed(securities):
         raise ValueError("seed must contain exact frozen four-sector universe")
 
 
+def dated_risk(securities, state, cutoff):
+    path = state / f"risk-{cutoff}.json"
+    audited = None
+    if path.exists():
+        obj = json.loads(path.read_text())
+        if obj.get("asOfDate") != cutoff or not obj.get("evidence") or not isinstance(obj.get("statuses"), dict):
+            raise ValueError("target-date risk snapshot requires independent evidence and status map")
+        audited = obj["statuses"]
+    output = []
+    for sec in securities:
+        if audited is not None:
+            risk = audited.get(sec["code"], "unknown")
+        else:
+            risk = sec["risk"] if sec.get("riskAsOf") == cutoff and sec.get("riskEvidence") else "unknown"
+        if risk not in {"eligible","excluded","unknown"}:
+            raise ValueError("invalid dated security status")
+        output.append(dict(sec, risk=risk))
+    return output
+
+
 def run(state, cutoff, budget, calendar, now, *, client_factory=HistoryClient, plan_only=True):
     if cutoff > expected_close(now, calendar) or not is_trading_day(dt.date.fromisoformat(cutoff), calendar):
         raise ValueError("target must be a verified completed trading date")
@@ -131,6 +151,8 @@ def run(state, cutoff, budget, calendar, now, *, client_factory=HistoryClient, p
         if json.loads(path.read_text())[-1]["date"] > cutoff:
             raise ValueError("private history already advanced beyond target")
     securities = base["securities"]
+    validate_seed(securities)
+    securities = dated_risk(securities, state, cutoff)
     validate_seed(securities)
     plans, missing, candidates, cached = [], {}, [], 0
     unknown_risk = sum(s["risk"] == "unknown" for s in securities)
@@ -250,7 +272,7 @@ def run(state, cutoff, budget, calendar, now, *, client_factory=HistoryClient, p
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--state", required=True, type=Path)
-    p.add_argument("--as-of", required=True)
+    p.add_argument("--as-of", help="Verified target close date; default latest completed close")
     p.add_argument("--max-points", required=True, type=int)
     p.add_argument("--history-calendar", type=Path,
                    help="Private, independently verified exchange calendar for earlier seed years")
@@ -279,7 +301,7 @@ def main():
             calendar["years"].setdefault(year, data)
     with (state / "m2-run.lock").open("a") as lock:
         fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        r = run(state, a.as_of, a.max_points, calendar, now, plan_only=not a.execute)
+        r = run(state, a.as_of or expected_close(now, calendar), a.max_points, calendar, now, plan_only=not a.execute)
     print(json.dumps(dict(r, failedOrOmitted=len(r.get("failedOrOmitted", {}))), ensure_ascii=False))
     if r["status"] == "partial" or r.get("fitsCap") is False or r.get("canReachCoverageGate") is False:
         raise SystemExit(2)

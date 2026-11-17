@@ -15,7 +15,11 @@ Transfer a verified seed internally to `seed.json` in that directory:
 - `provenance`: nonempty source description; `membershipDate`: verified effective date.
 - `securities`: the frozen 360-symbol four-sector manifest, with six-digit code and
   `.SH` or `.SZ`, `name`, `sector` and risk classification
-  `eligible` / `excluded` / `unknown`. ST/delisting status must not be guessed.
+  `eligible` / `excluded` / `unknown`. Include `riskAsOf` and `riskEvidence`
+  when dated eligibility is actually verified. For later dates, place a private
+  `risk-YYYY-MM-DD.json` with `asOfDate`, independent listing/exchange evidence
+  and a `statuses` map (`"600000.SH": "eligible"`, etc.). A quote name or old seed
+  alone is not proof of eligibility; undated/missing status is not screened.
 - `histories`: map from exchange-qualified codes to original, verified date-ordered
   completed daily bars, each with `date,open,high,low,close,volume,amount`.
   Use at least 319 observed seed rows before adding one target-day row. No
@@ -42,7 +46,7 @@ No network / no market data cost (default):
 python m2_incremental.py --state "$M2_PRIVATE_STATE" --as-of 2026-11-16 --max-points 13000 --plan-only
 ```
 
-The report identifies missing/eligible history, potential per-sector coverage and
+Omit `--as-of` to use the latest finalized exchange close. The report identifies missing/eligible history, potential per-sector coverage and
 conservative cap. The cap is calendar-day cells × six fields (including three
 overlapping dates, so a Wednesday-through-Monday query reserves 36 points per stock).
 Actual usage for delivered cells is reported separately and unknown provider
@@ -78,3 +82,26 @@ feed. CSV/JSON seeds, raw responses, test fixtures, numeric bars and charge
 ledgers must never be committed, uploaded publicly or deployed. Any eventual
 pilot publication is a separate validation/promotion step; require the current
 run's `candidate_ready` receipt for the exact target date.
+
+
+## Optional offline seed bridge
+
+```sh
+python m2_seed_bridge.py --cutoff 2026-11-13 --manifest private-universe.json \
+  --tencent-dir private-tencent-cache --ffd-overlap private-ffd-*.json
+```
+
+This prepares a seed only from saved original data. The manifest includes
+`membershipSource`, `membershipDate`, and the exact four-sector `securities`;
+it may contain verified date-specific risk evidence. Tencent files can use
+`600000.SH.json`, `sh600000.json`, or `1.600000.json`. Wrapped Tencent cache
+responses must match their canonical checksum, cutoff, symbol and adjusted
+series. A native raw file still must provide explicit `qfqday`; never accept
+a raw `day` fallback. Native FFD overlaps must carry qfq execution, declared
+share/CNY units and CNY row currency. All three overlaps must match OHLC.
+Tencent volume is inferred separately for each symbol: exact shares or lots
+converted to shares within 50 shares, with ambiguous and mixed units rejected.
+Historical amount stays null; the newest three actual amounts come from FFD.
+The offline command never accesses either vendor. Add `--write-seed` with a
+private 0700 path only after reviewing the report. It never overwrites an
+existing seed; history and target-day risk gates remain independently required.
