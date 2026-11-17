@@ -14,12 +14,18 @@ Transfer a verified seed internally to `seed.json` in that directory:
 - `schemaVersion: 1`, `adjustment: "qfq"`, `volumeUnit: "share"`, `amountUnit: "CNY"`.
 - `provenance`: nonempty source description; `membershipDate`: verified effective date.
 - `securities`: the frozen 360-symbol four-sector manifest, with six-digit code and
-  `.SH` or `.SZ`, `name`, `sector` and risk classification
+  `.SH`, `.SZ` or original `.BJ` membership, `name`, `sector` and risk classification
   `eligible` / `excluded` / `unknown`. Include `riskAsOf` and `riskEvidence`
   when dated eligibility is actually verified. For later dates, place a private
   `risk-YYYY-MM-DD.json` with `asOfDate`, independent listing/exchange evidence
   and a `statuses` map (`"600000.SH": "eligible"`, etc.). A quote name or old seed
   alone is not proof of eligibility; undated/missing status is not screened.
+  The original North Exchange member `920167.BJ` stays in the frozen sector
+  denominator and archival provenance. It remains unknown/unverified and is
+  neither queried nor screened by this SH/SZ-only live adapter. The private
+  results label it in `heldUnverifiedVenue`; do not relabel it as SH/SZ or
+  reduce the denominator. Beijing exchange calendar, adjusted OHLCV and
+  dated issuer-risk status must be validated before expanding live scope.
 - `histories`: map from exchange-qualified codes to original, verified date-ordered
   completed daily bars, each with `date,open,high,low,close,volume,amount`.
   Use at least 319 observed seed rows before adding one target-day row. No
@@ -140,3 +146,6 @@ upload raw responses or transformed price/volume series.
 Pass the private `tencent-YYYY-MM-DD` output directory to the offline bridge.
 A verified bootstrap history is not a date-specific risk classification, not
 a completed M2 screen, and not a website deployment or scheduled update.
+
+For independent dated issuer-status evidence and requirements before screening
+a recovered historical seed, see [M2 risk evidence](M2-RISK-EVIDENCE.md).

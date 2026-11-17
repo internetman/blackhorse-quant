@@ -15,6 +15,8 @@ from market_breadth import ZONE
 from trading_calendar import expected_close, is_trading_day, load_calendar
 
 FIELDS = ("open", "high", "low", "close", "volume", "amount")
+M2_SYMBOL = re.compile(r"[0-9]{6}\.(?:SH|SZ|BJ)")
+UNVERIFIED_VENUE = "北交所复权、交易日历及证券状态尚未验收"
 SECTORS = {"半导体": 161, "消费电子": 97, "光伏设备": 76, "电子化学品": 26}
 SEED_MIN = 319
 KEEP = 330
@@ -76,7 +78,7 @@ def reconcile(old, incoming):
 def stage(security, rows, cutoff):
     # First pilot only assesses current S2; prior-stage state is not inferred.
     latest = rows[-1]
-    if security["risk"] != "eligible" or latest["volume"] <= 0 or latest["amount"] <= 0:
+    if security["code"].endswith(".BJ") or security["risk"] != "eligible" or latest["volume"] <= 0 or latest["amount"] <= 0:
         return None
     closes = [r["close"] for r in rows]
     avg = lambda n, back=0: statistics.fmean(closes[-n-back:len(closes)-back])
@@ -99,13 +101,13 @@ def validate_seed(securities):
     seen = set()
     for sec in securities:
         code = sec["code"]
-        if not re.fullmatch(r"\d{6}\.(SH|SZ)", code) or code[:6] in seen:
+        if not isinstance(code, str) or not M2_SYMBOL.fullmatch(code) or code[:6] in seen:
             raise ValueError("invalid or duplicate symbol")
         if sec["sector"] not in actual or sec["risk"] not in {"eligible", "excluded", "unknown"}:
             raise ValueError("invalid sector or risk metadata")
         if not isinstance(sec["name"], str) or not 0 < len(sec["name"]) <= 40:
             raise ValueError("invalid security name")
-        if re.match(r"^\*?ST", sec["name"], re.I) or "退市" in sec["name"]:
+        if not code.endswith(".BJ") and (re.match(r"^\*?ST", sec["name"], re.I) or "退市" in sec["name"]):
             if sec["risk"] == "eligible":
                 raise ValueError("risk metadata conflicts with security name")
         actual[sec["sector"]] += 1
@@ -124,6 +126,11 @@ def dated_risk(securities, state, cutoff):
         audited = obj["statuses"]
     output = []
     for sec in securities:
+        if sec["code"].endswith(".BJ"):
+            # Fixed scope includes BSE; this worker has no verified BSE calendar,
+            # state policy or native increment adapter, regardless of input labels.
+            output.append(dict(sec, risk="unknown"))
+            continue
         if audited is not None:
             risk = audited.get(sec["code"], "unknown")
         else:
@@ -157,10 +164,13 @@ def run(state, cutoff, budget, calendar, now, *, client_factory=HistoryClient, p
     plans, missing, candidates, cached = [], {}, [], 0
     unknown_risk = sum(s["risk"] == "unknown" for s in securities)
     known_excluded = sum(s["risk"] == "excluded" for s in securities)
+    held_venue = sum(s["code"].endswith(".BJ") for s in securities)
     sector_counts = {key: 0 for key in SECTORS}
     for security in securities:
         code, sector = security["code"], security["sector"]
         try:
+            if code.endswith(".BJ"):
+                raise ValueError(UNVERIFIED_VENUE)
             if security["risk"] == "unknown":
                 raise ValueError("security risk state unknown; not screened or counted valid")
             active = history_dir / f"{code}.json"
@@ -193,7 +203,7 @@ def run(state, cutoff, budget, calendar, now, *, client_factory=HistoryClient, p
     j = dict(asOfDate=cutoff, plannedRequests=len(plans), worstCasePoints=planned,
              possiblePerSector=potential, canReachCoverageGate=gate_possible,
              pointCap=budget, cachedCurrent=cached, unusableAtPreflight=len(missing),
-             riskUnknown=unknown_risk, knownExcluded=known_excluded)
+             riskUnknown=unknown_risk, knownExcluded=known_excluded, heldUnverifiedVenue=held_venue)
     if plan_only:
         return dict(j, status="plan_only", fitsCap=planned <= budget)
     if not gate_possible:
@@ -262,10 +272,11 @@ def run(state, cutoff, budget, calendar, now, *, client_factory=HistoryClient, p
                        candidates=sorted(candidates, key=lambda x: x["code"]),
                        source="FFD 增量 + 既有历史（四板块试点）",
                        universe=dict(scope="四板块收盘试点（非全市场）", scopeId="four-sector-close-v1",
-                                     sectors=[dict(name=k, valid=sector_counts[k], total=SECTORS[k]) for k in SECTORS], valid=valid, riskUnknown=unknown_risk, knownExcluded=known_excluded,
+                                     sectors=[dict(name=k, valid=sector_counts[k], total=SECTORS[k]) for k in SECTORS], valid=valid, riskUnknown=unknown_risk, knownExcluded=known_excluded, heldUnverifiedVenue=held_venue,
                                      total=sum(SECTORS.values()), coveragePct=round(valid * 100 / sum(SECTORS.values()), 2)),
                        limitations=["只筛当前 S2；不生成买卖信号", "复权事件未独立核实；全部待核",
-                                    f"仅覆盖已验证的 {valid}/{sum(SECTORS.values())} 只；没有入围不代表未覆盖股票不符合"])
+                                    f"仅覆盖已验证的 {valid}/{sum(SECTORS.values())} 只；没有入围不代表未覆盖股票不符合"]
+                                   + ([f"{held_venue} 只北交所股票保留在分母，暂不筛选"] if held_venue else []))
         write(state / f"derived-{cutoff}.json", payload)
     return receipt
 

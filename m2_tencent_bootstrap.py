@@ -104,6 +104,8 @@ def prepare(manifest, cutoff, overlap_files, calendar, now):
     ready = {}
     for s in securities:
         code = s["code"]
+        if code.endswith(".BJ"):
+            continue  # In the original fixed denominator; not queried by this venue adapter.
         if not all(d in overlap.get(code,{}) for d in required_days):
             continue
         covered[s["sector"]] += 1
@@ -155,6 +157,7 @@ def run(state, cutoff, manifest, overlap_files, calendar, now, *, limit, execute
     report = dict(status="plan_only",seedCutoff=cutoff,scope="four-sector-close-v1",
                   availableOldOverlapBySector=possible,qualifiedRiskAtSeedCutoffBySector=risk,
                   theoreticalHistoryGatePossible=gate_possible,reused=valid,held=held,
+                  heldUnverifiedVenue=sum(s["code"].endswith(".BJ") for s in manifest["securities"]),
                   hasThreeOldOverlap=len(ready),planned=min(limit,len(pending)),
                   remainingAfterThisBatch=max(0,len(pending)-len(selected)),requestLimit=limit,
                   requestsMade=0,validatedNew=0,ffdCalls=0,ffdPointsUsed=0,barsPublished=False)

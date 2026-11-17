@@ -9,12 +9,13 @@ import json
 import math
 import os
 from pathlib import Path
-import re
 
-from m2_incremental import FIELDS, OVERLAP, SECTORS, valid_rows, validate_seed
+from m2_incremental import FIELDS, M2_SYMBOL, OVERLAP, SECTORS, UNVERIFIED_VENUE, valid_rows, validate_seed
 
 
 def vendor_symbol(code):
+    if not isinstance(code,str) or not M2_SYMBOL.fullmatch(code) or code.endswith(".BJ"):
+        raise ValueError("Tencent bootstrap only accepts verified Shanghai/Shenzhen source scope")
     name, exchange = code.split(".")
     return exchange.lower() + name
 
@@ -83,7 +84,7 @@ def load_ffd_rows(envelope):
     out = defaultdict(dict)
     for r in rows:
         code, day = r["code"], r["time"]
-        if not re.fullmatch(r"\d{6}\.(SH|SZ)", code) or dt.date.fromisoformat(day).isoformat() != day:
+        if not isinstance(code,str) or not M2_SYMBOL.fullmatch(code) or dt.date.fromisoformat(day).isoformat() != day:
             raise ValueError("invalid overlap identity/date")
         prev = out[code].get(day)
         if r.get("trade_currency") != "CNY":
@@ -138,7 +139,7 @@ def build(manifest, cutoff, tencent_dir, ffd_paths):
     securities = []
     for item in manifest["securities"]:
         security = {k:item[k] for k in ("code","name","sector")}
-        status = item.get("risk", "unknown")
+        status = "unknown" if security["code"].endswith(".BJ") else item.get("risk", "unknown")
         # Risk snapshot must come from independently checked dated listing/
         # exchange event evidence; a quote name alone is not evidence of eligibility.
         if status in {"eligible","excluded"} and not (item.get("riskAsOf") == cutoff and item.get("riskEvidence")):
@@ -157,6 +158,9 @@ def build(manifest, cutoff, tencent_dir, ffd_paths):
     hist_counts = {k:0 for k in SECTORS}
     for item in securities:
         code = item["code"]
+        if code.endswith(".BJ"):
+            missing[code] = UNVERIFIED_VENUE
+            continue
         try:
             file = tencent_dir / f"{code}.json"
             if not file.is_file():
@@ -174,6 +178,7 @@ def build(manifest, cutoff, tencent_dir, ffd_paths):
             missing[code] = type(exc).__name__
     return seed, dict(cutoff=cutoff, bridged=len(passed), omitted=len(missing),
                       riskUnknown=sum(s["risk"]=="unknown" for s in securities),
+                      heldUnverifiedVenue=sum(s["code"].endswith(".BJ") for s in securities),
                       validHistoryBySector=hist_counts, validKnownRiskBySector=eligible_counts,
                       canReachHistoricalGate=all(hist_counts[k]*100 >= SECTORS[k]*95 for k in SECTORS),
                       canReachCoverageGate=all(eligible_counts[k]*100 >= SECTORS[k]*95 for k in SECTORS)), passed, missing
