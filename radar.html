@@ -1052,6 +1052,7 @@
         // Only server-verified completed history is eligible; no browser substitution.
       }
       const dist = data.marketDistribution || {};
+      const verifiedMa20 = data.verifiedMa20;
       const observation = data.observation || {};
       const observationLabel = observation.mode === "published_observation" ? `已发布观察快照${observation.stale ? "（已滞后，仅供回顾）" : ""} · 抓取 ${observation.finishedAt || "未知"} · ${observation.runId || ""} · 会话 ${observation.session || "未知"}；抓取不等于精确午盘/收盘截点，源行情时间未核验` : "免费源抓取；源行情时间未核验";
       const sectorRankStatus = data.sectorRankStatus || { ready: true, message: "板块排行已更新。" };
@@ -1084,6 +1085,12 @@
       app.className = "";
       app.innerHTML = `
         <p class="section-note">${escapeHtml(observationLabel)}</p><p class="section-note">${escapeHtml(moduleEvidence)}</p>
+        ${verifiedMa20 ? `<section class="section" aria-label="补充收盘宽度">
+          <div class="section-head"><h2 class="section-title">沪深收盘宽度 · MA20</h2>
+            <span class="section-note">${escapeHtml(verifiedMa20.asOf)} · 独立校验</span></div>
+          <div class="summary-box"><div class="big-call">站上 MA20 ${plain(verifiedMa20.ma20.pct, "%")}</div>
+            <p>${verifiedMa20.ma20.above} / ${fmt0.format(verifiedMa20.ma20.valid)} 只 · 覆盖率 ${plain(verifiedMa20.coveragePct, "%")} · 样本名单 ${escapeHtml(verifiedMa20.membershipDate)}</p>
+            <p>逐股收盘价经 BaoStock 交叉校验，MA20 由大盘云图提供。完整 MA20 / MA50 仍使用下方带日期的正式快照。</p></div></section>` : ""}
         <div class="layout">
           <div class="stack">
             <section class="section">

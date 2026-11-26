@@ -51,4 +51,19 @@ class DeliveryTests(unittest.TestCase):
   x=json.loads((self.root/'dashboard-observed.json').read_text())
   self.assertNotIn('r02Breadth',x['payload'])
   self.assertNotIn('marketDistribution',x['payload'])
+ def test_verified_ma20_never_replaces_full_breadth(self):
+  report=dict(asOf='2026-11-12',barStatus='completed',scopeVersion='sckd-ma20-bao-verified-frozen-shsz-v1',
+              universeCount=5000,ma20=dict(pct=20,above=960,valid=4800))
+  path=self.root/'market-breadth-verified-ma20.json'
+  path.write_text(json.dumps(report))
+  x=d.observed_payload(self.root,self.now)
+  self.assertEqual(x['verifiedMa20'],report)
+  self.assertEqual(x['r02Breadth']['asOf'],'2026-11-11')
+  x['r02Breadth']['asOf']='2026-11-12'
+  x.pop('verifiedMa20')
+  d.attach_verified_ma20(x,self.root,self.now)
+  self.assertNotIn('verifiedMa20',x)
+  report['ma20'].update(above=900,valid=4500)
+  path.write_text(json.dumps(report))
+  self.assertNotIn('verifiedMa20',d.observed_payload(self.root,self.now))
 if __name__=='__main__':unittest.main()

@@ -3,6 +3,7 @@ from __future__ import annotations
 import concurrent.futures
 import datetime as dt
 import json
+import math
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import server
@@ -11,6 +12,24 @@ from dashboard_collect import observation_warnings
 
 ROOT = Path(__file__).resolve().parent
 ZONE = ZoneInfo('Asia/Shanghai')
+
+
+def attach_verified_ma20(data, root, now):
+    """Attach a separately scoped single-metric reading ahead of the full snapshot."""
+    try:
+        raw = json.loads((Path(root)/'market-breadth-verified-ma20.json').read_text())
+        day = dt.date.fromisoformat(raw['asOf'])
+        full_day = dt.date.fromisoformat(data['r02Breadth']['asOf'])
+        n, m = raw['universeCount'], raw['ma20']
+        above, valid, pct = m['above'], m['valid'], m['pct']
+        if (raw.get('scopeVersion') == 'sckd-ma20-bao-verified-frozen-shsz-v1'
+                and raw.get('barStatus') == 'completed'
+                and full_day < day < now.astimezone(ZONE).date()
+                and n >= 4000 and 0 <= above <= valid <= n and valid / n >= .95
+                and math.isfinite(pct) and abs(pct - 100 * above / valid) < .011):
+            data['verifiedMa20'] = raw
+    except (OSError, ValueError, KeyError, TypeError, ZeroDivisionError):
+        pass
 
 
 def observed_payload(root=ROOT, now=None):
@@ -32,6 +51,7 @@ def observed_payload(root=ROOT, now=None):
     if breadth.get('coveragePct',0) < 95 or not breadth.get('market'):
         raise ValueError('Current breadth snapshot failed its original coverage gate')
     data['r02Breadth'] = breadth
+    attach_verified_ma20(data, root, now)
     data['marketDistribution'] = dict(breadth['market'][-1],asOf=breadth['asOf'],
                                       source=breadth.get('source'),barStatus='completed')
     data['source'] = dict(data['source'],marketDistribution=breadth.get('source'),r02Breadth=breadth.get('source'))
@@ -46,6 +66,7 @@ def observed_payload(root=ROOT, now=None):
 
 
 def build_delivery(force=False, *, root=ROOT, now=None, timeout=20, live_builder=None):
+    now = now or dt.datetime.now(dt.timezone.utc)
     saved = observed_payload(root,now)
     if not force and not saved['observation']['stale']:
         return saved
@@ -60,6 +81,7 @@ def build_delivery(force=False, *, root=ROOT, now=None, timeout=20, live_builder
         live['observation'] = dict(mode='live_fetch_attempt',runId='live-'+now_text,finishedAt=now_text,
                                    session='source_time_unverified',quoteTimeVerified=False,stale=False)
         live, live['observation'] = merge_modules(live, live['observation'],dict(payload=saved,observation=saved['observation']))
+        attach_verified_ma20(live, root, now)
         live['moduleStatus'] = server.dashboard_module_status(live)
         live.setdefault('warnings',[]).extend(observation_warnings(dict(
             missingSectorHistoryCount=sum(not row.get('trend10') for row in live.get('top5',[])) if live.get('top5') else None,

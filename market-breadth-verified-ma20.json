@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "asOf": "2026-11-25",
+  "barStatus": "completed",
+  "generatedAt": "2026-11-26T14:27:10.326006+08:00",
+  "scopeVersion": "sckd-ma20-bao-verified-frozen-shsz-v1",
+  "source": "SCKD同日逐股收盘和源MA20；BaoStock独立同日未复权收盘交叉校验",
+  "universeCount": 5223,
+  "coveragePct": 97.7025,
+  "membershipDate": "2026-11-12",
+  "ma20": {
+    "pct": 6.8,
+    "above": 347,
+    "valid": 5103
+  },
+  "participation": {
+    "n": 5103,
+    "up": 562,
+    "down": 4480,
+    "flat": 61,
+    "upPct": 11.01,
+    "median": -3.64,
+    "p25": -5.66,
+    "p75": -1.45
+  }
+}
