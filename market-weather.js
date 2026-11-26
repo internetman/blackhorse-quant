@@ -29,10 +29,10 @@
     const expected = expectedCloseDate(now);
     // A date in the payload cannot prove that its update ran today.
     const latest = data?.market?.at(-1);
-    const complete = data?.barStatus === 'completed' && data?.coveragePct >= 95 && latest?.date === data?.asOf;
+    const complete = data?.dataMode !== 'public-aggregates' && data?.barStatus === 'completed' && data?.coveragePct >= 95 && latest?.date === data?.asOf;
     const stale = !expected || !data?.asOf || data.asOf < expected;
     const future = expected && data?.asOf > expected;
-    const failed = attempt?.status === 'failed' && attempt.attemptedAt > (data?.generatedAt || '');
+    const failed = attempt?.status === 'failed' && Date.parse(attempt.attemptedAt) > (Date.parse(data?.generatedAt) || -Infinity);
     return {expected, complete, stale, failed, usable: complete && !stale && !future && !failed,
       note: !expected ? '交易所日历缺失或年份未核实，暂停加仓判断' : !complete ? '同日数据不完整，暂停加仓判断' : future ? '快照日期超出完整收盘范围，暂停判断' : stale ? `数据滞后，实际截至 ${data.asOf}；应有收盘日 ${expected}` : failed ? '最近采集失败，暂停加仓判断' : '完整收盘快照；盘中涨幅不计入收盘信号'};
   }

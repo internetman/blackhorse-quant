@@ -68,6 +68,9 @@ M2_HISTORY_RETRY_DELAY_SECONDS = float(
 
 EASTMONEY_REFERER = "https://quote.eastmoney.com/"
 EASTMONEY_UT = "fa5fd1943c7b386f172d6893dbfba10b"
+# Public quote-page token; history keeps its own working token.
+EASTMONEY_QUOTE_UT = "bd1d9ddb04089700cf9c27f6f7426281"
+RADAR_FETCH_TIMEOUT_SECONDS = 1.5
 TENCENT_STOCK_REFERER = "https://gu.qq.com/"
 DAPANYUNTU_REFERER = "https://dapanyuntu.com/"
 SCKD_REFERER = "https://sckd.dapanyuntu.com/"
@@ -192,7 +195,30 @@ def append_query_param(url: str, key: str, value: str) -> str:
     return f"{url}{separator}{urllib.parse.urlencode({key: value})}"
 
 
-def fetch_eastmoney_json(url: str) -> dict[str, Any]:
+def fetch_eastmoney_json(url: str, *, radar: bool = False) -> dict[str, Any]:
+    if radar:
+        # Canonical encoded parameters preserve '+' in fs=m:90+t:2. Missing
+        # data is an upstream failure too, rather than a successful empty rank.
+        parts = urllib.parse.urlsplit(url)
+        params = dict(urllib.parse.parse_qsl(parts.query))
+        params["ut"] = EASTMONEY_UT if "/kline/" in parts.path else EASTMONEY_QUOTE_UT
+        params["_"] = str(int(time.time() * 1000))
+        url = urllib.parse.urlunsplit(parts._replace(query=urllib.parse.urlencode(params)))
+        delayed = url.replace("push2his.eastmoney.com", "push2delay.eastmoney.com").replace(
+            "push2.eastmoney.com", "push2delay.eastmoney.com")
+        errors = []
+        for variant in dict.fromkeys((url, delayed)):
+            try:
+                payload = fetch_json(variant, EASTMONEY_REFERER, timeout=RADAR_FETCH_TIMEOUT_SECONDS)
+                if payload.get("rc") != 0 or not isinstance(payload.get("data"), dict):
+                    raise FetchError("Eastmoney returned an unsuccessful/empty data envelope")
+                node = payload["data"]
+                if not (node.get("diff") or node.get("klines")):
+                    raise FetchError("Eastmoney returned no quote/history rows")
+                return payload
+            except FetchError as exc:
+                errors.append(str(exc))
+        raise FetchError(" | ".join(errors)[:720])
     base_variants = [url]
     for host in ("push2.eastmoney.com", "push2his.eastmoney.com"):
         if host in url:
@@ -240,10 +266,10 @@ def money_yi(value: float | None) -> float | None:
 def get_market_indices() -> list[dict[str, Any]]:
     url = (
         "https://push2.eastmoney.com/api/qt/ulist.np/get"
-        "?fltt=2&invt=2&fields=f12,f13,f14,f2,f3,f4,f6&secids="
+        "?fltt=2&invt=2&fields=f12,f13,f14,f2,f3,f4,f6,f124&secids="
         + urllib.parse.quote(INDEX_SECIDS, safe=",.")
     )
-    payload = fetch_eastmoney_json(url)
+    payload = fetch_eastmoney_json(url, radar=True)
     diff = payload.get("data", {}).get("diff") or []
     return [
         {
@@ -253,6 +279,7 @@ def get_market_indices() -> list[dict[str, Any]]:
             "change": num(row.get("f4")),
             "pct": num(row.get("f3")),
             "amountYi": money_yi(num(row.get("f6"))),
+            "sourceTime": quote_source_time(row.get("f124")),
         }
         for row in diff
     ]
@@ -776,15 +803,40 @@ def get_m2_history_payload(force: bool = False, completed_only: bool = False) ->
     return payload
 
 
+def quote_source_time(value: Any) -> str | None:
+    stamp = num(value)
+    if stamp is None or not math.isfinite(stamp) or not 946684800 <= stamp <= time.time() + 60:
+        return None
+    return dt.datetime.fromtimestamp(stamp, dt.timezone.utc).isoformat(timespec="seconds")
+
+
+def _quote_rows(payload: dict[str, Any], limit: int, *, boards: bool) -> list[dict[str, Any]]:
+    node = payload.get("data") or {}
+    rows = node.get("diff")
+    total = node.get("total")
+    if not isinstance(total, int) or isinstance(total, bool) or total < 1:
+        raise FetchError("Missing quote-universe total")
+    if not isinstance(rows, list) or len(rows) != min(limit, total):
+        raise FetchError("Incomplete ranked quote response")
+    codes = [row.get("f12") for row in rows]
+    pattern = r"BK[0-9]{4}" if boards else r"[0-9]{6}"
+    if len(set(codes)) != len(codes) or any(not re.fullmatch(pattern, str(c)) for c in codes):
+        raise FetchError("Invalid/duplicate ranked instrument identity")
+    percentages = [num(row.get("f3")) for row in rows]
+    if any(x is None or not math.isfinite(x) for x in percentages) or percentages != sorted(percentages, reverse=True):
+        raise FetchError("Malformed or unordered daily percentage rank")
+    if any(not quote_source_time(row.get("f124")) for row in rows):
+        raise FetchError("Missing or invalid provider quote timestamp")
+    return rows
+
+
 def get_sector_rank(limit: int = 20) -> list[dict[str, Any]]:
-    fields = "f12,f14,f2,f3,f4,f5,f6,f7,f8,f20,f104,f105,f128,f136,f140"
-    url = (
-        "https://push2.eastmoney.com/api/qt/clist/get"
-        f"?pn=1&pz={limit}&po=1&np=1&fltt=2&invt=2&fid=f3"
-        f"&fs=m:90+t:2&fields={fields}"
-    )
-    payload = fetch_eastmoney_json(url)
-    diff = payload.get("data", {}).get("diff") or []
+    fields = "f12,f14,f2,f3,f4,f5,f6,f7,f8,f20,f104,f105,f124,f128,f136,f140"
+    params = dict(pn=1, pz=limit, po=1, np=1, fltt=2, invt=2, fid="f3",
+                  fs="m:90+t:2", fields=fields)
+    url = "https://push2.eastmoney.com/api/qt/clist/get?" + urllib.parse.urlencode(params)
+    payload = fetch_eastmoney_json(url, radar=True)
+    diff = _quote_rows(payload, limit, boards=True)
     sectors = []
     for rank, row in enumerate(diff, start=1):
         sectors.append(
@@ -804,6 +856,8 @@ def get_sector_rank(limit: int = 20) -> list[dict[str, Any]]:
                 "leader": row.get("f128") or "--",
                 "leaderCode": row.get("f140") or "",
                 "leaderPct": num(row.get("f136")),
+                "sourceTime": quote_source_time(row.get("f124")),
+                "classificationCount": payload["data"]["total"],
             }
         )
     return sectors
@@ -827,6 +881,24 @@ def build_sector_rank_status(
             "message": "板块排行暂无数据，等待实时行情源返回。",
         }
 
+    # A current receipt can contain old quotes. Preserve source dates and fail
+    # closed for a different China-market date; saved observations remain dated.
+    today = dt.datetime.now(dt.timezone(dt.timedelta(hours=8))).date()
+    source_times = [row.get("sourceTime") for row in sectors]
+    try:
+        dates = [dt.datetime.fromisoformat(value).astimezone(dt.timezone(dt.timedelta(hours=8))).date()
+                 for value in source_times]
+    except (ValueError, TypeError):
+        dates = []
+    local_now = dt.datetime.now(dt.timezone(dt.timedelta(hours=8)))
+    intraday = (dt.time(9, 30) <= local_now.time() <= dt.time(11, 30)
+                or dt.time(13) <= local_now.time() <= dt.time(15))
+    too_old = bool(dates and intraday and any(
+        (local_now - dt.datetime.fromisoformat(value)).total_seconds() > 900 for value in source_times))
+    if not dates or any(date != today for date in dates) or too_old:
+        return {"ready": False, "reason": "stale_source_time",
+                "message": "板块源行情日期未通过当日校验，保留带日期的历史观察。"}
+
     has_intraday_snapshot = any(
         (sector.get("amountYi") is not None and sector.get("amountYi") > 0)
         or ((sector.get("upCount") or 0) + (sector.get("downCount") or 0) > 0)
@@ -841,6 +913,10 @@ def build_sector_rank_status(
             "ready": True,
             "reason": "ok",
             "message": "板块排行已更新。",
+            "sourceTime": min(source_times),
+            "latestSourceTime": max(source_times),
+            "timeStatus": "provider_reported_quote_time",
+            "classificationCount": sectors[0].get("classificationCount"),
         }
     return {
         "ready": False,
@@ -850,14 +926,14 @@ def build_sector_rank_status(
 
 
 def get_sector_leaders(code: str, limit: int = 10) -> list[dict[str, Any]]:
-    fields = "f12,f14,f2,f3,f4,f6,f7,f8,f10,f20,f21,f23"
-    url = (
-        "https://push2.eastmoney.com/api/qt/clist/get"
-        f"?pn=1&pz={limit}&po=1&np=1&fltt=2&invt=2&fid=f3"
-        f"&fs=b:{urllib.parse.quote(code)}&fields={fields}"
-    )
-    payload = fetch_eastmoney_json(url)
-    diff = payload.get("data", {}).get("diff") or []
+    if not re.fullmatch(r"BK[0-9]{4}", code):
+        raise FetchError("Invalid board identity for leaders")
+    fields = "f12,f14,f2,f3,f4,f6,f7,f8,f20,f21,f23,f124"
+    params = dict(pn=1, pz=limit, po=1, np=1, fltt=2, invt=2, fid="f3",
+                  fs=f"b:{code}", fields=fields)
+    url = "https://push2.eastmoney.com/api/qt/clist/get?" + urllib.parse.urlencode(params)
+    payload = fetch_eastmoney_json(url, radar=True)
+    diff = _quote_rows(payload, limit, boards=False)
     leaders = []
     for rank, row in enumerate(diff, start=1):
         leaders.append(
@@ -871,10 +947,11 @@ def get_sector_leaders(code: str, limit: int = 10) -> list[dict[str, Any]]:
                 "amountYi": money_yi(num(row.get("f6"))),
                 "amplitude": num(row.get("f7")),
                 "turnover": num(row.get("f8")),
-                "pe": num(row.get("f10")),
                 "marketCapYi": money_yi(num(row.get("f20"))),
                 "floatMarketCapYi": money_yi(num(row.get("f21"))),
                 "pb": num(row.get("f23")),
+                "sourceTime": quote_source_time(row.get("f124")),
+                "boardCode": code,
             }
         )
     return leaders
@@ -892,7 +969,7 @@ def get_sector_klines(code: str, days: int = TREND_DAYS) -> list[dict[str, Any]]
         "&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61"
         f"&ut={EASTMONEY_UT}&klt=101&fqt=1&beg={begin}&end={end}&lmt=40"
     )
-    payload = fetch_eastmoney_json(url)
+    payload = fetch_eastmoney_json(url, radar=True)
     return parse_board_history(payload, code, dates)
 
 
@@ -1050,13 +1127,18 @@ def dashboard_module_status(payload: dict[str, Any]) -> dict[str, Any]:
     breadth = payload.get("r02Breadth") or {}
     rank = payload.get("sectorRankStatus") or {}
     evidence = (payload.get("observation") or {}).get("modules") or {}
+    def source_time(rows):
+        values = [row.get("sourceTime") for row in rows]
+        return min(values) if values and all(values) else None
+    index_time = source_time(payload.get("indices") or [])
+    rank_time = source_time(payload.get("sectors") or [])
     return {
-        "indices": {"source": payload["source"]["indices"], "sourceTime": None,
+        "indices": {"source": payload["source"]["indices"], "sourceTime": index_time,
                     "receivedAt": evidence.get("indices", {}).get("finishedAt", receipt), "count": len(payload.get("indices", [])),
-                    "timeStatus": "unverified_source_time", "session": "not_verified"},
-        "sectorRank": {"sourceTime": None, "receivedAt": evidence.get("sectorRank", {}).get("finishedAt", rank.get("cachedAt") or receipt),
+                    "timeStatus": "provider_reported_quote_time" if index_time else "unverified_source_time", "session": "not_verified"},
+        "sectorRank": {"sourceTime": rank_time, "receivedAt": evidence.get("sectorRank", {}).get("finishedAt", rank.get("cachedAt") or receipt),
                        "cached": bool(rank.get("cached")), "cachedAt": rank.get("cachedAt"),
-                       "timeStatus": "unverified_source_time", "rankingMethod": "daily_pct_not_trend"},
+                       "timeStatus": "provider_reported_quote_time" if rank_time else "unverified_source_time", "rankingMethod": "daily_pct_not_trend"},
         "closeBreadth": {"asOf": breadth.get("asOf"), "session": "completed_close",
                          "coveragePct": breadth.get("coveragePct"), "source": breadth.get("source")},
         "r02Decision": {"recordDate": payload["r02"].get("updated"), "automaticRecalculation": False},
@@ -1064,7 +1146,9 @@ def dashboard_module_status(payload: dict[str, Any]) -> dict[str, Any]:
                           "firstDate": (row.get("trend10") or [{}])[0].get("date"),
                           "lastDate": (row.get("trend10") or [{}])[-1].get("date"),
                           "cached": bool(row.get("trend10Cached")),
-                          "cachedAt": row.get("trend10CachedAt"), "completedCloseVerified": False}
+                          "cachedAt": row.get("trend10CachedAt"),
+                          "completedCloseVerified": row.get("trend10Verified") is True,
+                          "barStatus": row.get("trend10BarStatus")}
                          for row in payload.get("top5", [])],
         "attribution": {"type": "price_volume_observation", "newsVerified": False},
     }
@@ -1141,60 +1225,58 @@ def build_dashboard_payload(force: bool = False) -> dict[str, Any]:
                     f"sectorRank {sector_rank_status['fallbackReason']}; using cached rank "
                     f"from {sector_rank_status['cachedAt']}"
                 )
+            else:
+                sectors = []
 
     top_sectors = sectors[:5] if sector_rank_status["ready"] else []
     if top_sectors:
-        detail_workers = min(API_WORKERS, max(1, len(top_sectors)))
+        # Fetch all board histories alongside their leaders. The former serial
+        # history loop consumed five retry windows and exceeded delivery's 20s.
+        detail_workers = min(max(1, API_WORKERS), len(top_sectors) * 2)
         with concurrent.futures.ThreadPoolExecutor(max_workers=detail_workers) as executor:
-            leader_futures = {}
-            for sector in top_sectors:
-                code = str(sector.get("code") or "")
-                leader_futures[executor.submit(get_sector_leaders, code, 10)] = (
-                    sector,
-                    code,
-                )
-
+            futures = {}
             for sector in top_sectors:
                 code = str(sector.get("code") or "")
                 cached = _trend_cache.get(code)
-                if cached and now - cached["ts"] < TREND_CACHE_TTL_SECONDS:
-                    if apply_trend_cache(sector, code, now, "server-cache"):
-                        continue
+                has_cache = bool(cached and now - cached["ts"] < TREND_CACHE_TTL_SECONDS
+                                 and apply_trend_cache(sector, code, now, "server-cache"))
+                if not has_cache:
+                    futures[executor.submit(get_sector_klines, code, TREND_DAYS)] = ("history", sector, code)
+                futures[executor.submit(get_sector_leaders, code, 10)] = ("leaders", sector, code)
 
-                try:
-                    trend = get_sector_klines(code, TREND_DAYS)
-                    if len(trend) < 2:
-                        raise FetchError(f"not enough kline rows: {len(trend)}")
-                    sector["trend10"] = trend
-                    sector["trend10Verified"] = True
-                    sector["trend10BarStatus"] = "completed"
-                    sector["trend5"] = trend
-                    sector["trend10Source"] = "live"
-                    sector["trend10Cached"] = False
-                    sector["trend10UpdatedAt"] = store_trend_cache(code, trend, now)
-                except Exception as exc:
-                    if apply_trend_cache(sector, code, now, "server-cache-stale"):
-                        warnings.append(
-                            f"{code} kline: {exc}; using cached trend from "
-                            f"{sector['trend10CachedAt']}"
-                        )
-                    else:
-                        sector["trend10"] = []
-                        sector["trend5"] = []
-                        sector["trend10Source"] = "missing"
-                        sector["trend10Cached"] = False
-                        warnings.append(f"{code} kline: {exc}")
-
-            for future in concurrent.futures.as_completed(leader_futures):
-                sector, code = leader_futures[future]
+            for future in concurrent.futures.as_completed(futures):
+                kind, sector, code = futures[future]
                 try:
                     result = future.result()
+                    if kind == "leaders":
+                        # Keep the aggregate source leader and constituent list
+                        # separate if the public endpoints disagree.
+                        sector["leaders10"] = result
+                        sector["leadersSourceTime"] = min(row["sourceTime"] for row in result)
+                        first = result[0]
+                        sector["leaderMatchesConstituents"] = bool(
+                            sector.get("leaderCode") == first.get("code")
+                            and sector.get("leaderPct") is not None
+                            and abs(sector["leaderPct"] - first["pct"]) <= 0.02)
+                        continue
+                    # Revalidate inside store_trend_cache before advertising
+                    # completion; a mocked or corrupt helper cannot bypass it.
+                    updated = store_trend_cache(code, result, now)
+                    sector.update(trend10=result, trend5=result,
+                                  trend10Verified=True, trend10BarStatus="completed",
+                                  trend10Source="live", trend10Cached=False,
+                                  trend10UpdatedAt=updated)
                 except Exception as exc:
-                    sector["leaders10"] = []
-                    warnings.append(f"{code} leaders: {exc}")
-                    continue
-
-                sector["leaders10"] = result
+                    if kind == "leaders":
+                        sector["leaders10"] = []
+                        warnings.append(f"{code} leaders: {exc}")
+                    elif apply_trend_cache(sector, code, now, "server-cache-stale"):
+                        warnings.append(f"{code} kline: {exc}; using cached trend from "
+                                        f"{sector['trend10CachedAt']}")
+                    else:
+                        sector.update(trend10=[], trend5=[], trend10Verified=False,
+                                      trend10Source="missing", trend10Cached=False)
+                        warnings.append(f"{code} kline: {exc}")
 
     for sector in top_sectors:
         sector.setdefault("trend10", [])

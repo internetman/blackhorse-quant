@@ -582,8 +582,8 @@
   <section id="sector-observation" aria-label="独立冻结行业午休观察"></section>
   <link rel="stylesheet" href="/sector-observation.css">
   <script defer src="/sector-observation.js"></script>
-  <script src="/market-weather.js?v=20261105-calendar"></script>
-  <script src="/market-breadth.js?v=20261105-calendar"></script>
+  <script src="/market-weather.js?v=20261125-refresh"></script>
+  <script src="/market-breadth.js?v=20261125-refresh"></script>
   <script>
     const app = document.getElementById("app");
     const refreshBtn = document.getElementById("refreshBtn");
@@ -989,7 +989,7 @@
                 ${sparkline(trend, color)}
                 ${renderAttribution(sector, trend)}
                 <div class="leaders-panel">
-                  <div class="leaders-title">板块内领涨 10 股</div><p class="section-note">${sector.observedModules?.leaders?.cached ? `沿用旧领涨股观察 ${escapeHtml(sector.observedModules.leaders.finishedAt || "时间未知")} · ${escapeHtml(sector.observedModules.leaders.runId || "runId未知")}，时效滞后` : "本轮获取；源行情时间未核验"}</p>
+                  <div class="leaders-title">板块内领涨 10 股</div><p class="section-note">${sector.leadersSourceTime ? `行情时间 ${escapeHtml(shortDateTime(sector.leadersSourceTime))}` : sector.observedModules?.leaders?.cached ? `沿用旧领涨股观察 ${escapeHtml(sector.observedModules.leaders.finishedAt || "时间未知")} · ${escapeHtml(sector.observedModules.leaders.runId || "runId未知")}，时效滞后` : "本轮获取；源行情时间未核验"}</p>
                   ${renderLeaders(sector.leaders10)}
                 </div>
               </div>
@@ -1057,10 +1057,13 @@
       const sectorRankStatus = data.sectorRankStatus || { ready: true, message: "板块排行已更新。" };
       const sectorRankReady = sectorRankStatus.ready !== false;
       const sectorRankCached = !!sectorRankStatus.cached;
+      const rankSourceTime = sectorRankStatus.sourceTime || data.moduleStatus?.sectorRank?.sourceTime;
+      const rankDate = rankSourceTime ? shortDateTime(rankSourceTime) : "";
+      const isHistoricalRank = sectorRankCached || observation.stale;
       const moduleEvidence = Object.entries(observation.modules || {}).map(([name, m])=>`${name}: ${m.cached ? "沿用旧观察/时效滞后" : "本轮抓取"} ${m.finishedAt || "时间未知"} · ${m.runId || "runId未知"}`).join("；");
-      const sectorRankCacheText = sectorRankCached
-        ? `沿用上次排行 ${shortDateTime(sectorRankStatus.cachedAt)}${sectorRankStatus.cacheAgeSeconds != null ? `（${compactAge(sectorRankStatus.cacheAgeSeconds)}）` : ""}`
-        : "";
+      const sectorRankCacheText = isHistoricalRank
+        ? `历史排行 ${rankDate || shortDateTime(sectorRankStatus.cachedAt || observation.finishedAt)} · 已滞后`
+        : (rankDate ? `行情时间 ${rankDate}` : "行情时间未核验");
       const visibleTop5 = sectorRankReady ? (data.top5 || []) : [];
       const visibleSectors = sectorRankReady ? (data.sectors || []) : [];
       const top1 = visibleTop5[0];
@@ -1115,14 +1118,14 @@
                   <div class="rail-sub">P25 ${signed(dist.p25)} / P75 ${signed(dist.p75)}</div>
                 </div>
                 <div class="rail-item">
-                  <div class="rail-label">领涨板块</div>
+                  <div class="rail-label">${isHistoricalRank ? "历史领涨板块" : "领涨板块"}</div>
                   <div class="rail-value ${clsPct(top1?.pct)}">${signed(top1?.pct)}</div>
                   <div class="rail-sub">${escapeHtml(top1?.name || "--")}</div>
                 </div>
                 <div class="rail-item">
-                  <div class="rail-label">Top5 平均涨幅</div>
+                  <div class="rail-label">${isHistoricalRank ? "历史 Top5 平均涨幅" : "Top5 平均涨幅"}</div>
                   <div class="rail-value ${clsPct(top5Avg)}">${signed(top5Avg)}</div>
-                  <div class="rail-sub">${sectorRankReady ? (sectorRankCached ? escapeHtml(sectorRankCacheText) : "按板块指数 f3 排序") : "等待板块行情"}</div>
+                  <div class="rail-sub">${sectorRankReady ? escapeHtml(sectorRankCacheText) : "等待板块行情"}</div>
                 </div>
               </div>
             </section>
@@ -1130,13 +1133,13 @@
             <section class="section">
               <div class="section-head">
                 <h2 class="section-title">前 5 名板块指数与 10 日趋势</h2>
-                <span class="section-note">按实时涨跌幅排序，趋势按首日收盘归一化${sectorRankCached ? ` · ${escapeHtml(sectorRankCacheText)}` : ""}</span>
+                <span class="section-note">按板块指数涨跌幅排序 · ${escapeHtml(sectorRankCacheText)}</span>
               </div>
               ${sectorRankReady ? `<div class="table-wrap">
                 <table>
                   <thead>
                     <tr>
-                      <th>排</th><th>板块</th><th>今日</th><th>板块点位</th><th>成交额</th><th>涨/跌</th><th>领涨股</th>
+                      <th>排</th><th>板块</th><th>${isHistoricalRank ? "历史涨跌幅" : "涨跌幅"}</th><th>板块点位</th><th>成交额</th><th>涨/跌</th><th>领涨股</th>
                     </tr>
                   </thead>
                   <tbody>${renderTop5(visibleTop5)}</tbody>
@@ -1147,7 +1150,7 @@
             <section class="section">
               <div class="section-head">
                 <h2 class="section-title">板块排行扩展</h2>
-                <span class="section-note">前 15 名，辅助观察扩散强度${sectorRankCached ? ` · ${escapeHtml(sectorRankCacheText)}` : ""}</span>
+                <span class="section-note">前 15 名 · ${escapeHtml(sectorRankCacheText)}</span>
               </div>
               ${sectorRankReady ? `<div class="table-wrap">
                 <table>

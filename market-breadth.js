@@ -4,7 +4,7 @@
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const pct = value => value == null ? '—' : `${Number(value).toFixed(1)}%`;
   const color = value => value == null ? '#eee' : value < 20 ? '#16836a' : value < 40 ? '#a9d5c3' : value < 60 ? '#edf0f0' : value < 80 ? '#f0b3a5' : '#bd3b43';
-  let data, attempt = null, midday = null, middayReadFailed = false, period = 'ma20', span = 30, search = '', sort = 'strength';
+  let data, liveParticipation, activeRefresh, refreshQueued = false, attempt = null, midday = null, middayReadFailed = false, period = 'ma20', span = 30, search = '', sort = 'strength';
   const point = value => value == null ? '—' : `${value > 0 ? '+' : ''}${value.toFixed(1)} 个百分点`;
   const fraction = m => m.pct==null ? '未取得该项数据' : m.valid==null ? '上游聚合值，未提供分子分母' : `${m.above} / ${m.valid} 只`;
   function validMidday(d) {
@@ -25,9 +25,9 @@
     ].map(([label,value,note])=>`<div class="breadth-stat"><span class="breadth-note">${label}</span><strong>${value}</strong><span class="breadth-note">${note}</span></div>`).join('')}</div><p class="breadth-note">前19/49个完整收盘价 + 当日午休价；独立于下方收盘趋势与天气，不作为收盘确认。行业名单日期：${esc(midday.membershipDate)}。<a href="/market-breadth-midday.json" download>下载午盘原始数据</a></p><details class="breadth-note"><summary>午盘行业宽度与计算口径</summary>${midday.rows.map(r=>`<p>${esc(r.industry)} · MA20 ${pct(r.ma20?.pct)} · MA50 ${pct(r.ma50?.pct)}</p>`).join('')}<p>${esc(midday.method)}</p></details></section>`;
   }
   function participation() {
-    const p=data.participation;
+    const p=liveParticipation || data.participation;
     if(!p)return '';
-    return `<section class="participation-panel" aria-label="最新市场涨跌参与度"><div class="breadth-head"><h3>最新市场参与度</h3><span class="breadth-note">${esc(p.asOf)} ${p.barStatus==='intraday'?'盘中报价':p.asOf===data.asOf && data.barStatus==='completed'?'收盘':'报价'} · 报价时间 ${esc(p.updatedAt)} · beta大盘云图</span></div><div class="breadth-stats">${[
+    return `<section class="participation-panel" aria-label="最新市场涨跌参与度"><div class="breadth-head"><h3>最新市场参与度</h3><span class="breadth-note">${esc(p.asOf)} ${p.barStatus==='intraday'?'盘中报价':'报价'} · 报价时间 ${esc(p.updatedAt)} · beta大盘云图</span></div><div class="breadth-stats">${[
       ['上涨占比',pct(p.upPct),`${p.up}涨 / ${p.down}跌 / ${p.flat}平`],
       ['个股涨跌幅中位数',pct(p.median),`${p.n}只有效报价，等权统计`],
       ['涨跌幅下四分位',pct(p.p25),'25%的股票涨跌幅不高于此值'],
@@ -69,7 +69,7 @@
     const fresh=window.MarketWeather.freshness(data,new Date(),attempt);
     const partial=data.availableMetrics && !data.availableMetrics.includes('ma50');
     if(partial)period='ma20';
-    root.innerHTML = `<div class="breadth-head"><h2>市场天气与市场宽度</h2><div><span class="breadth-note">${esc(data.asOf)} 收盘 · ${cached?'沿用上次快照':'已保存快照'} · ${fresh.usable?(partial?'MA20数据有效；MA50缺失':'数据有效'):'数据待更新'}</span> <a class="breadth-download" href="/market-breadth.json" download>下载原始数据</a></div></div><p class="weather-stale" data-history-policy="incremental-only">历史更新已切换为增量优先：日常任务不再全量重拉历史。安全复权增量尚未启用，宽度保留已验证日期 ${esc(data.asOf)}，不冒充今日数据。11月13日核查：FFD 因子完整覆盖仅至10月23日，当前区间仍有缺口。独立行业午休观察和页面行情模块不受此保护开关影响。</p>${middayPanel()}${participation()}${weather()}<div class="breadth-stats">${[
+    root.innerHTML = `<div class="breadth-head"><h2>市场天气与市场宽度</h2><div><span class="breadth-note">${esc(data.asOf)} 收盘 · ${cached?'沿用上次快照':'已保存快照'} · ${fresh.usable?(partial?'MA20数据有效；MA50缺失':'数据有效'):'数据待更新'}</span> ${data.dataMode==='public-aggregates'?'':'<a class="breadth-download" href="/market-breadth.json" download>下载当前服务端正式快照</a>'}</div></div><p class="weather-stale" data-history-policy="incremental-only">${data.dataMode==='public-aggregates'?'正式收盘宽度暂不可用。以下为行业备用数据，不能作为全市场收盘确认。':`正式收盘宽度截至 ${esc(data.asOf)}；若未取得当日正式数据，保留已核验快照，不计作当日更新。`} 独立午盘观察和市场涨跌参与度按各自日期显示。</p>${middayPanel()}${participation()}${weather()}<div class="breadth-stats">${[
       [`${data.universeLabel || '全市场'} MA20站上比例`,pct(latest.ma20.pct),fraction(latest.ma20)],
       ['MA50 站上比例',pct(latest.ma50.pct),partial?'当前MA50未完整取得，不使用旧值':fraction(latest.ma50)],
       ['MA20 较5交易日前',delta==null?'—':`${delta>0?'+':''}${delta.toFixed(1)} 点`,'百分点变化'],
@@ -103,33 +103,55 @@
     if(scopeNote && data.universeLabel)scopeNote.textContent=scopeNote.textContent.replace(/^沪深京/,data.universeLabel)+' · 北交所不在均线宽度范围';
     table();
   }
-  async function load() {
+  const partialSnapshot = value => value.dataMode === 'public-aggregates';
+  function preferSnapshot(next, current) {
+    if(!current)return true;
+    if(partialSnapshot(next)!==partialSnapshot(current))return !partialSnapshot(next);
+    if(next.asOf!==current.asOf)return next.asOf>current.asOf;
+    return (Date.parse(next.generatedAt)||0)>=(Date.parse(current.generatedAt)||0);
+  }
+  function rememberParticipation(p) {
+    if(!p || !Number.isFinite(Date.parse(p.updatedAt)))return;
+    if(!liveParticipation || Date.parse(p.updatedAt)>=Date.parse(liveParticipation.updatedAt))liveParticipation=p;
+  }
+  async function refresh() {
     try {
       await Promise.allSettled([
         (async()=>{try{const r=await fetch('/market-breadth-midday.json',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('midday');const j=await r.json();if(!validMidday(j))throw Error('midday validation');midday=j;middayReadFailed=false;}catch{middayReadFailed=true;}})(),
         (async()=>{const r=await fetch('/market-trading-calendar.json',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('calendar');window.MarketWeather.setCalendar(await r.json());})(),
-        (async()=>{const r=await fetch('/market-breadth-status.json',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(r.ok){const j=await r.json();if(j.attemptedAt)attempt=j;}})()
+        (async()=>{const r=await fetch('/market-breadth-status.json',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(r.ok){const j=await r.json();const t=Date.parse(j.attemptedAt);
+          if(Number.isFinite(t) && (!attempt || t>Date.parse(attempt.attemptedAt) ||
+            t===Date.parse(attempt.attemptedAt) && j.status==='failed'))attempt=j;}})()
       ]);
+      let currentSnapshot;
       const reads=await Promise.allSettled(['/market-breadth.json','/api/public-market'].map(async url=>{
         const response=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(20000)});
         if(!response.ok)throw Error('fetch');
         const value=await response.json();if(!valid(value))throw Error('coverage');
-        // Show a verified new static snapshot immediately; a slow backup must
-        // not leave the old cached chart visible for the full network timeout.
-        if(!data || value.asOf>data.asOf || value.asOf===data.asOf && value.dataMode!=='public-aggregates'){
-          data=value;render();try{localStorage.setItem(cacheKey,JSON.stringify(data));}catch{}
+        rememberParticipation(value.participation);
+        if(preferSnapshot(value,data)) {
+          data=value;
+          currentSnapshot=value;
+          try{localStorage.setItem(cacheKey,JSON.stringify(data));}catch{}
         }
+        if(data)render(data!==currentSnapshot);
         return value;
       }));
-      const choices=reads.filter(r=>r.status==='fulfilled').map(r=>r.value).sort((a,b)=>b.asOf.localeCompare(a.asOf)||(a.dataMode==='public-aggregates'?1:0)-(b.dataMode==='public-aggregates'?1:0));
-      const next=choices[0]; if(!next)throw Error('coverage');
-      if(data && next.asOf<data.asOf)throw Error('older');
-      data=next; render(); try{localStorage.setItem(cacheKey,JSON.stringify(data));}catch{}
+      if(!reads.some(r=>r.status==='fulfilled'))throw Error('coverage');
     } catch {
       if(data)render(true); else root.textContent='市场宽度快照暂不可用，等待收盘数据更新。';
     }
   }
-  try{const saved=JSON.parse(localStorage.getItem(cacheKey));if(valid(saved)){data=saved;render(true);}}catch{}
+  function load() {
+    if(activeRefresh){refreshQueued=true;return activeRefresh;}
+    activeRefresh=(async()=>{
+      try {
+        do { refreshQueued=false; await refresh(); } while(refreshQueued);
+      } finally { activeRefresh=null; }
+    })();
+    return activeRefresh;
+  }
+  try{const saved=JSON.parse(localStorage.getItem(cacheKey));if(valid(saved)){rememberParticipation(saved.participation);data=saved;render(true);}}catch{}
   load(); setInterval(load,1800000);
   new ResizeObserver(() => { if(data && root.querySelector('.breadth-trend')) root.querySelector('.breadth-trend').outerHTML=trend(); }).observe(root);
   document.getElementById('refreshBtn')?.addEventListener('click',load);
