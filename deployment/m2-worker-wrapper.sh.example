@@ -1,0 +1,3 @@
+#!/bin/sh
+# Setup-only example: replace both absolute paths before use; no secrets here.
+exec /ABSOLUTE/PYTHON-ENV/bin/python3 /ABSOLUTE/HEIMA-PRIVATE-APP/m2_mini_worker.py "$@"

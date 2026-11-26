@@ -33,6 +33,7 @@ class CloudTests(unittest.TestCase):
 
     def test_schedule_uses_event_cron_not_wall_clock(self):
         self.assertEqual(cloud.choose_session('schedule', '0,20 4 * * 1-5', 'close', self.now), 'midday')
+        self.assertEqual(cloud.choose_session('schedule', '7,27 4 * * 1-5', 'close', self.now), 'midday')
         self.assertEqual(cloud.choose_session('schedule', '40 8,9,10 * * 1-5', 'midday', NOW), 'close')
         with self.assertRaises(ValueError): cloud.choose_session('schedule', 'unknown', 'auto', NOW)
         self.assertEqual(cloud.choose_session('push', '', 'midday', NOW), 'close')
@@ -131,7 +132,7 @@ class CloudTests(unittest.TestCase):
         self.assertTrue(all('actions/checkout@11d5960a326750d5838078e36cf38b85af677262' in line for line in uses))
         self.assertNotIn('secrets.', text)
         self.assertIn('contents: write', text)
-        self.assertIn("'0,20 4 * * 1-5'", text)
+        self.assertIn("'7,27 4 * * 1-5'", text)
         self.assertIn("'40 8,9,10 * * 1-5'", text)
         self.assertNotIn('market-breadth.json\'\n', text)  # data commits cannot retrigger cold run
 
