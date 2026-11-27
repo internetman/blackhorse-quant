@@ -18,6 +18,8 @@ function fixture(rounds,cached) {
   assert(idx>0);
   const source=raws.slice(0,idx)+`  render=(cached)=>record({data,attempt,midday,middayReadFailed,live:typeof liveParticipation==='undefined'?undefined:liveParticipation,eligible:window.MarketWeather.freshness(data,new Date('${at('09:00')}'),attempt).usable});\n`+raws.slice(idx);
   const ctx={console,Date,Intl,AbortSignal,record:x=>{rendered=x;},fetch:async url=>{
+    // A pending optional archive must not delay or consume current-data reads.
+    if(url==='/market-breadth-archive.json')return new Promise(()=>{});
     const i=fetches++;
     if(i===0)await first;
     const v=rounds[Math.floor(i/5)]?.[i%5];

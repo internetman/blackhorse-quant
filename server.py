@@ -33,6 +33,7 @@ STATIC_FILES = {
     "/sector-observation.js": (ROOT / "sector-observation.js", "application/javascript; charset=utf-8"),
     "/sector-observation.css": (ROOT / "sector-observation.css", "text/css; charset=utf-8"),
     "/market-breadth.json": (ROOT / "market-breadth.json", "application/json; charset=utf-8"),
+    "/market-breadth-archive.json": (ROOT / "market-breadth-archive.json", "application/json; charset=utf-8"),
     "/market-breadth.js": (ROOT / "market-breadth.js", "text/javascript; charset=utf-8"),
     "/market-breadth.css": (ROOT / "market-breadth.css", "text/css; charset=utf-8"),
     "/": (ROOT / "index.html", "text/html; charset=utf-8"),
