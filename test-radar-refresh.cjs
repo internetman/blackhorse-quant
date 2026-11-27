@@ -4,7 +4,7 @@ const metric={valid:5000,above:2500,pct:50};
 const row={date:day,ma20:metric,ma50:metric};
 const close={schemaVersion:1,asOf:day,generatedAt:at('08:10'),barStatus:'completed',coveragePct:100,market:[row],rows:[{industry:'fixture',series:[row]}],dates:[day]};
 const noon={schemaVersion:1,scopeVersion:'qfq-shsz-midday-v1',session:'midday',barStatus:'intraday',coveragePct:100,universeCount:5000,latestHistoryCount:5000,asOf:day,previousCloseDate:prev,membershipDate:prev,observedAt:day+'T11:59:00+08:00',generatedAt:day+'T12:10:00+08:00',rows:Array.from({length:50},()=>({industry:'fixture'})),market:{ma20:metric,ma50:metric}};
-const fallback=date=>({...close,asOf:date,dataMode:'public-aggregates',participation:{asOf:date,updatedAt:date+'T16:15:00+08:00',n:5050,upPct:35},market:[{...row,date,ma20:{pct:null},ma50:{pct:null}}]});
+const fallback=date=>({...close,asOf:date,dataMode:'public-aggregates',participation:{asOf:date,updatedAt:date+'T16:15:00+08:00',n:5000,up:1750,down:3250,flat:0,upPct:35,median:0,p25:-2,p75:2},market:[{...row,date,ma20:{pct:null},ma50:{pct:null}}]});
 const status=(time,status)=>({attemptedAt:at(time),status});
 const calendar={schemaVersion:1,years:{2026:{closures:[]}}};
 const round=(attempt,midday=noon,formal=close,backup)=>[midday,calendar,attempt,formal,backup];

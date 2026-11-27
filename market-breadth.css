@@ -61,3 +61,6 @@
 .breadth-table .breadth-date-row th { top:32px; }
 .breadth-table .breadth-scope-boundary { border-left:3px solid #555; }
 .breadth-table td.breadth-gap { background:repeating-linear-gradient(135deg,#eee,#eee 5px,#e7e7e7 5px,#e7e7e7 7px)!important; }
+
+.weather-checkpoint h3 { margin:0 0 10px; font-size:24px; }
+.weather-checkpoint p { margin:8px 0 0; line-height:1.7; }

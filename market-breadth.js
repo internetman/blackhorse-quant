@@ -5,6 +5,8 @@
   const pct = value => value == null ? '—' : `${Number(value).toFixed(1)}%`;
   const color = value => value == null ? '#eee' : value < 20 ? '#16836a' : value < 40 ? '#a9d5c3' : value < 60 ? '#edf0f0' : value < 80 ? '#f0b3a5' : '#bd3b43';
   let archive = null, archiveReadPromise = null, heatmapCalendar = null, chartMode = 'all';
+  const checkpoint = {settled:false,calendarOK:false,statusOK:false};
+  let displayedCached = true;
   const archiveLabel = '历史归档（截至 11 月 12 日）';
   let data, liveParticipation, activeRefresh, refreshQueued = false, attempt = null, midday = null, middayReadFailed = false, period = 'ma20', span = 30, search = '', sort = 'strength';
   const point = value => value == null ? '—' : `${value > 0 ? '+' : ''}${value.toFixed(1)} 个百分点`;
@@ -17,7 +19,7 @@
   function middayPanel() {
     if(!validMidday(midday))return '';
     const today=new Date(Date.now()+8*3600000).toISOString().slice(0,10);
-    const label=midday.asOf===today ? data.asOf>=midday.asOf?'当日午盘回看':'今日午盘参考' : '历史午盘参考';
+    const label=midday.asOf===today ? data?.asOf>=midday.asOf?'当日午盘回看':'今日午盘参考' : '历史午盘参考';
     const m=midday.market;
     return `<section class="participation-panel midday-panel" aria-label="午盘市场宽度参考"><div class="breadth-head"><h3>${label} · 非收盘确认</h3><span class="breadth-note">${esc(midday.asOf)} · 报价 ${esc(midday.observedAt)} · 计算完成 ${esc(midday.generatedAt)}</span></div>${middayReadFailed?'<p class="breadth-note">最新午盘文件读取失败，以下保留上次读取值，请核对日期。</p>':''}<div class="breadth-stats">${[
       ['午盘动态 MA20',pct(m.ma20.pct),fraction(m.ma20)],
@@ -27,23 +29,34 @@
     ].map(([label,value,note])=>`<div class="breadth-stat"><span class="breadth-note">${label}</span><strong>${value}</strong><span class="breadth-note">${note}</span></div>`).join('')}</div><p class="breadth-note">前19/49个完整收盘价 + 当日午休价；独立于下方收盘趋势与天气，不作为收盘确认。行业名单日期：${esc(midday.membershipDate)}。<a href="/market-breadth-midday.json" download>下载午盘原始数据</a></p><details class="breadth-note"><summary>午盘行业宽度与计算口径</summary>${midday.rows.map(r=>`<p>${esc(r.industry)} · MA20 ${pct(r.ma20?.pct)} · MA50 ${pct(r.ma50?.pct)}</p>`).join('')}<p>${esc(midday.method)}</p></details></section>`;
   }
   function participation() {
-    const p=liveParticipation || data.participation;
-    if(!p)return '';
-    return `<section class="participation-panel" aria-label="最新市场涨跌参与度"><div class="breadth-head"><h3>最新市场参与度</h3><span class="breadth-note">${esc(p.asOf)} ${p.barStatus==='intraday'?'盘中报价':'报价'} · 报价时间 ${esc(p.updatedAt)} · beta大盘云图</span></div><div class="breadth-stats">${[
+    const p=liveParticipation || data?.participation;
+    if(!validParticipation(p))return '';
+    const today=new Date(Date.now()+8*3600000).toISOString().slice(0,10);
+    const dated=p.asOf!==today;
+    return `<section class="participation-panel" aria-label="市场涨跌参与度参考"><div class="breadth-head"><h3>${dated?'历史':'当日'}市场参与度</h3><span class="breadth-note">${esc(p.asOf)} ${dated?'· 历史报价，仅供回看 · ':''}${p.barStatus==='intraday'?'盘中报价':'报价'} · 报价时间 ${esc(p.updatedAt)} · beta大盘云图</span></div><div class="breadth-stats">${[
       ['上涨占比',pct(p.upPct),`${p.up}涨 / ${p.down}跌 / ${p.flat}平`],
       ['个股涨跌幅中位数',pct(p.median),`${p.n}只有效报价，等权统计`],
       ['涨跌幅下四分位',pct(p.p25),'25%的股票涨跌幅不高于此值'],
       ['涨跌幅上四分位',pct(p.p75),'75%的股票涨跌幅不高于此值']
     ].map(([label,value,note])=>`<div class="breadth-stat"><span class="breadth-note">${label}</span><strong>${value}</strong><span class="breadth-note">${note}</span></div>`).join('')}</div><p class="breadth-note">涨跌参与度衡量当日修复力度；MA20/MA50宽度衡量趋势位置，两者分别计算。</p></section>`;
   }
+  function checkpointWeather() {
+    const expected=checkpoint.calendarOK?window.MarketWeather.expectedCloseDate?.(new Date()):null;
+    const pending=!checkpoint.settled;
+    const reason=pending?'正在核对交易日历与最新采集记录，请稍候。':`${checkpoint.calendarOK?'':'交易日历读取失败。'}${checkpoint.statusOK?'':'最新采集记录读取失败。'}请点击页面上方刷新重试；核验完成前暂停天气判断。`;
+    return `<section class="weather-panel weather-unavailable weather-checkpoint" role="status" aria-label="市场天气核验状态"><h3>${pending?'正在核验收盘状态':'收盘状态暂无法核验'}</h3><p>${reason}</p><p class="breadth-note">最近有效收盘：${esc(data?.asOf || '尚未取得')} · 应有收盘日：${esc(expected || (pending?'核验中':'暂无法确定'))}。历史快照可供回看。</p></section>`;
+  }
   function weather() {
+    if(!checkpoint.settled || !checkpoint.calendarOK || !checkpoint.statusOK)return checkpointWeather();
     const w=window.MarketWeather.evaluate(data,new Date(),attempt);
     const latest=data.market.at(-1);
+    const heading=w.fresh.stale && w.fresh.expected && w.fresh.complete
+      ? `等待 ${w.fresh.expected} 收盘数据` : w.label;
     return `<section class="weather-panel weather-${esc(w.code)}" aria-label="市场天气与仓位参考">
-      <div class="weather-summary"><div><span class="breadth-note">市场天气 · 收盘确认</span><h3>${esc(w.label)}</h3><p>${esc(w.action)}</p></div><div class="weather-budget"><span>现行 R05 环境档</span><strong>${esc(w.ceiling)}</strong><small>上限不是目标仓位，不触发自动交易</small></div></div>
+      <div class="weather-summary"><div><span class="breadth-note">市场天气 · 收盘确认</span><h3>${esc(heading)}</h3><p>${esc(w.action)}</p></div><div class="weather-budget"><span>现行 R05 环境档</span><strong>${esc(w.ceiling)}</strong><small>上限不是目标仓位，不触发自动交易</small></div></div>
       <div class="weather-gates">${w.gates.map(g=>`<div class="weather-gate"><b>${g.passed===true?'通过':g.passed===false?'未通过':'缺数据'} · ${esc(g.label)}</b><small>${esc(g.detail)}</small></div>`).join('')}</div>
       <div class="weather-evidence"><span>行业扩散 ${pct(w.sectorPct)}（${w.sectorAbove}/${w.sectorValid} 个行业宽度≥50%）</span><span>个股涨跌幅中位数 ${pct(latest.median)}</span><span>MA50五日变化 ${point(w.change50)}</span></div>
-      <details class="weather-method"><summary>5个指数的MA50确认明细</summary>${(data.benchmarks || []).length ? data.benchmarks.map(i=>`<p>${esc(i.name)} · ${esc(i.asOf || '缺日期')} · 收盘 ${esc(i.close ?? '—')} · MA50 ${esc(i.ma50 ?? '—')} · MA50近20日 ${pct(i.ma50Slope20)} · ${esc(i.provider || '来源未标记')}</p>`).join('') : '<p>指数日K未完整取得，不能视为通过。</p>'}</details>${!w.fresh.usable?`<p class="weather-stale">历史快照当时的分类：${esc(w.observed.label)}，不代表今天。最新采集：${esc(attempt?.attemptedAt || '没有运行记录')} ${attempt?.error?`· ${esc(attempt.error)}`:''}</p>`:''}
+      <details class="weather-method"><summary>5个指数的MA50确认明细</summary>${(data.benchmarks || []).length ? data.benchmarks.map(i=>`<p>${esc(i.name)} · ${esc(i.asOf || '缺日期')} · 收盘 ${esc(i.close ?? '—')} · MA50 ${esc(i.ma50 ?? '—')} · MA50近20日 ${pct(i.ma50Slope20)} · ${esc(i.provider || i.source || '来源未标记')}</p>`).join('') : '<p>指数日K未完整取得，不能视为通过。</p>'}</details>${!w.fresh.usable?`<p class="weather-stale">最近有效收盘：${esc(data.asOf)} · 应有收盘日：${esc(w.fresh.expected || '暂无法确定')}。历史快照当时的分类：${esc(w.observed.label)}，不代表今天。最新采集：${esc(attempt?.attemptedAt || '没有运行记录')} ${attempt?.error?`· ${esc(attempt.error)}`:''}</p>`:''}
       <details class="weather-method"><summary>天气如何判定 / 仓位边界</summary><p>这是独立、未回测的观察分类：MA20或MA50站上比例低于30%为偏弱，低位五日改善标记修复；两项均≥50%、行业半数以上宽度≥50%、MA20五日不下降为扩散；扩散持续3日且MA20≥60%、MA50≥55%，至少3/5个指数站上上行的MA50，并有行业符合R02门槛，才标记顺风。</p><p>指数：上证、沪深300、中证1000、创业板、科创50。R02门槛：最新≥85且5日均≥80；或最新≥90且3日均≥80；或最新与5日均均≥70。缺失不算通过。</p><p>20%–30% / 40%–50% / 60%引用现行R05的防守、结构性行情、顺风环境参考上限；实际仓位仍取账户约束、个股买点及风险限制中的更严格值。红灯不新开仓，不用宽度替代止损。</p><p>盘中不提前写入收盘结论。应有收盘日按北京时间16:00和交易所年度休市安排计算；日历缺失或年份未核实时暂停判断，不按调休工作日冒充交易日。</p></details>
     </section>`;
   }
@@ -136,10 +149,11 @@
     root.querySelector('.breadth-scroll').scrollLeft=99999;
   }
   function render(cached=false) {
+    displayedCached=cached;
     const latest=data.market.at(-1), old=data.market.at(-6), delta=old?.ma20.pct!=null && latest.ma20.pct!=null ? latest.ma20.pct-old.ma20.pct : null;
     const fresh=window.MarketWeather.freshness(data,new Date(),attempt);
     const partial=data.availableMetrics && !data.availableMetrics.includes('ma50');
-    root.innerHTML = `<div class="breadth-head"><h2>市场天气与市场宽度</h2><div><span class="breadth-note">${esc(data.asOf)} 收盘 · ${cached?'沿用上次快照':'已保存快照'} · ${fresh.usable?(partial?'MA20数据有效；MA50缺失':'数据有效'):'数据待更新'}</span> ${data.dataMode==='public-aggregates'?'':'<a class="breadth-download" href="/market-breadth.json" download>下载当前服务端正式快照</a>'}</div></div><p class="weather-stale" data-history-policy="incremental-only">${data.dataMode==='public-aggregates'?'正式收盘宽度暂不可用。以下为行业备用数据，不能作为全市场收盘确认。':`正式收盘宽度截至 ${esc(data.asOf)}；若未取得当日正式数据，保留已核验快照，不计作当日更新。`} 独立午盘观察和市场涨跌参与度按各自日期显示。</p>${middayPanel()}${participation()}${weather()}<div class="breadth-stats">${[
+    root.innerHTML = `<div class="breadth-head"><h2>市场天气与市场宽度</h2><div><span class="breadth-note">${esc(data.asOf)} 收盘 · ${cached?'沿用上次快照':'已保存快照'} · ${!checkpoint.settled?'正在核验收盘状态':!checkpoint.calendarOK || !checkpoint.statusOK?'核验尚未完成':fresh.usable?(partial?'MA20数据有效；MA50缺失':'数据有效'):'数据待更新'}</span> ${data.dataMode==='public-aggregates'?'':'<a class="breadth-download" href="/market-breadth.json" download>下载当前服务端正式快照</a>'}</div></div><p class="weather-stale" data-history-policy="incremental-only">${data.dataMode==='public-aggregates'?'正式收盘宽度暂不可用。以下为行业备用数据，不能作为全市场收盘确认。':`正式收盘宽度截至 ${esc(data.asOf)}；若未取得当日正式数据，保留已核验快照，不计作当日更新。`} 独立午盘观察和市场涨跌参与度按各自日期显示。</p>${middayPanel()}${participation()}${weather()}<div class="breadth-stats">${[
       [`${data.universeLabel || '全市场'} MA20站上比例`,pct(latest.ma20.pct),fraction(latest.ma20)],
       ['MA50 站上比例',pct(latest.ma50.pct),partial?'当前MA50未完整取得，不使用旧值':fraction(latest.ma50)],
       ['MA20 较5交易日前',delta==null?'—':`${delta>0?'+':''}${delta.toFixed(1)} 点`,'百分点变化'],
@@ -171,6 +185,11 @@
     };
     updateCharts();
   }
+  function renderReferenceOnly() {
+    if(validMidday(midday) || validParticipation(liveParticipation)) {
+      root.innerHTML=`<div class="breadth-head"><h2>市场宽度独立参考</h2></div><p class="breadth-note">收盘快照暂未取得；以下按各自日期显示，不作收盘确认。</p>${middayPanel()}${participation()}<section class="weather-panel weather-unavailable"><h3>暂无收盘天气判断</h3><p>独立报价或午盘数据不替代完整收盘快照。可点击上方刷新重试。</p></section>`;
+    } else root.textContent='市场宽度快照暂不可用，未取得可核验的独立参考。请点击页面上方刷新重试。';
+  }
   const partialSnapshot = value => value.dataMode === 'public-aggregates';
   function preferSnapshot(next, current) {
     if(!current)return true;
@@ -178,8 +197,15 @@
     if(next.asOf!==current.asOf)return next.asOf>current.asOf;
     return (Date.parse(next.generatedAt)||0)>=(Date.parse(current.generatedAt)||0);
   }
+  function validParticipation(p) {
+    if(!p || !/^\d{4}-\d{2}-\d{2}$/.test(p.asOf) || typeof p.updatedAt!=='string' || !/(?:Z|[+-]\d{2}:\d{2})$/.test(p.updatedAt))return false;
+    const stamp=Date.parse(p.updatedAt);
+    if(!Number.isFinite(stamp) || stamp>Date.now()+60000 || new Date(stamp+8*3600000).toISOString().slice(0,10)!==p.asOf)return false;
+    if(![p.n,p.up,p.down,p.flat].every(Number.isInteger) || p.n<4000 || Math.min(p.up,p.down,p.flat)<0 || p.up+p.down+p.flat!==p.n)return false;
+    return [p.upPct,p.median,p.p25,p.p75].every(Number.isFinite) && Math.abs(p.upPct-100*p.up/p.n)<=.02 && p.p25<=p.median && p.median<=p.p75;
+  }
   function rememberParticipation(p) {
-    if(!p || !Number.isFinite(Date.parse(p.updatedAt)))return;
+    if(!validParticipation(p))return;
     if(!liveParticipation || Date.parse(p.updatedAt)>=Date.parse(liveParticipation.updatedAt))liveParticipation=p;
   }
   function loadArchive() {
@@ -206,17 +232,20 @@
     try {
       await Promise.allSettled([
         (async()=>{try{const r=await fetch('/market-breadth-midday.json',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('midday');const j=await r.json();if(!validMidday(j))throw Error('midday validation');midday=j;middayReadFailed=false;}catch{middayReadFailed=true;}})(),
-        (async()=>{const r=await fetch('/market-trading-calendar.json',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('calendar');heatmapCalendar=await r.json();window.MarketWeather.setCalendar(heatmapCalendar);})(),
-        (async()=>{const r=await fetch('/market-breadth-status.json',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(r.ok){const j=await r.json();const t=Date.parse(j.attemptedAt);
-          if(Number.isFinite(t) && (!attempt || t>Date.parse(attempt.attemptedAt) ||
-            t===Date.parse(attempt.attemptedAt) && j.status==='failed'))attempt=j;}})()
+        (async()=>{checkpoint.calendarOK=false;try{const r=await fetch('/market-trading-calendar.json',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('calendar');const j=await r.json();const year=new Date(Date.now()+8*3600000).toISOString().slice(0,4);if(j?.schemaVersion!==1 || !Array.isArray(j.years?.[year]?.closures))throw Error('calendar validation');heatmapCalendar=j;window.MarketWeather.setCalendar(j);checkpoint.calendarOK=true;}catch{checkpoint.calendarOK=false;}})(),
+        (async()=>{checkpoint.statusOK=false;try{const r=await fetch('/market-breadth-status.json',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('status');const j=await r.json(),t=Date.parse(j.attemptedAt);if(!Number.isFinite(t) || typeof j.status!=='string')throw Error('status validation');
+          if(!attempt || t>Date.parse(attempt.attemptedAt) || t===Date.parse(attempt.attemptedAt) && j.status==='failed')attempt=j;
+          checkpoint.statusOK=true;}catch{checkpoint.statusOK=false;}})()
       ]);
+      checkpoint.settled=true;
+      if(data)render(displayedCached);else if(validMidday(midday))renderReferenceOnly();
       let currentSnapshot;
       const reads=await Promise.allSettled(['/market-breadth.json','/api/public-market'].map(async url=>{
         const response=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(20000)});
         if(!response.ok)throw Error('fetch');
-        const value=await response.json();if(!valid(value))throw Error('coverage');
-        rememberParticipation(value.participation);
+        const value=await response.json();
+        rememberParticipation(value?.participation);
+        if(!valid(value)){if(data)render(displayedCached);else renderReferenceOnly();throw Error('coverage');}
         if(preferSnapshot(value,data)) {
           data=value;
           currentSnapshot=value;
@@ -227,7 +256,7 @@
       }));
       if(!reads.some(r=>r.status==='fulfilled'))throw Error('coverage');
     } catch {
-      if(data)render(true); else root.textContent='市场宽度快照暂不可用，等待收盘数据更新。';
+      if(data)render(true); else renderReferenceOnly();
     }
   }
   function load() {

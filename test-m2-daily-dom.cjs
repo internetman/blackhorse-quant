@@ -1,7 +1,9 @@
 const {chromium}=require('playwright');
 const fs=require('fs'); const assert=require('node:assert/strict');
 (async()=>{
- const browser=await chromium.launch({headless:true,executablePath:'/usr/bin/chromium'});const page=await browser.newPage({viewport:{width:390,height:844}});
+ const systemChromium='/usr/bin/chromium';
+ const chromiumOptions=fs.existsSync(systemChromium)?{headless:true,executablePath:systemChromium}:{headless:true};
+ const browser=await chromium.launch(chromiumOptions);const page=await browser.newPage({viewport:{width:390,height:844}});
  await page.route('https://test.invalid/**',route=>route.fulfill({status:200,contentType:'text/html',body:'<div id="dailyCandidateContent"></div>'}));
  await page.goto('https://test.invalid/');
  await page.evaluate(()=>{window.fetch=async()=>{throw Error('missing')};});

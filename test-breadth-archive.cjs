@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 let html='',weatherInput,renderCount=0,archiveReads=0,archiveResolve;
 let source=fs.readFileSync('market-breadth.js','utf8');
-source=source.replace('  try{const saved=JSON.parse(localStorage.getItem(cacheKey));',`  globalThis.hooks={validArchive,sourceSnapshot,chartContext,heatmapColumns,visibleColumns,trend,table,weather,refresh,loadArchive,set:(current,history,mode='all',days=30)=>{data=current;archive=history;chartMode=mode;span=days;},calendar:value=>{heatmapCalendar=value;},stubRender:fn=>{render=fn;}};return;
+source=source.replace('  try{const saved=JSON.parse(localStorage.getItem(cacheKey));',`  checkpoint.settled=checkpoint.calendarOK=checkpoint.statusOK=true;globalThis.hooks={validArchive,sourceSnapshot,chartContext,heatmapColumns,visibleColumns,trend,table,weather,refresh,loadArchive,set:(current,history,mode='all',days=30)=>{data=current;archive=history;chartMode=mode;span=days;},calendar:value=>{heatmapCalendar=value;},stubRender:fn=>{render=fn;}};return;
   try{const saved=JSON.parse(localStorage.getItem(cacheKey));`);
 const scrolling={set innerHTML(value){html=value;},scrollLeft:0};
 const archiveOption={disabled:true,textContent:''},periodOption={disabled:true,textContent:''},periodSelect={querySelector:()=>periodOption},context={innerHTML:''},scope={},method={};
