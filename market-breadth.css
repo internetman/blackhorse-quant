@@ -54,3 +54,10 @@
 .breadth-controls label:first-child { font-weight:600; }
 .breadth-controls #breadth-dataset { max-width:100%; font-weight:600; }
 @media(max-width:720px) { .breadth-controls label:first-child { width:100%; flex-wrap:wrap; } .breadth-controls #breadth-dataset { width:100%; } .breadth-chart-context strong,.breadth-chart-context span { display:block; } }
+
+.breadth-table .breadth-source-row th { height:32px; background:#f5f2e9; white-space:normal; font-size:11px; }
+.breadth-table .breadth-source-row .breadth-source-current { background:#e7eff3; }
+.breadth-table .breadth-source-row .breadth-source-gap { background:#e6e6e6; color:#666; }
+.breadth-table .breadth-date-row th { top:32px; }
+.breadth-table .breadth-scope-boundary { border-left:3px solid #555; }
+.breadth-table td.breadth-gap { background:repeating-linear-gradient(135deg,#eee,#eee 5px,#e7e7e7 5px,#e7e7e7 7px)!important; }

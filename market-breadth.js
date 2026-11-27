@@ -4,7 +4,7 @@
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const pct = value => value == null ? '—' : `${Number(value).toFixed(1)}%`;
   const color = value => value == null ? '#eee' : value < 20 ? '#16836a' : value < 40 ? '#a9d5c3' : value < 60 ? '#edf0f0' : value < 80 ? '#f0b3a5' : '#bd3b43';
-  let archive = null, archiveReadPromise = null, chartMode = 'current';
+  let archive = null, archiveReadPromise = null, heatmapCalendar = null, chartMode = 'all';
   const archiveLabel = '历史归档（截至 11 月 12 日）';
   let data, liveParticipation, activeRefresh, refreshQueued = false, attempt = null, midday = null, middayReadFailed = false, period = 'ma20', span = 30, search = '', sort = 'strength';
   const point = value => value == null ? '—' : `${value > 0 ? '+' : ''}${value.toFixed(1)} 个百分点`;
@@ -55,46 +55,85 @@
     const aligned=series=>Array.isArray(series) && series.length===dates.length && series.every((row,i)=>row && row.date===dates[i] && ['ma20','ma50'].every(key=>row[key] && (row[key].pct===null || Number.isFinite(row[key].pct) && row[key].pct>=0 && row[key].pct<=100)));
     return aligned(d.market) && d.rows.every(row=>row && typeof row.industry==='string' && aligned(row.series));
   }
-  function chartSnapshot() { return chartMode==='archive' && archive ? archive : data; }
-  function chartContext() {
-    const view=chartSnapshot(), dates=view.dates.slice(-span), archived=chartMode==='archive' && archive;
-    const range=`${dates[0]} 至 ${dates.at(-1)} · 实际显示 ${dates.length} 个交易日`;
-    return `<strong>${archived?archiveLabel:'当前口径'}</strong><span>${esc(range)}</span><p>${archived?'旧来源：腾讯 / 东方财富日线，含 FFD 试验补源。灰色空格为原始缺失；全市场曲线仅 11 月 11–12 日有效。':'旧日期可在“数据范围”切换历史归档。'} ${esc(view.universeLabel || '全市场')} · ${view.rows.length} 个行业 · 同日覆盖 ${pct(view.coveragePct)}。</p>${archived?`<p>归档单独展示；上方市场天气仍采用当前快照。 <a href="/market-breadth-archive.json" download>下载历史归档</a></p>`:''}`;
+  // Historical cells are displayed alongside current cells, never fed into
+  // the current line chart, market weather, rankings, or browser snapshot cache.
+  function sourceSnapshot(source) { return source==='archive'?archive:source==='current'?data:null; }
+  function heatmapColumns() {
+    const current=data.dates.map(date=>({date,source:'current'}));
+    if(chartMode==='current' || !archive)return current;
+    if(chartMode==='archive')return archive.dates.map(date=>({date,source:'archive'}));
+    const first=data.dates[0], older=archive.dates.filter(date=>date<first).map(date=>({date,source:'archive'}));
+    const gaps=[];
+    if(older.length) {
+      const cursor=new Date(older.at(-1).date+'T00:00:00Z');
+      for(let i=0;i<370;i++) {
+        cursor.setUTCDate(cursor.getUTCDate()+1);
+        const date=cursor.toISOString().slice(0,10);if(date>=first)break;
+        const entry=heatmapCalendar?.years?.[date.slice(0,4)];
+        if(entry && ![0,6].includes(cursor.getUTCDay()) && !entry.closures.some(([a,b])=>a<=date && date<=b))gaps.push({date,source:'gap'});
+      }
+    }
+    return [...older,...gaps,...current];
   }
-  function updateCharts() {
-    const view=chartSnapshot(), partial=view.availableMetrics && !view.availableMetrics.includes('ma50');
-    if(partial)period='ma20';
-    const select=root.querySelector('#breadth-period'), ma50=select.querySelector('option[value="ma50"]');
-    select.value=period;ma50.disabled=Boolean(partial);ma50.textContent=partial?'MA50（数据未完整取得）':'MA50';
+  function visibleColumns() { const columns=heatmapColumns();return span>0?columns.slice(-span):columns; }
+  function chartContext() {
+    const columns=visibleColumns(), archived=chartMode==='archive', combined=chartMode==='all';
+    const range=`${columns[0]?.date} 至 ${columns.at(-1)?.date} · 实际显示 ${columns.length} 个日期`;
+    return `<strong>${combined?'全部日期 · 按来源分段':archived?archiveLabel:'当前口径'}</strong><span>${esc(range)}</span><p>${combined?(archive?'历史归档与当前口径按列分组；中间缺失交易日留灰，不跨口径计算。':'先显示当前数据；历史归档读取后自动补入图表。'):archived?'旧来源：腾讯 / 东方财富日线，含 FFD 试验补源。':'当前已核验收盘快照。'} 折线与上方市场天气始终采用当前快照（截至 ${esc(data.asOf)}）。</p>${archive && chartMode!=='current'?`<p>归档灰格为原始缺失；旧全市场行仅 11 月 11–12 日有效。 <a href="/market-breadth-archive.json" download>下载历史归档</a></p>`:''}`;
+  }
+  function updateHeatmap() {
+    if(!data || !root.querySelector('#breadth-chart-context') || !root.querySelector('.breadth-scroll'))return;
     root.querySelector('#breadth-chart-context').innerHTML=chartContext();
+    const view=chartMode==='archive' && archive?archive:data;
     root.querySelector('#breadth-scope-note').textContent=view.dataMode==='public-aggregates'
       ? `${view.rows.length}个行业MA20聚合值 · beta有效报价${view.participation.n}只 · 未取得全市场均线分母，不推算覆盖率`
       : `${view.universeLabel || '沪深京'} ${view.universeCount} 只 · 同日历史覆盖 ${view.latestHistoryCount} 只（${view.coveragePct}%） · ${view.rows.length} 个行业${view.excludedMarkets?.length?' · 北交所未覆盖':''} · ${view.source}`;
-    root.querySelector('#breadth-chart-method').innerHTML=`<summary>本图计算口径与数据范围</summary><p>${esc(view.method)}</p><p>${chartMode==='archive'?'历史归档，仅供回看。':'收盘后更新；未取得当天收盘数据时显示最近可用交易日。'}宽度为参与程度，不能独立确定买点。采集时间：${esc(view.generatedAt)}</p>`;
-    root.querySelector('.breadth-trend').outerHTML=trend();
-    root.querySelector('.breadth-legend span:last-child').textContent=`${view.universeLabel || '全市场'}等权站上比例${chartMode==='archive'?' · 历史归档':''}`;
-    root.querySelector('.breadth-legend span:nth-child(2)').innerHTML=`<i style="background:#246b91"></i>${partial?'MA50（未完整取得）':'MA50'}`;
-    root.querySelector('.breadth-trend').setAttribute('aria-label',`${chartMode==='archive'?archiveLabel:'当前口径'}最近${Math.min(span,view.dates.length)}个交易日${view.universeLabel || '全市场'}均线站上比例趋势`);
+    root.querySelector('#breadth-chart-method').innerHTML=`<summary>计算口径与数据范围</summary><p>当前：${esc(data.method)} · 采集 ${esc(data.generatedAt)}</p>${archive && chartMode!=='current'?`<p>历史归档：${esc(archive.method)} · 采集 ${esc(archive.generatedAt)}</p>`:''}<p>同名行业分别展示各来源原值；不拼接全市场曲线，不以灰格推算数据。宽度不能独立确定买点。</p>`;
     table();
   }
+  function updatePeriodPicker() {
+    const partial=data.availableMetrics && !data.availableMetrics.includes('ma50');
+    const archiveMA50=archive?.availableMetrics?.includes('ma50') && chartMode!=='current';
+    if(partial && !archiveMA50)period='ma20';
+    const select=root.querySelector('#breadth-period');if(!select)return;
+    const ma50=select.querySelector('option[value="ma50"]');
+    select.value=period;ma50.disabled=Boolean(partial && !archiveMA50);ma50.textContent=ma50.disabled?'MA50（数据未完整取得）':'MA50';
+  }
+  function updateCharts() {
+    const partial=data.availableMetrics && !data.availableMetrics.includes('ma50');
+    updatePeriodPicker();
+    root.querySelector('.breadth-trend').outerHTML=trend();
+    root.querySelector('.breadth-legend span:last-child').textContent=`${data.universeLabel || '全市场'}等权站上比例 · 当前口径`;
+    root.querySelector('.breadth-legend span:nth-child(2)').innerHTML=`<i style="background:#246b91"></i>${partial?'MA50（当前未完整取得）':'MA50'}`;
+    updateHeatmap();
+  }
   function trend() {
-    const width = Math.max(280, root.clientWidth), right = width - 12;
-    const view=chartSnapshot(), rows=view.market.slice(-span);
-    const lines = (metric,stroke) => {
-      const segments=[]; let points=[];
-      rows.forEach((row,i)=>{if(row[metric].pct==null){if(points.length)segments.push(points);points=[];}else points.push(`${40+i/Math.max(1,rows.length-1)*(right-40)},${145-row[metric].pct*1.2}`);});
+    const width=Math.max(280,root.clientWidth),right=width-12,rows=span>0?data.market.slice(-span):data.market;
+    const lines=(metric,stroke)=>{
+      const segments=[];let points=[];
+      rows.forEach((row,i)=>{if(row[metric]?.pct==null){if(points.length)segments.push(points);points=[];}else points.push(`${40+i/Math.max(1,rows.length-1)*(right-40)},${145-row[metric].pct*1.2}`);});
       if(points.length)segments.push(points);
       return segments.map(points=>`<polyline points="${points.join(' ')}" fill="none" stroke="${stroke}" stroke-width="2.5"/>`).join('');
     };
-    return `<svg class="breadth-trend" viewBox="0 0 ${width} 180" role="img" aria-label="${esc(chartMode==='archive'?archiveLabel:'当前口径')}最近${rows.length}个交易日${esc(view.universeLabel || '全市场')}均线站上比例趋势">${[0,50,100].map(n => `<line x1="40" y1="${145-n*1.2}" x2="${right}" y2="${145-n*1.2}" stroke="#ddd"/><text x="3" y="${149-n*1.2}" font-size="11">${n}%</text>`).join('')}${lines('ma20','#bd3b43')}${lines('ma50','#246b91')}<text x="40" y="173" font-size="11">${esc(rows[0]?.date)}</text><text x="${right}" y="173" text-anchor="end" font-size="11">${esc(view.asOf)}</text></svg>`;
+    return `<svg class="breadth-trend" viewBox="0 0 ${width} 180" role="img" aria-label="当前口径最近${rows.length}个交易日${esc(data.universeLabel || '全市场')}均线站上比例趋势">${[0,50,100].map(n=>`<line x1="40" y1="${145-n*1.2}" x2="${right}" y2="${145-n*1.2}" stroke="#ddd"/><text x="3" y="${149-n*1.2}" font-size="11">${n}%</text>`).join('')}${lines('ma20','#bd3b43')}${lines('ma50','#246b91')}<text x="40" y="173" font-size="11">${esc(rows[0]?.date)}</text><text x="${right}" y="173" text-anchor="end" font-size="11">${esc(data.asOf)}</text></svg>`;
   }
   function table() {
-    const view=chartSnapshot();
-    let rows = view.rows.filter(row => row.industry.includes(search));
-    rows = [...rows].sort((a,b) => sort === 'name' ? a.industry.localeCompare(b.industry,'zh-CN') : (b.series.at(-1)[period].pct ?? -1)-(a.series.at(-1)[period].pct ?? -1));
-    const all = [{industry:view.universeLabel || '全市场', series:view.market}, ...rows];
-    root.querySelector('.breadth-scroll').innerHTML = `<table class="breadth-table"><thead><tr><th>行业 / 日期</th>${view.dates.slice(-span).map(d=>`<th>${esc(d.slice(5))}</th>`).join('')}</tr></thead><tbody>${all.map(row=>`<tr><th scope="row">${esc(row.industry)}</th>${row.series.slice(-span).map(s=>{const m=s[period];return `<td style="background:${color(m.pct)};color:${m.pct!=null&&(m.pct<20||m.pct>=80)?'#fff':'#222'}"><button data-industry="${esc(row.industry)}" data-date="${s.date}" title="${esc(row.industry)} ${s.date} ${period.toUpperCase()}：${pct(m.pct)}；${esc(fraction(m))}" aria-label="${esc(row.industry)} ${s.date} ${pct(m.pct)}">${m.pct==null?'—':m.pct.toFixed(0)}</button></td>`;}).join('')}</tr>`).join('')}</tbody></table>`;
-    root.querySelector('.breadth-scroll').scrollLeft = 99999;
+    const columns=visibleColumns(), sources=chartMode==='archive' && archive?[archive]:chartMode==='all' && archive?[data,archive]:[data];
+    const names=[...new Set(sources.flatMap(source=>source.rows.map(row=>row.industry)))].filter(name=>name.includes(search));
+    const sortSource=chartMode==='archive' && archive?archive:data;
+    const strength=name=>sortSource.rows.find(row=>row.industry===name)?.series.at(-1)?.[period]?.pct ?? -1;
+    names.sort((a,b)=>sort==='name'?a.localeCompare(b,'zh-CN'):strength(b)-strength(a));
+    const groups=[];
+    columns.forEach(column=>{const group=groups.at(-1);if(group?.source===column.source)group.count++;else groups.push({source:column.source,count:1});});
+    const labels={archive:'历史归档 · 腾讯/东财 + FFD 试验补源',gap:'缺少已核验数据',current:'当前口径 · 日线收益率复权'};
+    const rows=[{name:data.universeLabel || '全市场',market:true},...names.map(name=>({name,market:false}))];
+    root.querySelector('.breadth-scroll').innerHTML=`<table class="breadth-table"><thead><tr class="breadth-source-row"><th>来源 / 口径</th>${groups.map(group=>`<th class="breadth-source-${group.source}" data-source="${group.source}" colspan="${group.count}">${esc(labels[group.source])}</th>`).join('')}</tr><tr class="breadth-date-row"><th>行业 / 日期</th>${columns.map((column,i)=>`<th data-date="${column.date}" data-source="${column.source}" class="${i>0 && column.source!==columns[i-1].source?'breadth-scope-boundary':''}">${esc(column.date.slice(5))}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr><th scope="row">${esc(row.name)}</th>${columns.map((column,i)=>{
+      const source=sourceSnapshot(column.source),series=row.market?source?.market:source?.rows.find(item=>item.industry===row.name)?.series;
+      const value=series?.find(item=>item.date===column.date),metric=value?.[period] || {pct:null};
+      const title=`${row.name} ${column.date} ${labels[column.source]} ${period.toUpperCase()}：${pct(metric.pct)}；${column.source==='gap'?'未取得已核验快照':fraction(metric)}`;
+      return `<td data-source="${column.source}" class="${column.source==='gap'?'breadth-gap ':''}${i>0 && column.source!==columns[i-1].source?'breadth-scope-boundary':''}" style="background:${color(metric.pct)};color:${metric.pct!=null&&(metric.pct<20||metric.pct>=80)?'#fff':'#222'}"><button data-industry="${esc(row.name)}" data-market="${row.market}" data-date="${column.date}" data-source="${column.source}" title="${esc(title)}" aria-label="${esc(title)}">${metric.pct==null?'—':metric.pct.toFixed(0)}</button></td>`;
+    }).join('')}</tr>`).join('')}</tbody></table>`;
+    root.querySelector('.breadth-scroll').scrollLeft=99999;
   }
   function render(cached=false) {
     const latest=data.market.at(-1), old=data.market.at(-6), delta=old?.ma20.pct!=null && latest.ma20.pct!=null ? latest.ma20.pct-old.ma20.pct : null;
@@ -105,7 +144,7 @@
       ['MA50 站上比例',pct(latest.ma50.pct),partial?'当前MA50未完整取得，不使用旧值':fraction(latest.ma50)],
       ['MA20 较5交易日前',delta==null?'—':`${delta>0?'+':''}${delta.toFixed(1)} 点`,'百分点变化'],
       ['收盘上涨比例',pct(latest.upPct),`${latest.up}涨 / ${latest.down}跌 / ${latest.flat}平`]
-    ].map(([label,value,note])=>`<div class="breadth-stat"><span class="breadth-note">${label}</span><strong>${value}</strong><span class="breadth-note">${note}</span></div>`).join('')}</div><div class="breadth-legend"><span><i style="background:#bd3b43"></i>MA20</span><span><i style="background:#246b91"></i>MA50</span><span>全市场等权站上比例</span></div><div class="breadth-controls"><label>数据范围<select id="breadth-dataset"><option value="current">当前口径（${data.dates.length} 个交易日）</option><option value="archive" ${archive?'':'disabled'}>${archiveLabel}${archive?` · ${archive.dates.length} 个交易日`:' · 暂未取得'}</option></select></label><label>均线<select id="breadth-period"><option value="ma20">MA20</option><option value="ma50">MA50</option></select></label><label>区间<select id="breadth-span"><option value="30">30个交易日</option><option value="20">20个交易日</option><option value="10">10个交易日</option></select></label><label>行业<input id="breadth-search" type="search" placeholder="搜索行业"></label><label>排序<select id="breadth-sort"><option value="strength">最新宽度从高到低</option><option value="name">行业名称</option></select></label></div><div id="breadth-chart-context" class="breadth-chart-context" aria-live="polite">${chartContext()}</div>${trend()}<div class="breadth-legend">${['0–20%','20–40%','40–60%','60–80%','80–100%'].map((s,i)=>`<span><i style="background:${color(i*20+1)}"></i>${s}</span>`).join('')}<span>灰色空格：数据不足</span></div><div class="breadth-scroll" tabindex="0" aria-label="行业市场宽度热力图"></div><p id="breadth-scope-note" class="breadth-note">沪深京 ${data.universeCount} 只 · 同日历史覆盖 ${data.latestHistoryCount} 只（${data.coveragePct}%） · ${data.rows.length} 个行业 · ${esc(data.source)}</p><details id="breadth-chart-method" class="breadth-note"><summary>计算口径与数据范围</summary><p>${esc(data.method)}</p><p>收盘后更新；未取得当天收盘数据时显示最近可用交易日。宽度为参与程度，不能独立确定买点。采集时间：${esc(data.generatedAt)}</p></details><dialog class="breadth-detail"><button aria-label="关闭详情">×</button><div></div></dialog>`;
+    ].map(([label,value,note])=>`<div class="breadth-stat"><span class="breadth-note">${label}</span><strong>${value}</strong><span class="breadth-note">${note}</span></div>`).join('')}</div><div class="breadth-legend"><span><i style="background:#bd3b43"></i>MA20</span><span><i style="background:#246b91"></i>MA50</span><span>全市场等权站上比例</span></div><div class="breadth-controls"><label>数据范围<select id="breadth-dataset"><option value="all">全部日期（默认）</option><option value="current">当前口径（${data.dates.length} 个交易日）</option><option value="archive" ${archive?'':'disabled'}>${archiveLabel}${archive?` · ${archive.dates.length} 个交易日`:' · 暂未取得'}</option></select></label><label>均线<select id="breadth-period"><option value="ma20">MA20</option><option value="ma50">MA50</option></select></label><label>区间<select id="breadth-span"><option value="30">30个交易日</option><option value="20">20个交易日</option><option value="10">10个交易日</option><option value="0">全部日期</option></select></label><label>行业<input id="breadth-search" type="search" placeholder="搜索行业"></label><label>排序<select id="breadth-sort"><option value="strength">最新宽度从高到低</option><option value="name">行业名称</option></select></label></div><div id="breadth-chart-context" class="breadth-chart-context" aria-live="polite">${chartContext()}</div>${trend()}<div class="breadth-legend">${['0–20%','20–40%','40–60%','60–80%','80–100%'].map((s,i)=>`<span><i style="background:${color(i*20+1)}"></i>${s}</span>`).join('')}<span>灰色空格：数据不足</span></div><div class="breadth-scroll" tabindex="0" aria-label="行业市场宽度热力图"></div><p id="breadth-scope-note" class="breadth-note">沪深京 ${data.universeCount} 只 · 同日历史覆盖 ${data.latestHistoryCount} 只（${data.coveragePct}%） · ${data.rows.length} 个行业 · ${esc(data.source)}</p><details id="breadth-chart-method" class="breadth-note"><summary>计算口径与数据范围</summary><p>${esc(data.method)}</p><p>收盘后更新；未取得当天收盘数据时显示最近可用交易日。宽度为参与程度，不能独立确定买点。采集时间：${esc(data.generatedAt)}</p></details><dialog class="breadth-detail"><button aria-label="关闭详情">×</button><div></div></dialog>`;
     for (const [id,value] of [['period',period],['span',span],['search',search],['sort',sort]]) root.querySelector('#breadth-'+id).value=value;
     if(data.dataMode==='public-aggregates'){
       root.querySelector('.breadth-head .breadth-note').textContent=`${data.asOf} 行业MA20 · 在线备用模式 · 全市场均线待逐股校验`;
@@ -114,7 +153,7 @@
       if(coverage)coverage.textContent=`${data.rows.length}个行业MA20聚合值 · beta有效报价${data.participation.n}只 · 未取得全市场均线分母，不推算覆盖率`;
     }
     root.querySelector('#breadth-dataset').value=chartMode;
-    root.querySelector('#breadth-dataset').onchange=e=>{chartMode=e.target.value==='archive' && archive?'archive':'current';updateCharts();};
+    root.querySelector('#breadth-dataset').onchange=e=>{chartMode=e.target.value==='archive' && archive?'archive':e.target.value==='current'?'current':'all';updateCharts();};
     root.querySelector('#breadth-period').onchange=e=>{period=e.target.value;updateCharts();};
     root.querySelector('#breadth-span').onchange=e=>{span=Number(e.target.value);updateCharts();};
     root.querySelector('#breadth-search').oninput=e=>{search=e.target.value.trim();table();};
@@ -123,10 +162,11 @@
     dialog.querySelector('button').onclick=()=>dialog.close();
     root.querySelector('.breadth-scroll').onclick=e=>{
       const b=e.target.closest('button[data-date]'); if(!b)return;
-      const view=chartSnapshot();
-      const series=b.dataset.industry===(view.universeLabel || '全市场')?view.market:view.rows.find(r=>r.industry===b.dataset.industry).series;
-      const s=series.find(r=>r.date===b.dataset.date), m=s[period];
-      dialog.querySelector('div').innerHTML=`<h3>${esc(b.dataset.industry)}</h3><p>${chartMode==='archive'?archiveLabel:'当前口径'} · ${s.date} 收盘 · ${period.toUpperCase()}</p><p>站上比例 ${pct(m.pct)}</p><p>${esc(fraction(m))}</p>${m.valid!=null?`<p>当日有效行情样本 ${s.n} 只；均线不足 ${s.n-m.valid} 只。</p>`:''}`;
+      const source=b.dataset.source,view=sourceSnapshot(source);
+      const series=b.dataset.market==='true'?view?.market:view?.rows.find(r=>r.industry===b.dataset.industry)?.series;
+      const row=series?.find(r=>r.date===b.dataset.date),metric=row?.[period] || {pct:null};
+      const label=source==='archive'?archiveLabel:source==='gap'?'缺少已核验数据':'当前口径';
+      dialog.querySelector('div').innerHTML=`<h3>${esc(b.dataset.industry)}</h3><p>${label} · ${esc(b.dataset.date)} · ${period.toUpperCase()}</p><p>站上比例 ${pct(metric.pct)}</p><p>${source==='gap'?'该交易日没有已核验快照，保留灰格。':esc(fraction(metric))}</p>${metric.valid!=null?`<p>当日有效行情样本 ${row.n} 只；均线不足 ${row.n-metric.valid} 只。</p>`:''}`;
       dialog.showModal();
     };
     updateCharts();
@@ -155,6 +195,7 @@
         archive=value;
         const option=root.querySelector('#breadth-dataset option[value="archive"]');
         if(option){option.disabled=false;option.textContent=`${archiveLabel} · ${archive.dates.length} 个交易日`;}
+        if(data && chartMode==='all'){updatePeriodPicker();updateHeatmap();}
       } catch { /* Retry this optional read on the next refresh. */ }
       finally { archiveReadPromise=null; }
     })();
@@ -165,7 +206,7 @@
     try {
       await Promise.allSettled([
         (async()=>{try{const r=await fetch('/market-breadth-midday.json',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('midday');const j=await r.json();if(!validMidday(j))throw Error('midday validation');midday=j;middayReadFailed=false;}catch{middayReadFailed=true;}})(),
-        (async()=>{const r=await fetch('/market-trading-calendar.json',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('calendar');window.MarketWeather.setCalendar(await r.json());})(),
+        (async()=>{const r=await fetch('/market-trading-calendar.json',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('calendar');heatmapCalendar=await r.json();window.MarketWeather.setCalendar(heatmapCalendar);})(),
         (async()=>{const r=await fetch('/market-breadth-status.json',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(r.ok){const j=await r.json();const t=Date.parse(j.attemptedAt);
           if(Number.isFinite(t) && (!attempt || t>Date.parse(attempt.attemptedAt) ||
             t===Date.parse(attempt.attemptedAt) && j.status==='failed'))attempt=j;}})()
